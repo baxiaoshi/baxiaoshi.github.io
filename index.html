@@ -544,7 +544,7 @@
       
         
           
-            <h3 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h3><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
+            <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
 <p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
 <p><img src="/img/cloudify_jiagou.png" alt="img"></p>
 <p>结合自身的环境,cloudify有这么几个不合适的地方<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">cloudfiy就像一个资源池，我们只需要关心：需要多少资源、依赖关系等, 然后编写好蓝图，就可以完成应用的创建、发布等工作</div><div class="line">资源的调度、监控、日志收集、调度降级等工作都可以做，但通常公司的环境不同相关依赖或者业务调用关系，直接切换平台，明显不合理</div><div class="line">涉及组件太多，系统维护可能比较复杂</div></pre></td></tr></table></figure></p>

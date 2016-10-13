@@ -97,7 +97,7 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
 
 结合自身的环境,cloudify有这么">
 <meta property="og:image" content="http://www.sreguide.com/img/cloudify_jiagou.png">
-<meta property="og:updated_time" content="2016-10-13T13:43:56.968Z">
+<meta property="og:updated_time" content="2016-10-13T13:48:46.947Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="cloudify基本了解">
 <meta name="twitter:description" content="cloudify基本介绍cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理
@@ -308,7 +308,7 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
       
 
       
-        <h3 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h3><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
+        <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
 <p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
 <p><img src="/img/cloudify_jiagou.png" alt="img"></p>
 <p>结合自身的环境,cloudify有这么几个不合适的地方<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">cloudfiy就像一个资源池，我们只需要关心：需要多少资源、依赖关系等, 然后编写好蓝图，就可以完成应用的创建、发布等工作</div><div class="line">资源的调度、监控、日志收集、调度降级等工作都可以做，但通常公司的环境不同相关依赖或者业务调用关系，直接切换平台，明显不合理</div><div class="line">涉及组件太多，系统维护可能比较复杂</div></pre></td></tr></table></figure></p>
@@ -470,7 +470,7 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#cloudify基本介绍"><span class="nav-number">1.</span> <span class="nav-text">cloudify基本介绍</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify的安装"><span class="nav-number"></span> <span class="nav-text">cloudify的安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#下载对应系统的rpm包"><span class="nav-number">1.</span> <span class="nav-text">下载对应系统的rpm包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成密钥"><span class="nav-number">2.</span> <span class="nav-text">生成密钥</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成cloudify的环境"><span class="nav-number">3.</span> <span class="nav-text">生成cloudify的环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件"><span class="nav-number">4.</span> <span class="nav-text">修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#simple-manager-blueprint-inputs-yaml配置文件的修改"><span class="nav-number">4.1.</span> <span class="nav-text">simple-manager-blueprint-inputs.yaml配置文件的修改</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行安装命令"><span class="nav-number">5.</span> <span class="nav-text">执行安装命令</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify基本介绍"><span class="nav-number">1.</span> <span class="nav-text">cloudify基本介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify的安装"><span class="nav-number">2.</span> <span class="nav-text">cloudify的安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#下载对应系统的rpm包"><span class="nav-number">2.1.</span> <span class="nav-text">下载对应系统的rpm包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成密钥"><span class="nav-number">2.2.</span> <span class="nav-text">生成密钥</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成cloudify的环境"><span class="nav-number">2.3.</span> <span class="nav-text">生成cloudify的环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件"><span class="nav-number">2.4.</span> <span class="nav-text">修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#simple-manager-blueprint-inputs-yaml配置文件的修改"><span class="nav-number">2.4.1.</span> <span class="nav-text">simple-manager-blueprint-inputs.yaml配置文件的修改</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行安装命令"><span class="nav-number">2.5.</span> <span class="nav-text">执行安装命令</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
