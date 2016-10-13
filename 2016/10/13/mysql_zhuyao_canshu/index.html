@@ -1,0 +1,580 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="mysql的配置参数针对每个线程的参数12345sort_buffer_size: 为每个排序分配指定的内存join_buffer_size：每个join都会有一个read_buffer_size: 有查询需要read_rnd_buffer_size: 按需分配以上每个参数是每个线程配置的
+缓存池大小123innobd_buffer_pool_size：缓存数据锁索引等总内存-(每个线程所需要的内">
+<meta property="og:type" content="article">
+<meta property="og:title" content="8小时的技术博客">
+<meta property="og:url" content="http://www.sreguide.com/2016/10/13/mysql_zhuyao_canshu/index.html">
+<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:description" content="mysql的配置参数针对每个线程的参数12345sort_buffer_size: 为每个排序分配指定的内存join_buffer_size：每个join都会有一个read_buffer_size: 有查询需要read_rnd_buffer_size: 按需分配以上每个参数是每个线程配置的
+缓存池大小123innobd_buffer_pool_size：缓存数据锁索引等总内存-(每个线程所需要的内">
+<meta property="og:updated_time" content="2016-10-13T06:31:09.546Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="8小时的技术博客">
+<meta name="twitter:description" content="mysql的配置参数针对每个线程的参数12345sort_buffer_size: 为每个排序分配指定的内存join_buffer_size：每个join都会有一个read_buffer_size: 有查询需要read_rnd_buffer_size: 按需分配以上每个参数是每个线程配置的
+缓存池大小123innobd_buffer_pool_size：缓存数据锁索引等总内存-(每个线程所需要的内">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2016/10/13/mysql_zhuyao_canshu/"/>
+
+
+  <title>  | 8小时的技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">8小时的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-13T14:32:11+08:00" content="2016-10-13">
+              2016-10-13
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="mysql的配置参数"><a href="#mysql的配置参数" class="headerlink" title="mysql的配置参数"></a>mysql的配置参数</h2><h3 id="针对每个线程的参数"><a href="#针对每个线程的参数" class="headerlink" title="针对每个线程的参数"></a>针对每个线程的参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">sort_buffer_size: 为每个排序分配指定的内存</div><div class="line">join_buffer_size：每个join都会有一个</div><div class="line">read_buffer_size: 有查询需要</div><div class="line">read_rnd_buffer_size: 按需分配</div><div class="line">以上每个参数是每个线程配置的</div></pre></td></tr></table></figure>
+<h3 id="缓存池大小"><a href="#缓存池大小" class="headerlink" title="缓存池大小"></a>缓存池大小</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">innobd_buffer_pool_size：缓存数据锁索引等</div><div class="line">总内存-(每个线程所需要的内存*连接数)-系统保留内存</div><div class="line">key_buffer_size: myisam</div></pre></td></tr></table></figure>
+<h3 id="IO相关配置参数"><a href="#IO相关配置参数" class="headerlink" title="IO相关配置参数"></a>IO相关配置参数</h3><h4 id="innobd-i-o相关配置"><a href="#innobd-i-o相关配置" class="headerlink" title="innobd i/o相关配置"></a>innobd i/o相关配置</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">事务日志的写入是磁盘的顺序I/O这样，数据的写入速度非常快，而如果直接写入数据到表，则是随机IO</div><div class="line">innodb_log_file_size: 单个事务日志的大小</div><div class="line">innobd_file_in_group: 事务文件的格式</div><div class="line">事务日志总大小= 1 * 2</div><div class="line"></div><div class="line">事务日志总大小记录一个小时的日志</div><div class="line"></div><div class="line">innodb_log_buffer_size: 保存事务刷新的日志</div><div class="line"></div><div class="line">innodb_flush_log_at_trx_commoit</div><div class="line">0：每秒进行一次log写入到cache</div><div class="line">1:每次事务日志提交log,都会写入cache,并flush log</div><div class="line">2:事务提交后，提交log数据写入到cache,每秒执行一次flush log到磁盘</div><div class="line"></div><div class="line">innodb_flush_metho=O_DIRECT</div><div class="line">通知操作系统不要缓存数据，避免操作系统对mysql数据缓存的双重缓存</div><div class="line">innodb_file_per_table =1 </div><div class="line">每个表单独一个表空间</div><div class="line">innodb_doublewrite = 1</div><div class="line">innodb默认的页是16k， 如果写入数据的时候，操作系统崩溃，避免页没有写完整，造成页不完成，造成数据损坏，</div></pre></td></tr></table></figure>
+<h3 id="myisam-io相关参数"><a href="#myisam-io相关参数" class="headerlink" title="myisam io相关参数"></a>myisam io相关参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">deply_key_write</div><div class="line">off: 每次写操作后都刷新建缓存中的脏快到磁盘</div><div class="line">on:只对在建表时指定了delay_key_write选项的表使用延迟刷新</div><div class="line">all: 对所有的myisam表都使用延迟建写入</div><div class="line">myisam表索引写入的时候，发生问题可能需要重新修复myisam</div></pre></td></tr></table></figure>
+<h3 id="mysql安装相关配置参数"><a href="#mysql安装相关配置参数" class="headerlink" title="mysql安装相关配置参数"></a>mysql安装相关配置参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">expire_logs_day：两次全备的数据，</div><div class="line">max_allowed_packet：控制mysql可以接收的包的大小</div><div class="line">skip_dns_name:</div><div class="line"></div><div class="line">sysdate_is_now：确保sysdate返回确定性日期</div><div class="line">read_only：</div><div class="line">skip_slave_start： 禁用slave自动恢复</div><div class="line">sql_mode：</div></pre></td></tr></table></figure>
+<h3 id="其他配置参数"><a href="#其他配置参数" class="headerlink" title="其他配置参数"></a>其他配置参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sync_binlog：控制mysql如何向磁盘刷新binlog</div><div class="line">tmp_table_size和max_heap_table_size：控制内存临时表大小</div><div class="line">max_connections：控制允许的最大连接数</div></pre></td></tr></table></figure>
+<h2 id="mysql复制性能优化"><a href="#mysql复制性能优化" class="headerlink" title="mysql复制性能优化"></a>mysql复制性能优化</h2><h3 id="避免大的事务"><a href="#避免大的事务" class="headerlink" title="避免大的事务"></a>避免大的事务</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">减少事务在主库上的执行时间,可以将大事务拆分成多个小的事务</div></pre></td></tr></table></figure>
+<p>使用合适的binlog日志格式<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">从数据的传输量上减少从主库发送到从库的数据</div></pre></td></tr></table></figure></p>
+<h3 id="多线程复制"><a href="#多线程复制" class="headerlink" title="多线程复制"></a>多线程复制</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">mysql5.7中提供多线程复制的方式</div><div class="line">stop slave</div><div class="line">set global slave_parallel_type = &quot;logical_clock&quot;</div><div class="line">set global slave_parallel_workers = 4;</div><div class="line">start slave;</div><div class="line">使用逻辑时钟的方式来启动，否则mysql默认支持的多线程是每个库一个线程</div></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/12/cloudify_00/" rel="next" title="cloudify基本了解">
+                <i class="fa fa-chevron-left"></i> cloudify基本了解
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="8 小时的技术博客" />
+          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
+          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#mysql的配置参数"><span class="nav-number">1.</span> <span class="nav-text">mysql的配置参数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#针对每个线程的参数"><span class="nav-number">1.1.</span> <span class="nav-text">针对每个线程的参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#缓存池大小"><span class="nav-number">1.2.</span> <span class="nav-text">缓存池大小</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IO相关配置参数"><span class="nav-number">1.3.</span> <span class="nav-text">IO相关配置参数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#innobd-i-o相关配置"><span class="nav-number">1.3.1.</span> <span class="nav-text">innobd i/o相关配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#myisam-io相关参数"><span class="nav-number">1.4.</span> <span class="nav-text">myisam io相关参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mysql安装相关配置参数"><span class="nav-number">1.5.</span> <span class="nav-text">mysql安装相关配置参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他配置参数"><span class="nav-number">1.6.</span> <span class="nav-text">其他配置参数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mysql复制性能优化"><span class="nav-number">2.</span> <span class="nav-text">mysql复制性能优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#避免大的事务"><span class="nav-number">2.1.</span> <span class="nav-text">避免大的事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#多线程复制"><span class="nav-number">2.2.</span> <span class="nav-text">多线程复制</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -259,6 +259,107 @@
             
               
                 
+                <a class="post-title-link" href="/2016/10/13/mysql_zhuyao_canshu/" itemprop="url">
+                  未命名
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-13T14:32:11+08:00" content="2016-10-13">
+              2016-10-13
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="mysql的配置参数"><a href="#mysql的配置参数" class="headerlink" title="mysql的配置参数"></a>mysql的配置参数</h2><h3 id="针对每个线程的参数"><a href="#针对每个线程的参数" class="headerlink" title="针对每个线程的参数"></a>针对每个线程的参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">sort_buffer_size: 为每个排序分配指定的内存</div><div class="line">join_buffer_size：每个join都会有一个</div><div class="line">read_buffer_size: 有查询需要</div><div class="line">read_rnd_buffer_size: 按需分配</div><div class="line">以上每个参数是每个线程配置的</div></pre></td></tr></table></figure>
+<h3 id="缓存池大小"><a href="#缓存池大小" class="headerlink" title="缓存池大小"></a>缓存池大小</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">innobd_buffer_pool_size：缓存数据锁索引等</div><div class="line">总内存-(每个线程所需要的内存*连接数)-系统保留内存</div><div class="line">key_buffer_size: myisam</div></pre></td></tr></table></figure>
+<h3 id="IO相关配置参数"><a href="#IO相关配置参数" class="headerlink" title="IO相关配置参数"></a>IO相关配置参数</h3><h4 id="innobd-i-o相关配置"><a href="#innobd-i-o相关配置" class="headerlink" title="innobd i/o相关配置"></a>innobd i/o相关配置</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">事务日志的写入是磁盘的顺序I/O这样，数据的写入速度非常快，而如果直接写入数据到表，则是随机IO</div><div class="line">innodb_log_file_size: 单个事务日志的大小</div><div class="line">innobd_file_in_group: 事务文件的格式</div><div class="line">事务日志总大小= 1 * 2</div><div class="line"></div><div class="line">事务日志总大小记录一个小时的日志</div><div class="line"></div><div class="line">innodb_log_buffer_size: 保存事务刷新的日志</div><div class="line"></div><div class="line">innodb_flush_log_at_trx_commoit</div><div class="line">0：每秒进行一次log写入到cache</div><div class="line">1:每次事务日志提交log,都会写入cache,并flush log</div><div class="line">2:事务提交后，提交log数据写入到cache,每秒执行一次flush log到磁盘</div><div class="line"></div><div class="line">innodb_flush_metho=O_DIRECT</div><div class="line">通知操作系统不要缓存数据，避免操作系统对mysql数据缓存的双重缓存</div><div class="line">innodb_file_per_table =1 </div><div class="line">每个表单独一个表空间</div><div class="line">innodb_doublewrite = 1</div><div class="line">innodb默认的页是16k， 如果写入数据的时候，操作系统崩溃，避免页没有写完整，造成页不完成，造成数据损坏，</div></pre></td></tr></table></figure>
+<h3 id="myisam-io相关参数"><a href="#myisam-io相关参数" class="headerlink" title="myisam io相关参数"></a>myisam io相关参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">deply_key_write</div><div class="line">off: 每次写操作后都刷新建缓存中的脏快到磁盘</div><div class="line">on:只对在建表时指定了delay_key_write选项的表使用延迟刷新</div><div class="line">all: 对所有的myisam表都使用延迟建写入</div><div class="line">myisam表索引写入的时候，发生问题可能需要重新修复myisam</div></pre></td></tr></table></figure>
+<h3 id="mysql安装相关配置参数"><a href="#mysql安装相关配置参数" class="headerlink" title="mysql安装相关配置参数"></a>mysql安装相关配置参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">expire_logs_day：两次全备的数据，</div><div class="line">max_allowed_packet：控制mysql可以接收的包的大小</div><div class="line">skip_dns_name:</div><div class="line"></div><div class="line">sysdate_is_now：确保sysdate返回确定性日期</div><div class="line">read_only：</div><div class="line">skip_slave_start： 禁用slave自动恢复</div><div class="line">sql_mode：</div></pre></td></tr></table></figure>
+<h3 id="其他配置参数"><a href="#其他配置参数" class="headerlink" title="其他配置参数"></a>其他配置参数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sync_binlog：控制mysql如何向磁盘刷新binlog</div><div class="line">tmp_table_size和max_heap_table_size：控制内存临时表大小</div><div class="line">max_connections：控制允许的最大连接数</div></pre></td></tr></table></figure>
+<h2 id="mysql复制性能优化"><a href="#mysql复制性能优化" class="headerlink" title="mysql复制性能优化"></a>mysql复制性能优化</h2><h3 id="避免大的事务"><a href="#避免大的事务" class="headerlink" title="避免大的事务"></a>避免大的事务</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">减少事务在主库上的执行时间,可以将大事务拆分成多个小的事务</div></pre></td></tr></table></figure>
+<p>使用合适的binlog日志格式<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">从数据的传输量上减少从主库发送到从库的数据</div></pre></td></tr></table></figure></p>
+<h3 id="多线程复制"><a href="#多线程复制" class="headerlink" title="多线程复制"></a>多线程复制</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">mysql5.7中提供多线程复制的方式</div><div class="line">stop slave</div><div class="line">set global slave_parallel_type = &quot;logical_clock&quot;</div><div class="line">set global slave_parallel_workers = 4;</div><div class="line">start slave;</div><div class="line">使用逻辑时钟的方式来启动，否则mysql默认支持的多线程是每个库一个线程</div></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/10/12/cloudify_00/" itemprop="url">
                   cloudify基本了解
                 </a>
@@ -672,7 +773,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-count">5</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
