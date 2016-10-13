@@ -96,15 +96,15 @@
 我们的目标如果开发要新添加新特性,可以快速的发布到生产环境
 定义一个部署的蓝图, 可以快速持续的完成代码生产环境的发布
 持续交付的流程基于主机的持续交付1234567开发人员提交代码到版本仓库持续集成服务器">
-<meta property="og:image" content="http://www.sreguide.com/cd_practice/CDGuideCI1.png">
-<meta property="og:updated_time" content="2016-10-12T09:16:56.713Z">
+<meta property="og:image" content="http://www.sreguide.com/img/CDGuideCI1.png">
+<meta property="og:updated_time" content="2016-10-13T07:31:59.234Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="持续部署实践">
 <meta name="twitter:description" content="为什么要持续交付一个产品的上线流程通常如下：开发人员完成代码编写 ==&amp;gt; 编译成二进制包 ==&amp;gt; 拷贝到服务器 ==&amp;gt; 重启服务器 ==&amp;gt;测试业务 ==&amp;gt;完成上线
 我们的目标如果开发要新添加新特性,可以快速的发布到生产环境
 定义一个部署的蓝图, 可以快速持续的完成代码生产环境的发布
 持续交付的流程基于主机的持续交付1234567开发人员提交代码到版本仓库持续集成服务器">
-<meta name="twitter:image" content="http://www.sreguide.com/cd_practice/CDGuideCI1.png">
+<meta name="twitter:image" content="http://www.sreguide.com/img/CDGuideCI1.png">
 
 
 
@@ -311,7 +311,7 @@
         <h2 id="为什么要持续交付"><a href="#为什么要持续交付" class="headerlink" title="为什么要持续交付"></a>为什么要持续交付</h2><h3 id="一个产品的上线流程通常如下："><a href="#一个产品的上线流程通常如下：" class="headerlink" title="一个产品的上线流程通常如下："></a>一个产品的上线流程通常如下：</h3><pre><code>开发人员完成代码编写 ==&gt; 编译成二进制包 ==&gt; 拷贝到服务器 ==&gt; 重启服务器 ==&gt;测试业务 ==&gt;完成上线
 </code></pre><h3 id="我们的目标"><a href="#我们的目标" class="headerlink" title="我们的目标"></a>我们的目标</h3><pre><code>如果开发要新添加新特性,可以快速的发布到生产环境
 定义一个部署的蓝图, 可以快速持续的完成代码生产环境的发布
-</code></pre><h2 id="持续交付的流程"><a href="#持续交付的流程" class="headerlink" title="持续交付的流程"></a>持续交付的流程</h2><h3 id="基于主机的持续交付"><a href="#基于主机的持续交付" class="headerlink" title="基于主机的持续交付"></a>基于主机的持续交付</h3><p><img src="cd_practice/CDGuideCI1.png" alt="cd1"><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">开发人员提交代码到版本仓库</div><div class="line">持续集成服务器监听版本仓库的代码变化</div><div class="line">持续集成服务器开启一个处理进程来将代码打包成二进制</div><div class="line">将打包的二进制代码发送到生产服务器</div><div class="line">从负载均衡器下摘下</div><div class="line">重启对应业务，并验证服务</div><div class="line">重新挂载到负载均衡器上,对外提供服务</div></pre></td></tr></table></figure></p>
+</code></pre><h2 id="持续交付的流程"><a href="#持续交付的流程" class="headerlink" title="持续交付的流程"></a>持续交付的流程</h2><h3 id="基于主机的持续交付"><a href="#基于主机的持续交付" class="headerlink" title="基于主机的持续交付"></a>基于主机的持续交付</h3><p><img src="/img/CDGuideCI1.png" alt="cd1"><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">开发人员提交代码到版本仓库</div><div class="line">持续集成服务器监听版本仓库的代码变化</div><div class="line">持续集成服务器开启一个处理进程来将代码打包成二进制</div><div class="line">将打包的二进制代码发送到生产服务器</div><div class="line">从负载均衡器下摘下</div><div class="line">重启对应业务，并验证服务</div><div class="line">重新挂载到负载均衡器上,对外提供服务</div></pre></td></tr></table></figure></p>
 <p>###<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">主机环境：相关软件包，依赖软件包的，不同的配置文件，都会影响我们测试和构建应用</div><div class="line">为了提高资源的利用率,要实现应用运行环境的快速部署</div><div class="line">允许并行的启动一组vm/容器去测试和创建每一个应用</div></pre></td></tr></table></figure></p>
 <p>基于上面几个原因，形成了我们常说的IaaS平台, iaas可以根据需要的资源(cpu/网络)在几分钟内快速的构建出应用。如果有应用出现问题,也可以快速的重新构建</p>
 <p>Iaas可以为我们提供干净的主机环境，我们通过创建一些自动化脚本来实现持续交付的过程，但Iaas并没有解决资源利用率的问题，这就引入了我们常说的容器</p>
@@ -345,8 +345,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/10/11/about/" rel="next" title="">
-                <i class="fa fa-chevron-left"></i> 
+              <a href="/2016/10/11/test/" rel="next" title="Hello World">
+                <i class="fa fa-chevron-left"></i> Hello World
               </a>
             
           </div>
@@ -423,7 +423,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-count">4</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
