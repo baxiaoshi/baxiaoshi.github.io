@@ -259,6 +259,122 @@
             
               
                 
+                <a class="post-title-link" href="/2016/10/15/es_index_00/" itemprop="url">
+                  elasticsearch准实时索引介绍
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-15T23:11:16+08:00" content="2016-10-15">
+              2016-10-15
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/elk/" itemprop="url" rel="index">
+                    <span itemprop="name">elk</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Es准实时索引的实现"><a href="#Es准实时索引的实现" class="headerlink" title="Es准实时索引的实现"></a>Es准实时索引的实现</h2><p>lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。<br>新的数据写入到新的索引中。<br><img src="/img/elk/es_translog_01.png" alt="img"></p>
+<h3 id="es中单机数据写入的顺序"><a href="#es中单机数据写入的顺序" class="headerlink" title="es中单机数据写入的顺序"></a>es中单机数据写入的顺序</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">数据首先写入到内存中的buffer，并记录对应的Translog</div><div class="line">内存buffer在经过refresh_interval后，会生成一个segment(内存缓存中)</div><div class="line">默认每30分钟或者超过500M，会将对应的segment进行commint操作刷新到磁盘，同时清空translog(translog不会一直保存,会清空)</div></pre></td></tr></table></figure>
+<h3 id="es中通过副本和分片"><a href="#es中通过副本和分片" class="headerlink" title="es中通过副本和分片"></a>es中通过副本和分片</h3><p>es中通过副本和分片来实现了集群的可扩展性,集群的最大规模=分片数量*(副本数量+1)，则表示该索引下，最大的集群规模<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">数据写入到主分片后，主分片会根据对应的数据进行索引的操作</div><div class="line">同时主分片会将对应的数据发送到副本分片，副本分片接收到数据会同样的对数据进行索引操作（如果主分片挂掉，对应的文档已经发送到副本分片，副本分片执行commit则不会丢数据）</div></pre></td></tr></table></figure></p>
+<p>关于性能：<br>    如果压力测试时单分片无副本情况下测试的es写入性能为1w，则一台由一个主分片和一个副本分片的情况下，单机写入性能则下降为5000</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/10/13/devop_practical_01_02/" itemprop="url">
                   devops最佳实现读书笔记01-02
                 </a>
@@ -826,7 +942,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-count">6</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -834,7 +950,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -843,7 +959,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
