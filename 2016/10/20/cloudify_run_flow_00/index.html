@@ -1,0 +1,624 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="cloudify," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="下面以一个blueprint上传后，点击开始执行描述cloudify的整体执行流程
+前端下发任务下发任务默认访问coudify中的rest-service里面的Executions12345678910111213141516171819202122232425def post(self, **kwargs):    &amp;quot;&amp;quot;&amp;quot;Execute a workflow&amp;quo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cloudify执行逻辑(2016/10/20更新)">
+<meta property="og:url" content="http://www.sreguide.com/2016/10/20/cloudify_run_flow_00/index.html">
+<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:description" content="下面以一个blueprint上传后，点击开始执行描述cloudify的整体执行流程
+前端下发任务下发任务默认访问coudify中的rest-service里面的Executions12345678910111213141516171819202122232425def post(self, **kwargs):    &amp;quot;&amp;quot;&amp;quot;Execute a workflow&amp;quo">
+<meta property="og:updated_time" content="2016-10-20T04:25:55.873Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="cloudify执行逻辑(2016/10/20更新)">
+<meta name="twitter:description" content="下面以一个blueprint上传后，点击开始执行描述cloudify的整体执行流程
+前端下发任务下发任务默认访问coudify中的rest-service里面的Executions12345678910111213141516171819202122232425def post(self, **kwargs):    &amp;quot;&amp;quot;&amp;quot;Execute a workflow&amp;quo">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2016/10/20/cloudify_run_flow_00/"/>
+
+
+  <title> cloudify执行逻辑(2016/10/20更新) | 8小时的技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">8小时的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                cloudify执行逻辑(2016/10/20更新)
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-20T11:47:18+08:00" content="2016-10-20">
+              2016-10-20
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>下面以一个blueprint上传后，点击开始执行描述cloudify的整体执行流程</p>
+<h2 id="前端下发任务"><a href="#前端下发任务" class="headerlink" title="前端下发任务"></a>前端下发任务</h2><h3 id="下发任务默认访问coudify中的rest-service里面的Executions"><a href="#下发任务默认访问coudify中的rest-service里面的Executions" class="headerlink" title="下发任务默认访问coudify中的rest-service里面的Executions"></a>下发任务默认访问coudify中的rest-service里面的Executions</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">def post(self, **kwargs):</div><div class="line">    &quot;&quot;&quot;Execute a workflow&quot;&quot;&quot;</div><div class="line">    verify_json_content_type()</div><div class="line">    request_json = request.json</div><div class="line">    verify_parameter_in_request_body(&apos;deployment_id&apos;, request_json)</div><div class="line">    verify_parameter_in_request_body(&apos;workflow_id&apos;, request_json)</div><div class="line">    allow_custom_parameters = verify_and_convert_bool(</div><div class="line">        &apos;allow_custom_parameters&apos;,</div><div class="line">        request_json.get(&apos;allow_custom_parameters&apos;, &apos;false&apos;))</div><div class="line">    force = verify_and_convert_bool(</div><div class="line">        &apos;force&apos;,</div><div class="line">        request_json.get(&apos;force&apos;, &apos;false&apos;))</div><div class="line">    deployment_id = request.json[&apos;deployment_id&apos;]</div><div class="line">    workflow_id = request.json[&apos;workflow_id&apos;]</div><div class="line">    parameters = request.json.get(&apos;parameters&apos;, None)</div><div class="line">    if parameters is not None and parameters.__class__ is not dict:</div><div class="line">        raise manager_exceptions.BadParametersError(</div><div class="line">            &quot;request body&apos;s &apos;parameters&apos; field must be a dict but&quot;</div><div class="line">            &quot; is of type &#123;0&#125;&quot;.format(parameters.__class__.__name__))</div><div class="line">    bypass_maintenance = is_bypass_maintenance_mode()</div><div class="line">    execution = get_blueprints_manager().execute_workflow(</div><div class="line">        deployment_id, workflow_id, parameters=parameters,</div><div class="line">        allow_custom_parameters=allow_custom_parameters, force=force,</div><div class="line">        bypass_maintenance=bypass_maintenance)  # 验证完相关的参数后，把deployment_id, workflow_id等相关参数下发下去</div><div class="line">    return execution, 201</div></pre></td></tr></table></figure>
+<p>###　真正下发执行的函数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line">def execute_workflow(self, deployment_id, workflow_id,</div><div class="line">                     parameters=None,</div><div class="line">                     allow_custom_parameters=False,</div><div class="line">                     force=False, bypass_maintenance=None):</div><div class="line">    deployment = self.sm.get_deployment(deployment_id)</div><div class="line">    blueprint = self.sm.get_blueprint(deployment.blueprint_id)</div><div class="line">    if workflow_id not in deployment.workflows:</div><div class="line">        raise manager_exceptions.NonexistentWorkflowError(</div><div class="line">            &apos;Workflow &#123;0&#125; does not exist in deployment &#123;1&#125;&apos;.format(</div><div class="line">                workflow_id, deployment_id))</div><div class="line">    workflow = deployment.workflows[workflow_id]</div><div class="line">    self._verify_deployment_environment_created_successfully(deployment_id)</div><div class="line">    self._check_for_active_system_wide_execution()</div><div class="line">    self._check_for_active_executions(deployment_id, force)</div><div class="line">    execution_parameters = \</div><div class="line">        BlueprintsManager._merge_and_validate_execution_parameters(</div><div class="line">            workflow, workflow_id, parameters, allow_custom_parameters)</div><div class="line">    execution_id = str(uuid.uuid4())        # 每一个执行任务都通过uuid生成一个execution_id</div><div class="line">    new_execution = models.Execution(</div><div class="line">        id=execution_id,</div><div class="line">        status=models.Execution.PENDING,</div><div class="line">        created_at=utils.get_formatted_timestamp(),</div><div class="line">        blueprint_id=deployment.blueprint_id,</div><div class="line">        workflow_id=workflow_id,</div><div class="line">        deployment_id=deployment_id,</div><div class="line">        error=&apos;&apos;,</div><div class="line">        parameters=self._get_only_user_execution_parameters(</div><div class="line">            execution_parameters),</div><div class="line">        is_system_workflow=False)</div><div class="line">    self.sm.put_execution(new_execution)        #生成一个执行记录到数据库中</div><div class="line">    # executing the user workflow</div><div class="line">    workflow_plugins = blueprint.plan[</div><div class="line">        constants.WORKFLOW_PLUGINS_TO_INSTALL]</div><div class="line">    self.workflow_client.execute_workflow(      #在上面保存之后会执行真正的下发任务，下发到celery中</div><div class="line">        workflow_id,</div><div class="line">        workflow,</div><div class="line">        workflow_plugins=workflow_plugins,</div><div class="line">        blueprint_id=deployment.blueprint_id,</div><div class="line">        deployment_id=deployment_id,</div><div class="line">        execution_id=execution_id,</div><div class="line">        execution_parameters=execution_parameters,</div><div class="line">        bypass_maintenance=bypass_maintenance)</div><div class="line">    return new_execution                        #返回我们生成的任务对象</div></pre></td></tr></table></figure></p>
+<h3 id="真正执行下发任务"><a href="#真正执行下发任务" class="headerlink" title="真正执行下发任务"></a>真正执行下发任务</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">def execute_workflow(cls,</div><div class="line">                     name,</div><div class="line">                     workflow,</div><div class="line">                     workflow_plugins,</div><div class="line">                     blueprint_id,</div><div class="line">                     deployment_id,</div><div class="line">                     execution_id,</div><div class="line">                     execution_parameters=None,</div><div class="line">                     bypass_maintenance=None):</div><div class="line">    execution_parameters = execution_parameters or &#123;&#125;</div><div class="line">    task_name = workflow[&apos;operation&apos;]</div><div class="line">    task_queue = &apos;cloudify.management&apos;      #workflow默认是发送到cloudify.management队列中</div><div class="line">    plugin_name = workflow[&apos;plugin&apos;]</div><div class="line">    plugin = [p for p in workflow_plugins if p[&apos;name&apos;] == plugin_name][0]</div><div class="line">    execution_parameters[&apos;__cloudify_context&apos;] = &#123;      #构建我们请求的上下文</div><div class="line">        &apos;type&apos;: &apos;workflow&apos;,</div><div class="line">        &apos;task_name&apos;: task_name,</div><div class="line">        &apos;task_id&apos;: execution_id,</div><div class="line">        &apos;task_target&apos;: task_queue,</div><div class="line">        &apos;workflow_id&apos;: name,</div><div class="line">        &apos;blueprint_id&apos;: blueprint_id,</div><div class="line">        &apos;deployment_id&apos;: deployment_id,</div><div class="line">        &apos;execution_id&apos;: execution_id,</div><div class="line">        &apos;bypass_maintenance&apos;: bypass_maintenance,</div><div class="line">        &apos;plugin&apos;: &#123;</div><div class="line">            &apos;name&apos;: plugin_name,</div><div class="line">            &apos;package_name&apos;: plugin.get(&apos;package_name&apos;),</div><div class="line">            &apos;package_version&apos;: plugin.get(&apos;package_version&apos;)</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    execution_parameters[&apos;__cloudify_context&apos;].update(</div><div class="line">        cls._get_rest_credentials())</div><div class="line">    return execute_task(task_queue=task_queue,</div><div class="line">                        execution_id=execution_id,</div><div class="line">                        execution_parameters=execution_parameters)</div></pre></td></tr></table></figure>
+<h3 id="再下一层的封装celery发送的接口"><a href="#再下一层的封装celery发送的接口" class="headerlink" title="再下一层的封装celery发送的接口"></a>再下一层的封装celery发送的接口</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">def execute_task(task_queue, execution_id, execution_parameters):</div><div class="line">    celery = celery_client.get_client()</div><div class="line">    try:</div><div class="line">        return celery.execute_task(task_queue=task_queue,</div><div class="line">                                   task_id=execution_id,</div><div class="line">                                   kwargs=execution_parameters)</div><div class="line">    finally:</div><div class="line">        celery.close()</div></pre></td></tr></table></figure>
+<h3 id="真正发送任务的接口"><a href="#真正发送任务的接口" class="headerlink" title="真正发送任务的接口"></a>真正发送任务的接口</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">def execute_task(self, task_queue, task_id=None, kwargs=None):</div><div class="line">    &quot;&quot;&quot;</div><div class="line">        Execute a task</div><div class="line">        :param task_queue: the task queue</div><div class="line">        :param task_id: optional id for the task</div><div class="line">        :param kwargs: optional kwargs to be passed to the task</div><div class="line">        :return: the celery task async result</div><div class="line">    &quot;&quot;&quot;</div><div class="line">    return self.celery.send_task(&apos;cloudify.dispatch.dispatch&apos;,</div><div class="line">                                 queue=task_queue,</div><div class="line">                                 task_id=task_id,</div><div class="line">                                 kwargs=kwargs)</div></pre></td></tr></table></figure>
+<h2 id="后端agent执行的逻辑"><a href="#后端agent执行的逻辑" class="headerlink" title="后端agent执行的逻辑"></a>后端agent执行的逻辑</h2><h3 id="agent接收到的消息体"><a href="#agent接收到的消息体" class="headerlink" title="agent接收到的消息体"></a>agent接收到的消息体</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">(args: (u&apos;cloudify.dispatch.dispatch&apos;,</div><div class="line">u&apos;8d246b75-20ef-4e1a-834c-b0ef473ecb8f&apos;,</div><div class="line">[</div><div class="line">  </div><div class="line">],</div><div class="line">&#123;</div><div class="line">  u&apos;__cloudify_context&apos;: &#123;</div><div class="line">    &apos;socket_url&apos;: &apos;ipc:///tmp/cloudify-logging-server-bd0dc.socket&apos;,</div><div class="line">    u&apos;task_id&apos;: u&apos;8d246b75-20ef-4e1a-834c-b0ef473ecb8f&apos;,</div><div class="line">    u&apos;blueprint_id&apos;: u&apos;sanity_bp&apos;,</div><div class="line">    u&apos;bypass_maintenance&apos;: u&apos;True&apos;,</div><div class="line">    u&apos;plugin&apos;: &#123;</div><div class="line">      u&apos;package_version&apos;: None,</div><div class="line">      u&apos;name&apos;: u&apos;default_workflows&apos;,</div><div class="line">      u&apos;package_name&apos;: None</div><div class="line">    &#125;,</div><div class="line">    u&apos;task_target&apos;: u&apos;cloudify.management&apos;,</div><div class="line">    u&apos;workflow_id&apos;: u&apos;install&apos;,</div><div class="line">    u&apos;task_name&apos;: u&apos;cloudify.plugins.workflows.install&apos;,</div><div class="line">    u&apos;deployment_id&apos;: u&apos;sanity_deployment&apos;,</div><div class="line">    u&apos;type&apos;: u&apos;workflow&apos;,           #通过type去进行对应的操作</div><div class="line">    u&apos;execution_id&apos;: u&apos;8d246b75-20ef-4e1a-834c-b0ef473ecb8f&apos;</div><div class="line">  &#125;</div><div class="line">&#125;,</div><div class="line">&#123;</div><div class="line">  u&apos;utc&apos;: True,</div><div class="line">  u&apos;is_eager&apos;: False,</div><div class="line">  u&apos;chord&apos;: None,</div><div class="line">  u&apos;group&apos;: None,</div><div class="line">  u&apos;args&apos;: [</div><div class="line">    </div><div class="line">  ],</div><div class="line">  u&apos;retries&apos;: 0,</div><div class="line">  u&apos;delivery_info&apos;: &#123;</div><div class="line">    u&apos;priority&apos;: None,</div><div class="line">    u&apos;redelivered&apos;: False,</div><div class="line">    u&apos;routing_key&apos;: u&apos;cloudify.management&apos;,</div><div class="line">    u&apos;exchange&apos;: u&apos;cloudify.management&apos;</div><div class="line">  &#125;,</div><div class="line">  u&apos;expires&apos;: None,</div><div class="line">  u&apos;hostname&apos;: &apos;celery@cloudify.management&apos;,</div><div class="line">  u&apos;task&apos;: u&apos;cloudify.dispatch.dispatch&apos;,</div><div class="line">  u&apos;callbacks&apos;: None,</div><div class="line">  u&apos;correlation_id&apos;: ...kwargs: &#123;</div><div class="line">    </div><div class="line">  &#125;)</div></pre></td></tr></table></figure>
+<h3 id="agent接收到消息，执行对应的cloudify-dispatch-dispatch"><a href="#agent接收到消息，执行对应的cloudify-dispatch-dispatch" class="headerlink" title="agent接收到消息，执行对应的cloudify.dispatch.dispatch"></a>agent接收到消息，执行对应的cloudify.dispatch.dispatch</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">TASK_HANDLERS = &#123;</div><div class="line">    &apos;operation&apos;: OperationHandler,</div><div class="line">    &apos;workflow&apos;: WorkflowHandler</div><div class="line">&#125;</div><div class="line">@task</div><div class="line">def dispatch(__cloudify_context, *args, **kwargs):</div><div class="line">    dispatch_type = __cloudify_context[&apos;type&apos;]          #　这里的type是workflow</div><div class="line">    dispatch_handler_cls = TASK_HANDLERS.get(dispatch_type)    </div><div class="line">    if not dispatch_handler_cls:</div><div class="line">        raise exceptions.NonRecoverableError(&apos;No handler for task type: &#123;0&#125;&apos;</div><div class="line">                                             .format(dispatch_type))</div><div class="line">    handler = dispatch_handler_cls(cloudify_context=__cloudify_context,         </div><div class="line">                                   args=args,</div><div class="line">                                   kwargs=kwargs)           #　通过上面的type和对应的请求上下文，构建了一个WorkflowHandler的对象</div><div class="line">    return handler.handle_or_dispatch_to_subprocess_if_remote()     # 执行handle_or_dispatch_to_subprocess_if_remote函数</div></pre></td></tr></table></figure>
+<h3 id="接收到对应的的handle-or-dispoatch-to-subprocesss-if-remote"><a href="#接收到对应的的handle-or-dispoatch-to-subprocesss-if-remote" class="headerlink" title="接收到对应的的handle_or_dispoatch_to_subprocesss_if_remote"></a>接收到对应的的handle_or_dispoatch_to_subprocesss_if_remote</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">def handle_or_dispatch_to_subprocess_if_remote(self):</div><div class="line">    if self.cloudify_context.get(&apos;task_target&apos;):</div><div class="line">        return self.dispatch_to_subprocess()</div><div class="line">    else:</div><div class="line">        return self.handle()</div></pre></td></tr></table></figure>
+<h3 id="接着执行下层封装调用执行的函数dispatch-to-subprocess"><a href="#接着执行下层封装调用执行的函数dispatch-to-subprocess" class="headerlink" title="接着执行下层封装调用执行的函数dispatch_to_subprocess"></a>接着执行下层封装调用执行的函数dispatch_to_subprocess</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div></pre></td><td class="code"><pre><div class="line">def dispatch_to_subprocess(self):</div><div class="line">    # inputs.json, output.json and output are written to a temporary</div><div class="line">    # directory that only lives during the lifetime of the subprocess</div><div class="line">    split = self.cloudify_context[&apos;task_name&apos;].split(&apos;.&apos;)</div><div class="line">    dispatch_dir = tempfile.mkdtemp(prefix=&apos;task-&#123;0&#125;.&#123;1&#125;-&apos;.format(</div><div class="line">        split[0], split[-1]))</div><div class="line"></div><div class="line">    # stdout/stderr are redirected to output. output is only displayed</div><div class="line">    # in case something really bad happened. in the general case, output</div><div class="line">    # that users want to see in log files, should go through the different</div><div class="line">    # loggers</div><div class="line">    output = open(os.path.join(dispatch_dir, &apos;output&apos;), &apos;w&apos;)</div><div class="line">    try:</div><div class="line">        with open(os.path.join(dispatch_dir, &apos;input.json&apos;), &apos;w&apos;) as f:</div><div class="line">            json.dump(&#123;</div><div class="line">                &apos;cloudify_context&apos;: self.cloudify_context,</div><div class="line">                &apos;args&apos;: self.args,</div><div class="line">                &apos;kwargs&apos;: self.kwargs</div><div class="line">            &#125;, f)</div><div class="line">        env = self._build_subprocess_env()</div><div class="line">        command_args = [sys.executable, __file__, dispatch_dir]     # 获取当前文件，构建成一个要执行的command（一个python脚本）</div><div class="line">        try:</div><div class="line">            subprocess.check_call(command_args,</div><div class="line">                                  env=env,</div><div class="line">                                  bufsize=1,</div><div class="line">                                  close_fds=os.name != &apos;nt&apos;,</div><div class="line">                                  stdout=output,</div><div class="line">                                  stderr=output)        # 这里是执行任务的地方</div><div class="line">        except subprocess.CalledProcessError:</div><div class="line">            # this means something really bad happened because we generally</div><div class="line">            # catch all exceptions in the subprocess and exit cleanly</div><div class="line">            # regardless.</div><div class="line">            output.close()</div><div class="line">            with open(os.path.join(dispatch_dir, &apos;output&apos;)) as f:</div><div class="line">                read_output = f.read()</div><div class="line">            raise exceptions.NonRecoverableError(</div><div class="line">                &apos;Unhandled exception occurred in operation dispatch: &apos;</div><div class="line">                &apos;&#123;0&#125;&apos;.format(read_output))</div><div class="line">        with open(os.path.join(dispatch_dir, &apos;output.json&apos;)) as f:</div><div class="line">            dispatch_output = json.load(f)</div><div class="line">        if dispatch_output[&apos;type&apos;] == &apos;result&apos;:</div><div class="line">            return dispatch_output[&apos;payload&apos;]</div><div class="line">        elif dispatch_output[&apos;type&apos;] == &apos;error&apos;:</div><div class="line">            error = dispatch_output[&apos;payload&apos;]</div><div class="line"></div><div class="line">            tb = error[&apos;traceback&apos;]</div><div class="line">            exception_type = error[&apos;exception_type&apos;]</div><div class="line">            message = error[&apos;message&apos;]</div><div class="line"></div><div class="line">            known_exception_type_kwargs = error[</div><div class="line">                &apos;known_exception_type_kwargs&apos;]</div><div class="line">            causes = known_exception_type_kwargs.pop(&apos;causes&apos;, [])</div><div class="line">            causes.append(&#123;</div><div class="line">                &apos;message&apos;: message,</div><div class="line">                &apos;type&apos;: exception_type,</div><div class="line">                &apos;traceback&apos;: tb</div><div class="line">            &#125;)</div><div class="line">            known_exception_type_kwargs[&apos;causes&apos;] = causes</div><div class="line"></div><div class="line">            known_exception_type = getattr(exceptions,</div><div class="line">                                           error[&apos;known_exception_type&apos;])</div><div class="line">            known_exception_type_args = error[&apos;known_exception_type_args&apos;]</div><div class="line"></div><div class="line">            if error[&apos;append_message&apos;]:</div><div class="line">                known_exception_type_args.append(message)</div><div class="line">            else:</div><div class="line">                known_exception_type_args.insert(0, message)</div><div class="line">            raise known_exception_type(*known_exception_type_args,</div><div class="line">                                       **known_exception_type_kwargs)</div><div class="line">        else:</div><div class="line">            raise exceptions.NonRecoverableError(</div><div class="line">                &apos;Unexpected output type: &#123;0&#125;&apos;</div><div class="line">                .format(dispatch_output[&apos;type&apos;]))</div><div class="line">    finally:</div><div class="line">        output.close()</div><div class="line">        shutil.rmtree(dispatch_dir, ignore_errors=True)</div></pre></td></tr></table></figure>
+<h3 id="当前函数有一个main方法，就是上面sys-executable函数取到的"><a href="#当前函数有一个main方法，就是上面sys-executable函数取到的" class="headerlink" title="当前函数有一个main方法，就是上面sys.executable函数取到的"></a>当前函数有一个main方法，就是上面sys.executable函数取到的</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div></pre></td><td class="code"><pre><div class="line">def main():</div><div class="line">    dispatch_dir = sys.argv[1]</div><div class="line">    with open(os.path.join(dispatch_dir, &apos;input.json&apos;)) as f:</div><div class="line">        dispatch_inputs = json.load(f)</div><div class="line">    cloudify_context = dispatch_inputs[&apos;cloudify_context&apos;]</div><div class="line">    args = dispatch_inputs[&apos;args&apos;]</div><div class="line">    kwargs = dispatch_inputs[&apos;kwargs&apos;]</div><div class="line">    dispatch_type = cloudify_context[&apos;type&apos;]</div><div class="line">    threading.current_thread().setName(&apos;Dispatch-&#123;0&#125;&apos;.format(dispatch_type))</div><div class="line">    handler_cls = TASK_HANDLERS[dispatch_type]</div><div class="line">    handler = None</div><div class="line">    try:</div><div class="line">        handler = handler_cls(cloudify_context=cloudify_context,</div><div class="line">                              args=args,</div><div class="line">                              kwargs=kwargs)</div><div class="line">        handler.setup_logging()</div><div class="line">        payload = handler.handle()      #　这里生成的还是一个workflow的实例，然后调用对应的handle方法</div><div class="line">        payload_type = &apos;result&apos;</div><div class="line">    except BaseException as e:</div><div class="line"></div><div class="line">        tb = StringIO.StringIO()</div><div class="line">        traceback.print_exc(file=tb)</div><div class="line">        trace_out = tb.getvalue()</div><div class="line"></div><div class="line">        # Needed because HttpException constructor sucks</div><div class="line">        append_message = False</div><div class="line">        # Convert exception to a know exception type that can be deserialized</div><div class="line">        # by the calling process</div><div class="line">        known_exception_type_args = []</div><div class="line">        if isinstance(e, exceptions.ProcessExecutionError):</div><div class="line">            known_exception_type = exceptions.ProcessExecutionError</div><div class="line">            known_exception_type_args = [e.error_type, e.traceback]</div><div class="line">            trace_out = e.traceback</div><div class="line">        elif isinstance(e, exceptions.HttpException):</div><div class="line">            known_exception_type = exceptions.HttpException</div><div class="line">            known_exception_type_args = [e.url, e.code]</div><div class="line">            append_message = True</div><div class="line">        elif isinstance(e, exceptions.NonRecoverableError):</div><div class="line">            known_exception_type = exceptions.NonRecoverableError</div><div class="line">        elif isinstance(e, exceptions.OperationRetry):</div><div class="line">            known_exception_type = exceptions.OperationRetry</div><div class="line">            known_exception_type_args = [e.retry_after]</div><div class="line">        elif isinstance(e, exceptions.RecoverableError):</div><div class="line">            known_exception_type = exceptions.RecoverableError</div><div class="line">            known_exception_type_args = [e.retry_after]</div><div class="line">        else:</div><div class="line">            # convert pure user exceptions to a RecoverableError</div><div class="line">            known_exception_type = exceptions.RecoverableError</div><div class="line"></div><div class="line">        try:</div><div class="line">            causes = e.causes</div><div class="line">        except AttributeError:</div><div class="line">            causes = []</div><div class="line"></div><div class="line">        payload_type = &apos;error&apos;</div><div class="line">        payload = &#123;</div><div class="line">            &apos;traceback&apos;: trace_out,</div><div class="line">            &apos;exception_type&apos;: type(e).__name__,</div><div class="line">            &apos;message&apos;: str(e),</div><div class="line">            &apos;known_exception_type&apos;: known_exception_type.__name__,</div><div class="line">            &apos;known_exception_type_args&apos;: known_exception_type_args,</div><div class="line">            &apos;known_exception_type_kwargs&apos;: &#123;&apos;causes&apos;: causes or []&#125;,</div><div class="line">            &apos;append_message&apos;: append_message,</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        logger = logging.getLogger(__name__)</div><div class="line">        logger.error(&apos;Task &#123;0&#125;[&#123;1&#125;] raised:\n&#123;2&#125;&apos;.format(</div><div class="line">            handler.cloudify_context[&apos;task_name&apos;],</div><div class="line">            handler.cloudify_context.get(&apos;task_id&apos;, &apos;&lt;no-id&gt;&apos;),</div><div class="line">            trace_out))</div><div class="line"></div><div class="line">    finally:</div><div class="line">        if handler:</div><div class="line">            handler.close()</div><div class="line">    with open(os.path.join(dispatch_dir, &apos;output.json&apos;), &apos;w&apos;) as f:</div><div class="line">        json.dump(&#123;</div><div class="line">            &apos;type&apos;: payload_type,</div><div class="line">            &apos;payload&apos;: payload</div><div class="line">        &#125;, f)</div></pre></td></tr></table></figure>
+<h3 id="WorkflowHandler里面的handle执行逻辑"><a href="#WorkflowHandler里面的handle执行逻辑" class="headerlink" title="WorkflowHandler里面的handle执行逻辑"></a>WorkflowHandler里面的handle执行逻辑</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div></pre></td><td class="code"><pre><div class="line">def handle(self):</div><div class="line">    if not self.func:</div><div class="line">        raise exceptions.NonRecoverableError(</div><div class="line">            &apos;func not found: &#123;0&#125;&apos;.format(self.cloudify_context))</div><div class="line"></div><div class="line">    self.kwargs[&apos;ctx&apos;] = self.ctx</div><div class="line">    if self.ctx.local:</div><div class="line">        return self._handle_local_workflow()</div><div class="line">    return self._handle_remote_workflow()       #　因为这里我的请求上下文中没有local，所以这个地方会生成一个远端的workflow handler</div><div class="line"></div><div class="line">def _handle_remote_workflow(self):</div><div class="line">    rest = get_rest_client()</div><div class="line">    amqp_client_utils.init_amqp_client()</div><div class="line">    try:</div><div class="line">        try:</div><div class="line">            self._workflow_started()</div><div class="line">        except InvalidExecutionUpdateStatus:</div><div class="line">            self._workflow_cancelled()</div><div class="line">            return api.EXECUTION_CANCELLED_RESULT</div><div class="line"></div><div class="line">        queue = Queue.Queue()</div><div class="line">        t = AMQPWrappedThread(target=self._remote_workflow_child_thread,</div><div class="line">                              args=(queue,),</div><div class="line">                              name=&apos;Workflow-Child&apos;)        #这里面会生成一个线程去执行真正的任务，然后主进程和线程之间通过一个queue去接收对应的result信息</div><div class="line">        t.start()</div><div class="line"></div><div class="line">        # while the child thread is executing the workflow, the parent</div><div class="line">        # thread is polling for &apos;cancel&apos; requests while also waiting for</div><div class="line">        # messages from the child thread</div><div class="line">        result = None</div><div class="line">        while True:</div><div class="line">            # check if child thread sent a message</div><div class="line">            try:</div><div class="line">                data = queue.get(timeout=5)</div><div class="line">                if &apos;result&apos; in data:</div><div class="line">                    # child thread has terminated</div><div class="line">                    result = data[&apos;result&apos;]</div><div class="line">                    break</div><div class="line">                else:</div><div class="line">                    # error occurred in child thread</div><div class="line">                    error = data[&apos;error&apos;]</div><div class="line">                    raise exceptions.ProcessExecutionError(</div><div class="line">                        error[&apos;message&apos;],</div><div class="line">                        error[&apos;type&apos;],</div><div class="line">                        error[&apos;traceback&apos;])</div><div class="line">            except Queue.Empty:</div><div class="line">                pass</div><div class="line">            # check for &apos;cancel&apos; requests</div><div class="line">            execution = rest.executions.get(self.ctx.execution_id,</div><div class="line">                                            _include=[&apos;status&apos;])</div><div class="line">            if execution.status == Execution.FORCE_CANCELLING:</div><div class="line">                result = api.EXECUTION_CANCELLED_RESULT</div><div class="line">                break</div><div class="line">            elif execution.status == Execution.CANCELLING:</div><div class="line">                # send a &apos;cancel&apos; message to the child thread. It is up to</div><div class="line">                # the workflow implementation to check for this message</div><div class="line">                # and act accordingly (by stopping and raising an</div><div class="line">                # api.ExecutionCancelled error, or by returning the</div><div class="line">                # deprecated api.EXECUTION_CANCELLED_RESULT as result).</div><div class="line">                # parent thread then goes back to polling for messages from</div><div class="line">                # child thread or possibly &apos;force-cancelling&apos; requests</div><div class="line">                api.cancel_request = True</div><div class="line"></div><div class="line">        if result == api.EXECUTION_CANCELLED_RESULT:</div><div class="line">            self._workflow_cancelled()</div><div class="line">        else:</div><div class="line">            self._workflow_succeeded()</div><div class="line">        return result</div><div class="line">    except exceptions.ProcessExecutionError as e:</div><div class="line">        self._workflow_failed(e, e.traceback)</div><div class="line">        raise</div><div class="line">    except BaseException as e:</div><div class="line">        error = StringIO.StringIO()</div><div class="line">        traceback.print_exc(file=error)</div><div class="line">        self._workflow_failed(e, error.getvalue())</div><div class="line">        raise</div><div class="line">    finally:</div><div class="line">        amqp_client_utils.close_amqp_client()</div><div class="line"></div><div class="line">def _remote_workflow_child_thread(self, queue):</div><div class="line">    # the actual execution of the workflow will run in another thread.</div><div class="line">    # this method is the entry point for that thread, and takes care of</div><div class="line">    # forwarding the result or error back to the parent thread</div><div class="line">    try:</div><div class="line">        self.ctx.internal.start_event_monitor()</div><div class="line">        workflow_result = self._execute_workflow_function()     #　这里会执行对应的操作</div><div class="line">        queue.put(&#123;&apos;result&apos;: workflow_result&#125;)</div><div class="line">    except api.ExecutionCancelled:</div><div class="line">        queue.put(&#123;&apos;result&apos;: api.EXECUTION_CANCELLED_RESULT&#125;)</div><div class="line">    except BaseException as workflow_ex:</div><div class="line">        tb = StringIO.StringIO()</div><div class="line">        traceback.print_exc(file=tb)</div><div class="line">        err = &#123;</div><div class="line">            &apos;type&apos;: type(workflow_ex).__name__,</div><div class="line">            &apos;message&apos;: str(workflow_ex),</div><div class="line">            &apos;traceback&apos;: tb.getvalue()</div><div class="line">        &#125;</div><div class="line">        queue.put(&#123;&apos;error&apos;: err&#125;)</div><div class="line">    finally:</div><div class="line">        self.ctx.internal.stop_event_monitor()</div><div class="line"></div><div class="line">def _execute_workflow_function(self):</div><div class="line">    try:</div><div class="line">        self.ctx.internal.start_local_tasks_processing()</div><div class="line">        state.current_workflow_ctx.set(self.ctx, self.kwargs)</div><div class="line">        result = self.func(*self.args, **self.kwargs)   #　这里是用的Python里面的import加载了对应的操作的函数，然后执行</div><div class="line">        if not self.ctx.internal.graph_mode:</div><div class="line">            tasks = list(self.ctx.internal.task_graph.tasks_iter())</div><div class="line">            for workflow_task in tasks:</div><div class="line">                workflow_task.async_result.get()</div><div class="line">        return result</div><div class="line">    finally:</div><div class="line">        self.ctx.internal.stop_local_tasks_processing()</div><div class="line">        state.current_workflow_ctx.clear()</div><div class="line"></div><div class="line">def func(self):</div><div class="line">    if not self._func:</div><div class="line">        task_name = self.cloudify_context[&apos;task_name&apos;]      # cloudify.plugins.workflows.install这里面生成的对应的task_name</div><div class="line">        split = task_name.split(&apos;.&apos;)</div><div class="line">        module_name = &apos;.&apos;.join(split[:-1])</div><div class="line">        function_name = split[-1]</div><div class="line">        try:</div><div class="line">            module = importlib.import_module(module_name)       #　会通过module加载对应的函数</div><div class="line">        except ImportError as e:</div><div class="line">            raise exceptions.NonRecoverableError(</div><div class="line">                &apos;No module named &#123;0&#125; (&#123;1&#125;)&apos;.format(module_name, e))</div><div class="line">        try:</div><div class="line">            self._func = getattr(module, function_name)</div><div class="line">        except AttributeError:</div><div class="line">            raise exceptions.NonRecoverableError(</div><div class="line">                &quot;&#123;0&#125; has no function named &apos;&#123;1&#125;&apos; &quot;.format(module_name,</div><div class="line">                                                          function_name))</div><div class="line">    return self._func</div><div class="line"></div><div class="line">def _workflow_started(self):</div><div class="line">    self._update_execution_status(Execution.STARTED)        ＃更新当前任务的状态</div><div class="line">    self.ctx.internal.send_workflow_event(</div><div class="line">        event_type=&apos;workflow_started&apos;,</div><div class="line">        message=&quot;Starting &apos;&#123;0&#125;&apos; workflow execution&quot;.format(</div><div class="line">            self.ctx.workflow_id))      #发送一个事件</div><div class="line"></div><div class="line">def _update_execution_status(self, status, error=None):</div><div class="line">    if self.ctx.local:</div><div class="line">        return</div><div class="line">    while True:</div><div class="line">        try:</div><div class="line">            return update_execution_status(</div><div class="line">                self.ctx.execution_id, status, error)</div><div class="line">        except InvalidExecutionUpdateStatus as exc:</div><div class="line">            self.ctx.logger.exception(</div><div class="line">                &apos;update execution status is invalid: &#123;0&#125;&apos;.format(exc))</div><div class="line">            raise</div><div class="line">        except Exception as exc:</div><div class="line">            self.ctx.logger.exception(</div><div class="line">                &apos;update execution status got unexpected rest error: &#123;0&#125;&apos;</div><div class="line">                .format(exc))</div><div class="line">        sleep(5)</div></pre></td></tr></table></figure>
+<h3 id="加载cloudify-plugins-workflow-install里面对应的install里面的函数去执行"><a href="#加载cloudify-plugins-workflow-install里面对应的install里面的函数去执行" class="headerlink" title="加载cloudify.plugins.workflow.install里面对应的install里面的函数去执行"></a>加载cloudify.plugins.workflow.install里面对应的install里面的函数去执行</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">@workflow</div><div class="line">def install(ctx, **kwargs):</div><div class="line">    &quot;&quot;&quot;Default install workflow&quot;&quot;&quot;</div><div class="line">    lifecycle.install_node_instances(</div><div class="line">        graph=ctx.graph_mode(),</div><div class="line">        node_instances=set(ctx.node_instances))</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/cloudify/" rel="tag">#cloudify</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/20/cloudify_agent_run_steps_00/" rel="next" title="cloudify agent 执行流程">
+                <i class="fa fa-chevron-left"></i> cloudify agent 执行流程
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="8 小时的技术博客" />
+          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
+          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前端下发任务"><span class="nav-number">1.</span> <span class="nav-text">前端下发任务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#下发任务默认访问coudify中的rest-service里面的Executions"><span class="nav-number">1.1.</span> <span class="nav-text">下发任务默认访问coudify中的rest-service里面的Executions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#真正执行下发任务"><span class="nav-number">1.2.</span> <span class="nav-text">真正执行下发任务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#再下一层的封装celery发送的接口"><span class="nav-number">1.3.</span> <span class="nav-text">再下一层的封装celery发送的接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#真正发送任务的接口"><span class="nav-number">1.4.</span> <span class="nav-text">真正发送任务的接口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后端agent执行的逻辑"><span class="nav-number">2.</span> <span class="nav-text">后端agent执行的逻辑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#agent接收到的消息体"><span class="nav-number">2.1.</span> <span class="nav-text">agent接收到的消息体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#agent接收到消息，执行对应的cloudify-dispatch-dispatch"><span class="nav-number">2.2.</span> <span class="nav-text">agent接收到消息，执行对应的cloudify.dispatch.dispatch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#接收到对应的的handle-or-dispoatch-to-subprocesss-if-remote"><span class="nav-number">2.3.</span> <span class="nav-text">接收到对应的的handle_or_dispoatch_to_subprocesss_if_remote</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#接着执行下层封装调用执行的函数dispatch-to-subprocess"><span class="nav-number">2.4.</span> <span class="nav-text">接着执行下层封装调用执行的函数dispatch_to_subprocess</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#当前函数有一个main方法，就是上面sys-executable函数取到的"><span class="nav-number">2.5.</span> <span class="nav-text">当前函数有一个main方法，就是上面sys.executable函数取到的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#WorkflowHandler里面的handle执行逻辑"><span class="nav-number">2.6.</span> <span class="nav-text">WorkflowHandler里面的handle执行逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#加载cloudify-plugins-workflow-install里面对应的install里面的函数去执行"><span class="nav-number">2.7.</span> <span class="nav-text">加载cloudify.plugins.workflow.install里面对应的install里面的函数去执行</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
