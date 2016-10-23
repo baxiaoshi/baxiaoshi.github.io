@@ -259,6 +259,137 @@
             
               
                 
+                <a class="post-title-link" href="/2016/10/23/opstask_design_00/" itemprop="url">
+                  opstask运维任务执行平台-设计
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-23T14:12:42+08:00" content="2016-10-23">
+              2016-10-23
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/opstask/" itemprop="url" rel="index">
+                    <span itemprop="name">opstask</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="opstask任务执行平台的介绍"><a href="#opstask任务执行平台的介绍" class="headerlink" title="opstask任务执行平台的介绍"></a>opstask任务执行平台的介绍</h2><h3 id="opstask的目标"><a href="#opstask的目标" class="headerlink" title="opstask的目标"></a>opstask的目标</h3><p>将日常的运维任务都抽象成一个流程,并提供web界面，实现一键式运维,提升运维效率。</p>
+<h3 id="opstask的设计"><a href="#opstask的设计" class="headerlink" title="opstask的设计"></a>opstask的设计</h3><p><img src="/img/opstask/opstask_design_00.png" alt="opstask_desgin"></p>
+<h4 id="模块划分"><a href="#模块划分" class="headerlink" title="模块划分"></a>模块划分</h4><ul>
+<li><p>rest-web前端展示</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">用于后端相关操作的前端显示</div></pre></td></tr></table></figure>
+</li>
+<li><p>rest-service后端操作接口(flask)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">登录模块: 用于登录,需要做成oauth的，后面可以与其他系统对接</div><div class="line">任务模版模块：默认所有任务都必须先注册,才能被后续加入到执行中去</div><div class="line">流程模版模块：流程是上面任务的编排,编排完成后,才能被后续使用</div><div class="line">订单模块: 通过流程模版+对应的参数,才是一个可执行的任务，后面才可以被执行</div><div class="line">日志模块：用于上面订单的相关执行状态的获取</div><div class="line">订单管理模块：用于相关订单执行冲突的处理, 同时控制相关订单的取消、终止</div><div class="line">权限控制：与其他系统做对接，这里默认不进行权限的处理</div></pre></td></tr></table></figure>
+</li>
+<li><p>分布式任务队列(celery)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">任务下发到消息队列，这里使用redis做消息队列</div><div class="line">后端worker默认可以被分配到多台机器上</div><div class="line">所有任务的执行结果都输出到redis，然后通过logstash输出到es中</div></pre></td></tr></table></figure>
+</li>
+<li><p>后端worker </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">celery后端的worker进程用过消息队列接收任务后，就通过subprocess去重新启动一个进程去执行，并传递一个队列，将任务执行的数据返回</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="opstask的开发日志"><a href="#opstask的开发日志" class="headerlink" title="opstask的开发日志"></a>opstask的开发日志</h2><h3 id="opstask的开发日志-1"><a href="#opstask的开发日志-1" class="headerlink" title="opstask的开发日志"></a>opstask的开发日志</h3><ul>
+<li>2016-10-23 完成了基本流程设计</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2016/10/21/elk_base_pp_00t/" itemprop="url">
                   部门内分享elk
                 </a>
@@ -1387,122 +1518,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/10/15/es_index_00/" itemprop="url">
-                  elasticsearch准实时索引介绍
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-15T23:11:16+08:00" content="2016-10-15">
-              2016-10-15
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/elk/" itemprop="url" rel="index">
-                    <span itemprop="name">elk</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="Es准实时索引的实现"><a href="#Es准实时索引的实现" class="headerlink" title="Es准实时索引的实现"></a>Es准实时索引的实现</h2><p>lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。<br>新的数据写入到新的索引中。<br><img src="/img/elk/es_translog_01.png" alt="img"></p>
-<h3 id="es中单机数据写入的顺序"><a href="#es中单机数据写入的顺序" class="headerlink" title="es中单机数据写入的顺序"></a>es中单机数据写入的顺序</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">数据首先写入到内存中的buffer，并记录对应的Translog</div><div class="line">内存buffer在经过refresh_interval后，会生成一个segment(内存缓存中)</div><div class="line">默认每30分钟或者超过500M，会将对应的segment进行commint操作刷新到磁盘，同时清空translog(translog不会一直保存,会清空)</div></pre></td></tr></table></figure>
-<h3 id="es中通过副本和分片"><a href="#es中通过副本和分片" class="headerlink" title="es中通过副本和分片"></a>es中通过副本和分片</h3><p>es中通过副本和分片来实现了集群的可扩展性,集群的最大规模=分片数量*(副本数量+1)，则表示该索引下，最大的集群规模<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">数据写入到主分片后，主分片会根据对应的数据进行索引的操作</div><div class="line">同时主分片会将对应的数据发送到副本分片，副本分片接收到数据会同样的对数据进行索引操作（如果主分片挂掉，对应的文档已经发送到副本分片，副本分片执行commit则不会丢数据）</div></pre></td></tr></table></figure></p>
-<p>关于性能：<br>    如果压力测试时单分片无副本情况下测试的es写入性能为1w，则一台由一个主分片和一个副本分片的情况下，单机写入性能则下降为5000</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1548,7 +1563,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">15</span>
+              <span class="site-state-item-count">16</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1556,7 +1571,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-count">5</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1565,7 +1580,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-count">5</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
