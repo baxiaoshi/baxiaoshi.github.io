@@ -84,15 +84,19 @@
 
 
 
-<meta name="description" content="梦想还有，还在路上">
-<meta property="og:type" content="website">
-<meta property="og:title" content="8小时的技术博客">
-<meta property="og:url" content="http://www.sreguide.com/tags/devops/index.html">
+<meta name="description" content="Workflow的设计一个agent接收到一个需要执行的workflow后的执行逻辑
+workflow可能需要的数据结构123456&amp;#123;    &amp;apos;type&amp;apos;: &amp;quot;workflow&amp;quot;,    ctx: &amp;#123;        &amp;apos;target_name&amp;apos;: &amp;apos;workflow.ansible_runner.run_com">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Workflow的设计">
+<meta property="og:url" content="http://www.sreguide.com/2016/11/01/workflow_task_0/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="梦想还有，还在路上">
+<meta property="og:description" content="Workflow的设计一个agent接收到一个需要执行的workflow后的执行逻辑
+workflow可能需要的数据结构123456&amp;#123;    &amp;apos;type&amp;apos;: &amp;quot;workflow&amp;quot;,    ctx: &amp;#123;        &amp;apos;target_name&amp;apos;: &amp;apos;workflow.ansible_runner.run_com">
+<meta property="og:updated_time" content="2016-11-01T11:28:22.398Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="8小时的技术博客">
-<meta name="twitter:description" content="梦想还有，还在路上">
+<meta name="twitter:title" content="Workflow的设计">
+<meta name="twitter:description" content="Workflow的设计一个agent接收到一个需要执行的workflow后的执行逻辑
+workflow可能需要的数据结构123456&amp;#123;    &amp;apos;type&amp;apos;: &amp;quot;workflow&amp;quot;,    ctx: &amp;#123;        &amp;apos;target_name&amp;apos;: &amp;apos;workflow.ansible_runner.run_com">
 
 
 
@@ -113,10 +117,10 @@
 
 
 
-  <link rel="canonical" href="http://www.sreguide.com/tags/devops/"/>
+  <link rel="canonical" href="http://www.sreguide.com/2016/11/01/workflow_task_0/"/>
 
 
-  <title> 标签: devops | 8小时的技术博客 </title>
+  <title> Workflow的设计 | 8小时的技术博客 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -137,7 +141,7 @@
     
   
 
-  <div class="container one-collumn sidebar-position-left  ">
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
@@ -235,46 +239,123 @@
           <div id="content" class="content">
             
 
-  <div id="posts" class="posts-collapse">
-    <div class="collection-title">
-      <h2 >
-        devops
-        <small>标签</small>
-      </h2>
-    </div>
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
 
     
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Workflow的设计
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-01T19:18:32+08:00" content="2016-11-01">
+              2016-11-01
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
       
 
-  <article class="post post-type-normal" itemscope itemtype="//schema.org/Article">
-    <header class="post-header">
+      
+        <h2 id="Workflow的设计"><a href="#Workflow的设计" class="headerlink" title="Workflow的设计"></a>Workflow的设计</h2><p>一个agent接收到一个需要执行的workflow后的执行逻辑</p>
+<h3 id="workflow可能需要的数据结构"><a href="#workflow可能需要的数据结构" class="headerlink" title="workflow可能需要的数据结构"></a>workflow可能需要的数据结构</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    &apos;type&apos;: &quot;workflow&quot;,</div><div class="line">    ctx: &#123;</div><div class="line">        &apos;target_name&apos;: &apos;workflow.ansible_runner.run_command&apos;</div><div class="line">    &#125;,</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>workflow最后需要解析出一个step_list = [step1, step2, step3]的列表,然后执行就一个个去执行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">if start_step:</div><div class="line">    if start_step:</div><div class="line">        step_index = step_list.index(start_step)</div><div class="line">        steps = [step_index:]</div><div class="line"></div><div class="line">for step in steps:</div><div class="line">    1. 执行step</div><div class="line">    2. 获取参数</div><div class="line">    3. 设置上线文</div><div class="line"></div><div class="line">最后</div></pre></td></tr></table></figure></p>
+<p>### </p>
 
-      <h1 class="post-title">
+      
+    </div>
+
+    <div>
+      
         
-            <a class="post-title-link" href="/2016/10/13/devop_practical_01_02/" itemprop="url">
-              
-                <span itemprop="name">devops最佳实现读书笔记01-02</span>
-              
-            </a>
+
+      
+    </div>
+
+    <div>
+      
         
-      </h1>
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2016-10-13T18:05:03+08:00"
-              content="2016-10-13" >
-          10-13
-        </time>
-      </div>
+      
+    </div>
 
-    </header>
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/01/rabbimq_action_00/" rel="next" title="rabbitmq基础操作">
+                <i class="fa fa-chevron-left"></i> rabbitmq基础操作
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/11/02/workflow_step_00/" rel="prev" title="workflow任务执行">
+                workflow任务执行 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </article>
 
 
-    
-  </div>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -282,6 +363,10 @@
 
 
           
+  <div class="comments" id="comments">
+    
+  </div>
+
 
         </div>
         
@@ -301,8 +386,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel  sidebar-panel-active ">
+      <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -352,6 +446,17 @@
 
       </section>
 
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Workflow的设计"><span class="nav-number">1.</span> <span class="nav-text">Workflow的设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#workflow可能需要的数据结构"><span class="nav-number">1.1.</span> <span class="nav-text">workflow可能需要的数据结构</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
       
 
     </div>
@@ -455,6 +560,10 @@
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
 
   
 

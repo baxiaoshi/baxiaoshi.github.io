@@ -84,27 +84,15 @@
 
 
 
-<meta name="description" content="cloudify基本介绍cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理
-cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:
-
-结合自身的环境,cloudify有这么">
-<meta property="og:type" content="article">
-<meta property="og:title" content="cloudify基本了解">
-<meta property="og:url" content="http://www.sreguide.com/2016/10/12/cloudify_00/index.html">
+<meta name="description" content="梦想还有，还在路上">
+<meta property="og:type" content="website">
+<meta property="og:title" content="8小时的技术博客">
+<meta property="og:url" content="http://www.sreguide.com/page/3/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="cloudify基本介绍cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理
-cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:
-
-结合自身的环境,cloudify有这么">
-<meta property="og:image" content="http://www.sreguide.com/img/cloudify_jiagou.png">
-<meta property="og:updated_time" content="2016-10-13T13:48:46.947Z">
+<meta property="og:description" content="梦想还有，还在路上">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="cloudify基本了解">
-<meta name="twitter:description" content="cloudify基本介绍cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理
-cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:
-
-结合自身的环境,cloudify有这么">
-<meta name="twitter:image" content="http://www.sreguide.com/img/cloudify_jiagou.png">
+<meta name="twitter:title" content="8小时的技术博客">
+<meta name="twitter:description" content="梦想还有，还在路上">
 
 
 
@@ -125,10 +113,10 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
 
 
 
-  <link rel="canonical" href="http://www.sreguide.com/2016/10/12/cloudify_00/"/>
+  <link rel="canonical" href="http://www.sreguide.com/page/3/"/>
 
 
-  <title> cloudify基本了解 | 8小时的技术博客 </title>
+  <title> 8小时的技术博客 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -149,7 +137,9 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
     
   
 
-  <div class="container one-collumn sidebar-position-left page-post-detail ">
+  <div class="container one-collumn sidebar-position-left 
+   page-home 
+ ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
@@ -246,9 +236,9 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
         <div class="content-wrap">
           <div id="content" class="content">
             
-
-  <div id="posts" class="posts-expand">
+  <section id="posts" class="posts-expand">
     
+      
 
   
   
@@ -268,7 +258,10 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
             
             
               
-                cloudify基本了解
+                
+                <a class="post-title-link" href="/2016/10/12/cloudify_00/" itemprop="url">
+                  cloudify基本了解
+                </a>
               
             
           </h1>
@@ -308,7 +301,9 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
       
 
       
-        <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
+        
+          
+            <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
 <p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
 <p><img src="/img/cloudify_jiagou.png" alt="img"></p>
 <p>结合自身的环境,cloudify有这么几个不合适的地方<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">cloudfiy就像一个资源池，我们只需要关心：需要多少资源、依赖关系等, 然后编写好蓝图，就可以完成应用的创建、发布等工作</div><div class="line">资源的调度、监控、日志收集、调度降级等工作都可以做，但通常公司的环境不同相关依赖或者业务调用关系，直接切换平台，明显不合理</div><div class="line">涉及组件太多，系统维护可能比较复杂</div></pre></td></tr></table></figure></p>
@@ -322,20 +317,16 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
 <h3 id="修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件"><a href="#修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件" class="headerlink" title="修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)"></a>修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">[root@devops cloudify-manager-blueprints]# ll -hrt </div><div class="line">总用量 308K</div><div class="line">-rw-r--r--  1 root root  31K 9月   4 22:00 vsphere-manager-blueprint.yaml</div><div class="line">-rw-r--r--  1 root root  14K 9月   4 22:00 vsphere-manager-blueprint-inputs.yaml</div><div class="line">-rw-r--r--  1 root root  35K 9月   4 22:00 vcloud-manager-blueprint.yaml</div><div class="line">-rw-r--r--  1 root root  13K 9月   4 22:00 vcloud-manager-blueprint-inputs.yaml</div><div class="line">-rw-r--r--  1 root root  28K 9月   4 22:00 simple-manager-blueprint.yaml</div><div class="line">-rwxr-xr-x  1 root root  675 9月   4 22:00 run_test.sh</div><div class="line">-rw-r--r--  1 root root  398 9月   4 22:00 README.md</div><div class="line">-rw-r--r--  1 root root  32K 9月   4 22:00 openstack-manager-blueprint.yaml</div><div class="line">-rw-r--r--  1 root root  13K 9月   4 22:00 openstack-manager-blueprint-inputs.yaml</div><div class="line">-rw-r--r--  1 root root  12K 9月   4 22:00 LICENSE</div><div class="line">-rw-r--r--  1 root root 1.3K 9月   4 22:00 circle.yml</div><div class="line">-rw-r--r--  1 root root  37K 9月   4 22:00 azure-manager-blueprint.yaml</div><div class="line">-rw-r--r--  1 root root  558 9月   4 22:00 azure-manager-blueprint-inputs.yaml</div><div class="line">-rw-r--r--  1 root root  29K 9月   4 22:00 aws-ec2-manager-blueprint.yaml</div><div class="line">-rw-r--r--  1 root root  13K 9月   4 22:00 aws-ec2-manager-blueprint-inputs.yaml</div><div class="line">drwxr-xr-x 16 root root 4.0K 10月 12 10:25 components</div><div class="line">drwxr-xr-x  4 root root   27 10月 12 10:25 resources</div><div class="line">drwxr-xr-x  3 root root   79 10月 12 10:25 tests</div><div class="line">drwxr-xr-x  2 root root   31 10月 12 10:25 types</div><div class="line">-rw-r--r--  1 root root  11K 10月 13 21:12 simple-manager-blueprint-inputs.yaml</div><div class="line">[root@devops cloudify-manager-blueprints]# ls -l simple-manager-blueprint*</div><div class="line">-rw-r--r-- 1 root root 11212 10月 13 21:12 simple-manager-blueprint-inputs.yaml</div><div class="line">-rw-r--r-- 1 root root 28395 9月   4 22:00 simple-manager-blueprint.yaml</div><div class="line">[root@devops cloudify-manager-blueprints]# pwd</div><div class="line">/opt/cfy/cloudify-manager-blueprints</div></pre></td></tr></table></figure>
 <h4 id="simple-manager-blueprint-inputs-yaml配置文件的修改"><a href="#simple-manager-blueprint-inputs-yaml配置文件的修改" class="headerlink" title="simple-manager-blueprint-inputs.yaml配置文件的修改"></a>simple-manager-blueprint-inputs.yaml配置文件的修改</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"># The public IP of the manager to which the CLI will connect.</div><div class="line">public_ip: &apos;10.0.5.213&apos;</div><div class="line"></div><div class="line"># The manager&apos;s private IP address. This is the address which will be used by the</div><div class="line"># application hosts to connect to the Manager&apos;s fileserver and message broker.</div><div class="line">private_ip: &apos;10.0.5.213&apos;</div><div class="line"></div><div class="line"># SSH user used to connect to the manager</div><div class="line">ssh_user: &apos;root&apos;  #cloudify会使用fabric来连接执行任务这是连接的用户</div><div class="line"></div><div class="line"># SSH key path used to connect to the manager</div><div class="line">ssh_key_filename: &apos;/root/.ssh/id_rsa&apos;   #连接使用的key文件</div></pre></td></tr></table></figure>
 <h3 id="执行安装命令"><a href="#执行安装命令" class="headerlink" title="执行安装命令"></a>执行安装命令</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[root@devops cloudify-manager-blueprints]# cd /opt/.cloudify/</div><div class="line">[root@devops .cloudify]# cfy bootstrap --install-plugins -p /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint-inputs.yaml</div><div class="line">因为要联网，所以我先回家了，晚上在看看</div></pre></td></tr></table></figure>
+          
+        
       
     </div>
 
     <div>
       
-        
-
-      
     </div>
 
     <div>
-      
-        
-
       
     </div>
 
@@ -343,36 +334,128 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
       
 
       
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2016/10/12/cd_practice/" rel="next" title="持续部署实践">
-                <i class="fa fa-chevron-left"></i> 持续部署实践
-              </a>
-            
-          </div>
-
-          <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/10/13/mysql_zhuyao_canshu/" rel="prev" title="mysql基本配置">
-                mysql基本配置 <i class="fa fa-chevron-right"></i>
-              </a>
-            
-          </div>
-        </div>
-      
 
       
+      
+        <div class="post-eof"></div>
       
     </footer>
   </article>
 
 
+    
+      
 
-    <div class="post-spread">
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/10/12/cd_practice/" itemprop="url">
+                  持续部署实践
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-12T14:38:21+08:00" content="2016-10-12">
+              2016-10-12
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="为什么要持续交付"><a href="#为什么要持续交付" class="headerlink" title="为什么要持续交付"></a>为什么要持续交付</h2><h3 id="一个产品的上线流程通常如下："><a href="#一个产品的上线流程通常如下：" class="headerlink" title="一个产品的上线流程通常如下："></a>一个产品的上线流程通常如下：</h3><pre><code>开发人员完成代码编写 ==&gt; 编译成二进制包 ==&gt; 拷贝到服务器 ==&gt; 重启服务器 ==&gt;测试业务 ==&gt;完成上线
+</code></pre><h3 id="我们的目标"><a href="#我们的目标" class="headerlink" title="我们的目标"></a>我们的目标</h3><pre><code>如果开发要新添加新特性,可以快速的发布到生产环境
+定义一个部署的蓝图, 可以快速持续的完成代码生产环境的发布
+</code></pre><h2 id="持续交付的流程"><a href="#持续交付的流程" class="headerlink" title="持续交付的流程"></a>持续交付的流程</h2><h3 id="基于主机的持续交付"><a href="#基于主机的持续交付" class="headerlink" title="基于主机的持续交付"></a>基于主机的持续交付</h3><p><img src="/img/CDGuideCI1.png" alt="cd1"><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">开发人员提交代码到版本仓库</div><div class="line">持续集成服务器监听版本仓库的代码变化</div><div class="line">持续集成服务器开启一个处理进程来将代码打包成二进制</div><div class="line">将打包的二进制代码发送到生产服务器</div><div class="line">从负载均衡器下摘下</div><div class="line">重启对应业务，并验证服务</div><div class="line">重新挂载到负载均衡器上,对外提供服务</div></pre></td></tr></table></figure></p>
+<p>###<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">主机环境：相关软件包，依赖软件包的，不同的配置文件，都会影响我们测试和构建应用</div><div class="line">为了提高资源的利用率,要实现应用运行环境的快速部署</div><div class="line">允许并行的启动一组vm/容器去测试和创建每一个应用</div></pre></td></tr></table></figure></p>
+<p>基于上面几个原因，形成了我们常说的IaaS平台, iaas可以根据需要的资源(cpu/网络)在几分钟内快速的构建出应用。如果有应用出现问题,也可以快速的重新构建</p>
+<p>Iaas可以为我们提供干净的主机环境，我们通过创建一些自动化脚本来实现持续交付的过程，但Iaas并没有解决资源利用率的问题，这就引入了我们常说的容器</p>
+<p>容器提供了虚拟机一样的干净的环境(相对),通常创建一个虚拟机可能是分钟级别的时间，但容器一般就秒级;使用容器我们可以使用更少的资源,来进行并行任务的处理</p>
+<p>###</p>
+<p>当我们将代码部署到生产系统，需要先编写一个部署的流程，以确保能在所有的环境里面正常部署，通常包括下面几个问题：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">选择正确的工具来运行这个部署任务(通常我们可以把部署任务都做成脚本，然后选择一个工具去执行对应的脚本完成,ansible相对合适一些)</div><div class="line">自动获取我们的主机列表(cmdb)</div><div class="line">选择部署的类型(A/B组或者金丝雀)</div></pre></td></tr></table></figure></p>
+<p>###<br>虽然我们可以使用这些方法来部署代码——如果我们想持续部署应用程序作为一个整体,包括基础设施(不仅仅是代码),这就需要把基础环境编排进来。我们仍然需要执行相同的初始步骤：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">理解这个应用对我们系统的影响</div><div class="line">如何创建一个应用的二进制文件(代码包)</div><div class="line">测试业务</div><div class="line">监控业务</div></pre></td></tr></table></figure></p>
+<p>创建基础设施主要包含下面几个工作:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">加载资源</div></pre></td></tr></table></figure></p>
+
+          
+        
       
     </div>
-  </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+  </section>
+
+  
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span>
+  </nav>
+
 
 
           </div>
@@ -380,10 +463,6 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
 
 
           
-  <div class="comments" id="comments">
-    
-  </div>
-
 
         </div>
         
@@ -403,17 +482,8 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview sidebar-panel ">
+      <section class="site-overview sidebar-panel  sidebar-panel-active ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -463,17 +533,6 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
 
       </section>
 
-      
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-            
-              
-            
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify基本介绍"><span class="nav-number">1.</span> <span class="nav-text">cloudify基本介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify的安装"><span class="nav-number">2.</span> <span class="nav-text">cloudify的安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#下载对应系统的rpm包"><span class="nav-number">2.1.</span> <span class="nav-text">下载对应系统的rpm包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成密钥"><span class="nav-number">2.2.</span> <span class="nav-text">生成密钥</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成cloudify的环境"><span class="nav-number">2.3.</span> <span class="nav-text">生成cloudify的环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件"><span class="nav-number">2.4.</span> <span class="nav-text">修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#simple-manager-blueprint-inputs-yaml配置文件的修改"><span class="nav-number">2.4.1.</span> <span class="nav-text">simple-manager-blueprint-inputs.yaml配置文件的修改</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行安装命令"><span class="nav-number">2.5.</span> <span class="nav-text">执行安装命令</span></a></li></ol></li></ol></div>
-            
-          </div>
-        </section>
       
 
     </div>
@@ -577,10 +636,6 @@ cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件
 
 
   
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
-
-
 
   
 

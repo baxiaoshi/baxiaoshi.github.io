@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="elk," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -84,21 +84,22 @@
 
 
 
-<meta name="description" content="Es准实时索引的实现lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。新的数据写入到新的索引中。
-es中单机数据写入的顺序123数据首先写入到内存中的buffer，并记录对应的Translog内存buffer在经过refresh_interval后，会生成一个segment(内">
+<meta name="description" content="之前将整个设计后,很多细的地方并没有想明白，这里记录下opstask agent工作的流程
+Opstask Agent流程agent启动并连接broker123通过本地配置文件：broker的地址、连接的帐号密码、连接的主机(rabbitmq里面的概念)构建agent的上下文根据这些信息，尝试连接broker, 并监听在一个channel上
+接收到任务后1234单独启动线程连接到broker构建起">
 <meta property="og:type" content="article">
-<meta property="og:title" content="elasticsearch准实时索引介绍">
-<meta property="og:url" content="http://www.sreguide.com/2016/10/15/es_index_00/index.html">
+<meta property="og:title" content="Opstask agent任务流">
+<meta property="og:url" content="http://www.sreguide.com/2016/10/26/opstask_agent_00/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="Es准实时索引的实现lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。新的数据写入到新的索引中。
-es中单机数据写入的顺序123数据首先写入到内存中的buffer，并记录对应的Translog内存buffer在经过refresh_interval后，会生成一个segment(内">
-<meta property="og:image" content="http://www.sreguide.com/img/elk/es_translog_01.png">
-<meta property="og:updated_time" content="2016-10-15T15:39:48.524Z">
+<meta property="og:description" content="之前将整个设计后,很多细的地方并没有想明白，这里记录下opstask agent工作的流程
+Opstask Agent流程agent启动并连接broker123通过本地配置文件：broker的地址、连接的帐号密码、连接的主机(rabbitmq里面的概念)构建agent的上下文根据这些信息，尝试连接broker, 并监听在一个channel上
+接收到任务后1234单独启动线程连接到broker构建起">
+<meta property="og:updated_time" content="2016-10-26T11:10:49.701Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="elasticsearch准实时索引介绍">
-<meta name="twitter:description" content="Es准实时索引的实现lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。新的数据写入到新的索引中。
-es中单机数据写入的顺序123数据首先写入到内存中的buffer，并记录对应的Translog内存buffer在经过refresh_interval后，会生成一个segment(内">
-<meta name="twitter:image" content="http://www.sreguide.com/img/elk/es_translog_01.png">
+<meta name="twitter:title" content="Opstask agent任务流">
+<meta name="twitter:description" content="之前将整个设计后,很多细的地方并没有想明白，这里记录下opstask agent工作的流程
+Opstask Agent流程agent启动并连接broker123通过本地配置文件：broker的地址、连接的帐号密码、连接的主机(rabbitmq里面的概念)构建agent的上下文根据这些信息，尝试连接broker, 并监听在一个channel上
+接收到任务后1234单独启动线程连接到broker构建起">
 
 
 
@@ -119,10 +120,10 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
 
 
 
-  <link rel="canonical" href="http://www.sreguide.com/2016/10/15/es_index_00/"/>
+  <link rel="canonical" href="http://www.sreguide.com/2016/10/26/opstask_agent_00/"/>
 
 
-  <title> elasticsearch准实时索引介绍 | 8小时的技术博客 </title>
+  <title> Opstask agent任务流 | 8小时的技术博客 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -262,7 +263,7 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
             
             
               
-                elasticsearch准实时索引介绍
+                Opstask agent任务流
               
             
           </h1>
@@ -274,30 +275,11 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-15T23:11:16+08:00" content="2016-10-15">
-              2016-10-15
+            <time itemprop="dateCreated" datetime="2016-10-26T18:26:14+08:00" content="2016-10-26">
+              2016-10-26
             </time>
           </span>
 
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/elk/" itemprop="url" rel="index">
-                    <span itemprop="name">elk</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
           
 
           
@@ -321,11 +303,12 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
       
 
       
-        <h2 id="Es准实时索引的实现"><a href="#Es准实时索引的实现" class="headerlink" title="Es准实时索引的实现"></a>Es准实时索引的实现</h2><p>lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。<br>新的数据写入到新的索引中。<br><img src="/img/elk/es_translog_01.png" alt="img"></p>
-<h3 id="es中单机数据写入的顺序"><a href="#es中单机数据写入的顺序" class="headerlink" title="es中单机数据写入的顺序"></a>es中单机数据写入的顺序</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">数据首先写入到内存中的buffer，并记录对应的Translog</div><div class="line">内存buffer在经过refresh_interval后，会生成一个segment(内存缓存中)</div><div class="line">默认每30分钟或者超过500M，会将对应的segment进行commint操作刷新到磁盘，同时清空translog(translog不会一直保存,会清空)</div></pre></td></tr></table></figure>
-<h3 id="es中通过副本和分片"><a href="#es中通过副本和分片" class="headerlink" title="es中通过副本和分片"></a>es中通过副本和分片</h3><p>es中通过副本和分片来实现了集群的可扩展性,集群的最大规模=分片数量*(副本数量+1)，则表示该索引下，最大的集群规模<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">数据写入到主分片后，主分片会根据对应的数据进行索引的操作</div><div class="line">同时主分片会将对应的数据发送到副本分片，副本分片接收到数据会同样的对数据进行索引操作（如果主分片挂掉，对应的文档已经发送到副本分片，副本分片执行commit则不会丢数据）</div></pre></td></tr></table></figure></p>
-<p>关于性能：<br>    如果压力测试时单分片无副本情况下测试的es写入性能为1w，则一台由一个主分片和一个副本分片的情况下，单机写入性能则下降为5000</p>
-
+        <p>之前将整个设计后,很多细的地方并没有想明白，这里记录下opstask agent工作的流程</p>
+<h2 id="Opstask-Agent流程"><a href="#Opstask-Agent流程" class="headerlink" title="Opstask Agent流程"></a>Opstask Agent流程</h2><h3 id="agent启动并连接broker"><a href="#agent启动并连接broker" class="headerlink" title="agent启动并连接broker"></a>agent启动并连接broker</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">通过本地配置文件：broker的地址、连接的帐号密码、连接的主机(rabbitmq里面的概念)</div><div class="line">构建agent的上下文</div><div class="line">根据这些信息，尝试连接broker, 并监听在一个channel上</div></pre></td></tr></table></figure>
+<h3 id="接收到任务后"><a href="#接收到任务后" class="headerlink" title="接收到任务后"></a>接收到任务后</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">单独启动线程连接到broker</div><div class="line">构建起当前任务执行的上线文</div><div class="line">解析任务需要的plugin(软件包、版本)</div><div class="line">    如果对应的版本或者插件不存在，进行安装</div></pre></td></tr></table></figure>
+<h3 id="workflow的执行流程"><a href="#workflow的执行流程" class="headerlink" title="workflow的执行流程"></a>workflow的执行流程</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">根据传过来的workflow_id, 去请求workflow的具体内容(rest_api)</div><div class="line">将获取的结果解析，构建workflow， 并将每一步都构建成一个workflowtask，最后存放到一个列表中</div><div class="line">执行列表中的task:</div><div class="line">    通过任务内容，解析出一个执行的function(python)</div><div class="line">    如果是一个本地的任务：（执行更新agent操作）</div><div class="line">        根据任务解析出function然后执行</div><div class="line">    如果是一个远端的任务：（如果涉及到任务里面需要连接的帐号密码这种信息，该如何处理）</div><div class="line">        创建一个amqp的client端，并传入一个队列</div><div class="line">        然后执行workflow里面的内容，将workflow执行完成后的内容，防到queue里面</div><div class="line">            每执行一步，就去请求下当前任务的状态，如果任务状态取消了，则任务终止执行(rest_client)</div><div class="line">        主线程获取到队列里面的内容</div><div class="line">        创建一个子线程去构建执行远端任务的环境</div></pre></td></tr></table></figure>
+<h2 id="opstask-agengt全局的一些东西"><a href="#opstask-agengt全局的一些东西" class="headerlink" title="opstask agengt全局的一些东西"></a>opstask agengt全局的一些东西</h2><h3 id="关于执行日志"><a href="#关于执行日志" class="headerlink" title="关于执行日志"></a>关于执行日志</h3><pre><code>
+</code></pre>
       
     </div>
 
@@ -345,27 +328,21 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/elk/" rel="tag">#elk</a>
-          
-        </div>
-      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/10/13/devop_practical_01_02/" rel="next" title="devops最佳实现读书笔记01-02">
-                <i class="fa fa-chevron-left"></i> devops最佳实现读书笔记01-02
+              <a href="/2016/10/24/monitor_item_to_zabbix/" rel="next" title="执行命令，并根据正则解析出对应的key,然后发送到zabbix">
+                <i class="fa fa-chevron-left"></i> 执行命令，并根据正则解析出对应的key,然后发送到zabbix
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/10/17/1. cloudify_system_event_bus_01/" rel="prev" title="cloudify的任务执行流程">
-                cloudify的任务执行流程 <i class="fa fa-chevron-right"></i>
+              <a href="/2016/10/31/opstask_agent_01/" rel="prev" title="">
+                 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -480,7 +457,7 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Es准实时索引的实现"><span class="nav-number">1.</span> <span class="nav-text">Es准实时索引的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#es中单机数据写入的顺序"><span class="nav-number">1.1.</span> <span class="nav-text">es中单机数据写入的顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#es中通过副本和分片"><span class="nav-number">1.2.</span> <span class="nav-text">es中通过副本和分片</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Opstask-Agent流程"><span class="nav-number">1.</span> <span class="nav-text">Opstask Agent流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#agent启动并连接broker"><span class="nav-number">1.1.</span> <span class="nav-text">agent启动并连接broker</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#接收到任务后"><span class="nav-number">1.2.</span> <span class="nav-text">接收到任务后</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#workflow的执行流程"><span class="nav-number">1.3.</span> <span class="nav-text">workflow的执行流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#opstask-agengt全局的一些东西"><span class="nav-number">2.</span> <span class="nav-text">opstask agengt全局的一些东西</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#关于执行日志"><span class="nav-number">2.1.</span> <span class="nav-text">关于执行日志</span></a></li></ol></li></ol></div>
             
           </div>
         </section>

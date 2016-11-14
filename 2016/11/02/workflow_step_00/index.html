@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="elk," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -84,21 +84,16 @@
 
 
 
-<meta name="description" content="Es准实时索引的实现lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。新的数据写入到新的索引中。
-es中单机数据写入的顺序123数据首先写入到内存中的buffer，并记录对应的Translog内存buffer在经过refresh_interval后，会生成一个segment(内">
+<meta name="description" content="接收到workflow接收到workflow_id,下发任务123456789101112131415# 目前设计的任务类型，只会下发workflow这一种，有几个问题如下：# 1. 任务只会被一台机器执行，这里保留了这个task_type是为了后面，把workflow单独抽象出来，做一个schedule的角色，只负责任务调度，然后根据一些调度把任务发送到队列中，这样后端就可以起多个worker，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="elasticsearch准实时索引介绍">
-<meta property="og:url" content="http://www.sreguide.com/2016/10/15/es_index_00/index.html">
+<meta property="og:title" content="workflow任务执行">
+<meta property="og:url" content="http://www.sreguide.com/2016/11/02/workflow_step_00/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="Es准实时索引的实现lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。新的数据写入到新的索引中。
-es中单机数据写入的顺序123数据首先写入到内存中的buffer，并记录对应的Translog内存buffer在经过refresh_interval后，会生成一个segment(内">
-<meta property="og:image" content="http://www.sreguide.com/img/elk/es_translog_01.png">
-<meta property="og:updated_time" content="2016-10-15T15:39:48.524Z">
+<meta property="og:description" content="接收到workflow接收到workflow_id,下发任务123456789101112131415# 目前设计的任务类型，只会下发workflow这一种，有几个问题如下：# 1. 任务只会被一台机器执行，这里保留了这个task_type是为了后面，把workflow单独抽象出来，做一个schedule的角色，只负责任务调度，然后根据一些调度把任务发送到队列中，这样后端就可以起多个worker，">
+<meta property="og:updated_time" content="2016-11-09T06:49:51.347Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="elasticsearch准实时索引介绍">
-<meta name="twitter:description" content="Es准实时索引的实现lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。新的数据写入到新的索引中。
-es中单机数据写入的顺序123数据首先写入到内存中的buffer，并记录对应的Translog内存buffer在经过refresh_interval后，会生成一个segment(内">
-<meta name="twitter:image" content="http://www.sreguide.com/img/elk/es_translog_01.png">
+<meta name="twitter:title" content="workflow任务执行">
+<meta name="twitter:description" content="接收到workflow接收到workflow_id,下发任务123456789101112131415# 目前设计的任务类型，只会下发workflow这一种，有几个问题如下：# 1. 任务只会被一台机器执行，这里保留了这个task_type是为了后面，把workflow单独抽象出来，做一个schedule的角色，只负责任务调度，然后根据一些调度把任务发送到队列中，这样后端就可以起多个worker，">
 
 
 
@@ -119,10 +114,10 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
 
 
 
-  <link rel="canonical" href="http://www.sreguide.com/2016/10/15/es_index_00/"/>
+  <link rel="canonical" href="http://www.sreguide.com/2016/11/02/workflow_step_00/"/>
 
 
-  <title> elasticsearch准实时索引介绍 | 8小时的技术博客 </title>
+  <title> workflow任务执行 | 8小时的技术博客 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -262,7 +257,7 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
             
             
               
-                elasticsearch准实时索引介绍
+                workflow任务执行
               
             
           </h1>
@@ -274,30 +269,11 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-10-15T23:11:16+08:00" content="2016-10-15">
-              2016-10-15
+            <time itemprop="dateCreated" datetime="2016-11-02T14:56:23+08:00" content="2016-11-02">
+              2016-11-02
             </time>
           </span>
 
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/elk/" itemprop="url" rel="index">
-                    <span itemprop="name">elk</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
           
 
           
@@ -321,10 +297,16 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
       
 
       
-        <h2 id="Es准实时索引的实现"><a href="#Es准实时索引的实现" class="headerlink" title="Es准实时索引的实现"></a>Es准实时索引的实现</h2><p>lucene把每次生成的倒排索引，叫做一个段，然后另外使用一个commit文件，记录索引内存的所有segment，而生成的segment的数据，则来源内存中的buffer。<br>新的数据写入到新的索引中。<br><img src="/img/elk/es_translog_01.png" alt="img"></p>
-<h3 id="es中单机数据写入的顺序"><a href="#es中单机数据写入的顺序" class="headerlink" title="es中单机数据写入的顺序"></a>es中单机数据写入的顺序</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">数据首先写入到内存中的buffer，并记录对应的Translog</div><div class="line">内存buffer在经过refresh_interval后，会生成一个segment(内存缓存中)</div><div class="line">默认每30分钟或者超过500M，会将对应的segment进行commint操作刷新到磁盘，同时清空translog(translog不会一直保存,会清空)</div></pre></td></tr></table></figure>
-<h3 id="es中通过副本和分片"><a href="#es中通过副本和分片" class="headerlink" title="es中通过副本和分片"></a>es中通过副本和分片</h3><p>es中通过副本和分片来实现了集群的可扩展性,集群的最大规模=分片数量*(副本数量+1)，则表示该索引下，最大的集群规模<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">数据写入到主分片后，主分片会根据对应的数据进行索引的操作</div><div class="line">同时主分片会将对应的数据发送到副本分片，副本分片接收到数据会同样的对数据进行索引操作（如果主分片挂掉，对应的文档已经发送到副本分片，副本分片执行commit则不会丢数据）</div></pre></td></tr></table></figure></p>
-<p>关于性能：<br>    如果压力测试时单分片无副本情况下测试的es写入性能为1w，则一台由一个主分片和一个副本分片的情况下，单机写入性能则下降为5000</p>
+        <h3 id="接收到workflow"><a href="#接收到workflow" class="headerlink" title="接收到workflow"></a>接收到workflow</h3><p>接收到workflow_id,下发任务<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"># 目前设计的任务类型，只会下发workflow这一种，有几个问题如下：</div><div class="line"># 1. 任务只会被一台机器执行，这里保留了这个task_type是为了后面，把workflow单独抽象出来，做一个schedule的角色，只负责任务调度，然后根据一些调度把任务发送到队列中，这样后端就可以起多个worker，提高对单step的执行效率</div><div class="line">&#123;</div><div class="line">    ctx:&#123;</div><div class="line">        &apos;user&apos;: username,</div><div class="line">        &apos;task_type&apos;: &apos;workflow&apos;     </div><div class="line">        &apos;task_params&apos;: &#123;</div><div class="line">            &apos;order_task_id&apos;: order_task_id,</div><div class="line">            &apos;start_step&apos;: start_step,</div><div class="line">            &apos;run_time&apos;: run_time</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    args: args</div><div class="line">    kwargs: kwargs</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="构建任务执行环境"><a href="#构建任务执行环境" class="headerlink" title="构建任务执行环境"></a>构建任务执行环境</h3><p>···<br>ctx:<br>    workflowContext<br>logger:<br>    任务记录工作，用于更新任务的状态结果到db<br>task_utils:<br>    用于获取当前step，需要的参数和结果设置，获取当前order task的状态(用于取消状态)等<br>···</p>
+<h3 id="step执行"><a href="#step执行" class="headerlink" title="step执行"></a>step执行</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">开始执行任务</div></pre></td></tr></table></figure>
+<h3 id="开始执行任务"><a href="#开始执行任务" class="headerlink" title="开始执行任务"></a>开始执行任务</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">加载模块 ModulManager</div><div class="line">检查函数是否存在</div><div class="line">设置当前任务的参数</div><div class="line">检查当前任务的执行条件</div></pre></td></tr></table></figure>
+<h3 id="step执行完成"><a href="#step执行完成" class="headerlink" title="step执行完成"></a>step执行完成</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">设置任务结果和输出参数</div></pre></td></tr></table></figure>
+<p>###<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">```</div><div class="line"></div><div class="line"></div><div class="line">step对象</div></pre></td></tr></table></figure></p>
+<p>pass<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">### 资源目录的设置</div></pre></td></tr></table></figure></p>
+<p>scripts:<br>    common: 常用脚本例如清理日志、添加用户、等<br>    app(应用名称): 剩下的以业务名进行存放<br>package:<br>    主要用于存放一些安装包，比如lnmp,或者其他的， 为了统一规划，所有的package必须遵循下面的一点规则：<br>        包名<em>版本号.tar.gz, 解压后的目录名称必须是:包名</em>版本号<br>        每个包必须提供一个可执行的脚本: 包名_版本号(目录)/run.sh, 如果需要获取参数则在run.sh中进行检测, 执行的时候，需要在订单里面把对应的参数事先提供<br>    categories(类型)：<br>    lnmp:<br>    cache:<br>    database:<br>playbook:<br>    用于存放ansible的playbook<br>    按照用途进行分类:<br>    common:<br>roles：<br>    存放ansible的角色相关，都放到同一级别，如果有版本更改，就加version把<br>crontab：</p>
+<p>deveplop</p>
+<p>conf:<br>    存放一些配置文件，比如ansible的ansible.cfg配置文件,<br>```</p>
 
       
     </div>
@@ -345,28 +327,18 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/elk/" rel="tag">#elk</a>
-          
-        </div>
-      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/10/13/devop_practical_01_02/" rel="next" title="devops最佳实现读书笔记01-02">
-                <i class="fa fa-chevron-left"></i> devops最佳实现读书笔记01-02
+              <a href="/2016/11/01/workflow_task_0/" rel="next" title="Workflow的设计">
+                <i class="fa fa-chevron-left"></i> Workflow的设计
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/10/17/1. cloudify_system_event_bus_01/" rel="prev" title="cloudify的任务执行流程">
-                cloudify的任务执行流程 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -480,7 +452,7 @@ es中单机数据写入的顺序123数据首先写入到内存中的buffer，并
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Es准实时索引的实现"><span class="nav-number">1.</span> <span class="nav-text">Es准实时索引的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#es中单机数据写入的顺序"><span class="nav-number">1.1.</span> <span class="nav-text">es中单机数据写入的顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#es中通过副本和分片"><span class="nav-number">1.2.</span> <span class="nav-text">es中通过副本和分片</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#接收到workflow"><span class="nav-number">1.</span> <span class="nav-text">接收到workflow</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#构建任务执行环境"><span class="nav-number">2.</span> <span class="nav-text">构建任务执行环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#step执行"><span class="nav-number">3.</span> <span class="nav-text">step执行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#开始执行任务"><span class="nav-number">4.</span> <span class="nav-text">开始执行任务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#step执行完成"><span class="nav-number">5.</span> <span class="nav-text">step执行完成</span></a></li></ol></div>
             
           </div>
         </section>
