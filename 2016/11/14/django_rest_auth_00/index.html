@@ -1,0 +1,638 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="django," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="django的rest登录设置使用token来进行验证123456789101112131415161718192021222324252627282930from rest_framework.authtoken.models import Tokenclass LogoutView(APIView):    permission_classes = (IsAuthenticated,)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="opstask web api的编写">
+<meta property="og:url" content="http://www.sreguide.com/2016/11/14/django_rest_auth_00/index.html">
+<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:description" content="django的rest登录设置使用token来进行验证123456789101112131415161718192021222324252627282930from rest_framework.authtoken.models import Tokenclass LogoutView(APIView):    permission_classes = (IsAuthenticated,)">
+<meta property="og:updated_time" content="2016-11-14T11:24:49.308Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="opstask web api的编写">
+<meta name="twitter:description" content="django的rest登录设置使用token来进行验证123456789101112131415161718192021222324252627282930from rest_framework.authtoken.models import Tokenclass LogoutView(APIView):    permission_classes = (IsAuthenticated,)">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2016/11/14/django_rest_auth_00/"/>
+
+
+  <title> opstask web api的编写 | 8小时的技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">8小时的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                opstask web api的编写
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-14T11:28:41+08:00" content="2016-11-14">
+              2016-11-14
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="django的rest登录设置"><a href="#django的rest登录设置" class="headerlink" title="django的rest登录设置"></a>django的rest登录设置</h3><h4 id="使用token来进行验证"><a href="#使用token来进行验证" class="headerlink" title="使用token来进行验证"></a>使用token来进行验证</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">from rest_framework.authtoken.models import Token</div><div class="line"></div><div class="line"></div><div class="line">class LogoutView(APIView):</div><div class="line">    permission_classes = (IsAuthenticated,)</div><div class="line"></div><div class="line">    def post(self, request, *args, **kwargs):</div><div class="line">        token = Token.objects.filter(user=request.user)</div><div class="line">        token.delete()      #登出的时候默认会把用户的登录时候的token给删除</div><div class="line">        logout(request)</div><div class="line">        return Response(&#123;&apos;result&apos;: 1&#125;)</div><div class="line"></div><div class="line"></div><div class="line">class LoginView(APIView):</div><div class="line">    throttle_classes = ()</div><div class="line">    permission_classes = ()</div><div class="line">    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)</div><div class="line">    renderer_classes = (renderers.JSONRenderer,)</div><div class="line">    serializer_class = AuthTokenSerializer</div><div class="line"></div><div class="line">    def post(self, request, *args, **kwargs):</div><div class="line">        serializer = self.serializer_class(data=request.data)</div><div class="line">        serializer.is_valid(raise_exception=True)</div><div class="line">        user = serializer.validated_data[&apos;user&apos;]</div><div class="line">        token, created = Token.objects.get_or_create(user=user)</div><div class="line">        return Response(&#123;&apos;token&apos;: token.key&#125;)</div><div class="line"></div><div class="line"></div><div class="line">auth_login = LoginView.as_view()</div><div class="line">auth_logout = LogoutView.as_view()</div></pre></td></tr></table></figure>
+<h4 id="workflow里面的基本API规划"><a href="#workflow里面的基本API规划" class="headerlink" title="workflow里面的基本API规划"></a>workflow里面的基本API规划</h4><table>
+<thead>
+<tr>
+<th>api地址</th>
+<th style="text-align:center">类</th>
+<th style="text-align:right">功能说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>/task</td>
+<td style="text-align:center">TaskView</td>
+<td style="text-align:right">任务的创建删除</td>
+</tr>
+<tr>
+<td>/workflow</td>
+<td style="text-align:center">WorkflowView</td>
+<td style="text-align:right">工作流程</td>
+</tr>
+<tr>
+<td>/WorkflowStep</td>
+<td style="text-align:center">WorkflowStepView</td>
+<td style="text-align:right">工作流程步骤</td>
+</tr>
+<tr>
+<td>/Order</td>
+<td style="text-align:center">OrderView</td>
+<td style="text-align:right">订单的相关操作</td>
+</tr>
+<tr>
+<td>/OrderTask</td>
+<td style="text-align:center">OrderTaskView</td>
+<td style="text-align:right">订单任务</td>
+</tr>
+<tr>
+<td>/OrderTaskLog</td>
+<td style="text-align:center">OrderTaskLogView</td>
+<td style="text-align:right">订单任务日志</td>
+</tr>
+<tr>
+<td>/TaskResult</td>
+<td style="text-align:center">TaskResultView</td>
+<td style="text-align:right">任务步骤结果</td>
+</tr>
+</tbody>
+</table>
+<p>功能设计参考这个连接: <a href="http://agiliq.com/blog/2014/12/building-a-restful-api-with-django-rest-framework/" target="_blank" rel="external">http://agiliq.com/blog/2014/12/building-a-restful-api-with-django-rest-framework/</a></p>
+<h3 id="创建Task的api-view"><a href="#创建Task的api-view" class="headerlink" title="创建Task的api view"></a>创建Task的api view</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line">class TaskListView(APIView):</div><div class="line">    # listview下面包含了对应实例的展示和创建接口</div><div class="line">    serializer_class = TaskSerializers</div><div class="line">    permission_classes = (IsAuthenticated,)</div><div class="line"></div><div class="line">    def get(self, request,format=None):</div><div class="line">        instances = Task.objects.all()</div><div class="line">        serializer = self.serializer_class(instances, many=True)</div><div class="line">        return Response(serializer.data)</div><div class="line"></div><div class="line">    def post(self, request, format=None):</div><div class="line">        serializer = self.serializer_class(data=request.data)</div><div class="line">        if serializer.is_valid():</div><div class="line">            serializer.save(create_user=request.user)</div><div class="line">            return Response(serializer.data, status=status.HTTP_201_CREATED)</div><div class="line">        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)</div><div class="line"></div><div class="line"></div><div class="line">class TaskDetailView(APIView):</div><div class="line">    # apiview则是单个model对象的基本操作</div><div class="line">    serializer_class = TaskSerializers</div><div class="line">    permission_classes = (IsAuthenticated,)</div><div class="line"></div><div class="line">    def get(self, request, pk, format=None):</div><div class="line">        instance = get_object_or_404(Task, pk=pk)</div><div class="line">        instance = self.serializer_class(instance)</div><div class="line">        return Response(instance.data)</div><div class="line"></div><div class="line">    def put(self, request, pk, format=None):</div><div class="line">        instance = get_object_or_404(Task, pk=pk)</div><div class="line">        serializer = self.serializer_class(instance, data=request.data)</div><div class="line">        if serializer.is_valid():</div><div class="line">            serializer.save()</div><div class="line">            return Response(serializer.data)</div><div class="line">        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)</div><div class="line"></div><div class="line">    def delete(self, request, pk, format=None):</div><div class="line">        instance = get_object_or_404(Task, pk=pk)</div><div class="line">        instance.delete()</div><div class="line">        return Response(status=status.HTTP_204_NO_CONTENT)</div></pre></td></tr></table></figure>
+<h3 id="因为代码都差不多，所以就使用模版生成了部分view的代码"><a href="#因为代码都差不多，所以就使用模版生成了部分view的代码" class="headerlink" title="因为代码都差不多，所以就使用模版生成了部分view的代码"></a>因为代码都差不多，所以就使用模版生成了部分view的代码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div></pre></td><td class="code"><pre><div class="line">#from workflow.models import OrderTask</div><div class="line">from jinja2 import Template</div><div class="line"></div><div class="line">view_template = Template(&apos;&apos;&apos;</div><div class="line">class &#123;&#123;name&#125;&#125;ListView(APIView):</div><div class="line">    serializer_class = &#123;&#123;name&#125;&#125;Serializers</div><div class="line">    permission_classes = (IsAuthenticated,)</div><div class="line"></div><div class="line">    def get(self, request,format=None):</div><div class="line">        instances = &#123;&#123;name&#125;&#125;.objects.all()</div><div class="line">        serializer = self.serializer_class(instances, many=True)</div><div class="line">        return Response(serializer.data)</div><div class="line"></div><div class="line">    def post(self, request, format=None):</div><div class="line">        serializer = self.serializer_class(data=request.data)</div><div class="line">        if serializer.is_valid():</div><div class="line">            serializer.save(create_user=request.user)</div><div class="line">            return Response(serializer.data, status=status.HTTP_201_CREATED)</div><div class="line">        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)</div><div class="line"></div><div class="line"></div><div class="line">class &#123;&#123;name&#125;&#125;DetailView(APIView):</div><div class="line">    serializer_class = &#123;&#123;name&#125;&#125;Serializers</div><div class="line">    permission_classes = (IsAuthenticated,)</div><div class="line"></div><div class="line">    def get(self, request, pk, format=None):</div><div class="line">        instance = get_object_or_404(&#123;&#123;name&#125;&#125;, pk=pk)</div><div class="line">        instance = self.serializer_class(instance)</div><div class="line">        return Response(instance.data)</div><div class="line"></div><div class="line">    def put(self, request, pk, format=None):</div><div class="line">        instance = get_object_or_404(&#123;&#123;name&#125;&#125;, pk=pk)</div><div class="line">        serializer = self.serializer_class(instance, data=request.data)</div><div class="line">        if serializer.is_valid():</div><div class="line">            serializer.save()</div><div class="line">            return Response(serializer.data)</div><div class="line">        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)</div><div class="line"></div><div class="line">    def delete(self, request, pk, format=None):</div><div class="line">        instance = get_object_or_404(&#123;&#123;name&#125;&#125;, pk=pk)</div><div class="line">        instance.delete()</div><div class="line">        return Response(status=status.HTTP_204_NO_CONTENT)</div><div class="line">&apos;&apos;&apos;)</div><div class="line"></div><div class="line">serializers_template = Template(&apos;&apos;&apos;</div><div class="line">from workflow.models import &#123;&#123;models&#125;&#125;</div><div class="line">&apos;&apos;&apos;)</div><div class="line"></div><div class="line"></div><div class="line">model_list = [&quot;Order&quot;, &quot;OrderTask&quot;, &quot;OrderTaskLog&quot;, &quot;TaskResult&quot;, &quot;Task&quot;]</div><div class="line">print serializers_template.render(models=&apos;, &apos;.join(model_list))</div><div class="line"></div><div class="line"></div><div class="line">for model in model_list:</div><div class="line">    print view_template.render(name=model)</div></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/django/" rel="tag">#django</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/01/build_python_code_fornt/" rel="next" title="为pycharm安装自己喜欢的字体">
+                <i class="fa fa-chevron-left"></i> 为pycharm安装自己喜欢的字体
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="8 小时的技术博客" />
+          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
+          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">18</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#django的rest登录设置"><span class="nav-number">1.</span> <span class="nav-text">django的rest登录设置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用token来进行验证"><span class="nav-number">1.1.</span> <span class="nav-text">使用token来进行验证</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#workflow里面的基本API规划"><span class="nav-number">1.2.</span> <span class="nav-text">workflow里面的基本API规划</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建Task的api-view"><span class="nav-number">2.</span> <span class="nav-text">创建Task的api view</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#因为代码都差不多，所以就使用模版生成了部分view的代码"><span class="nav-number">3.</span> <span class="nav-text">因为代码都差不多，所以就使用模版生成了部分view的代码</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
