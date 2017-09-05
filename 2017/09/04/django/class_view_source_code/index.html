@@ -1,0 +1,619 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="django," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="前言目的内部的自动化平台一直使用Django做为web框架, 自己也一直使用class view进行后端view的编写, 代码也一直没有整理,最近整理下
+View基类分析as_view方法1234567891011121314151617181920212223242526# django.views.generic.base    @classonlymethod    def as_view(">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Django里面的class view实现">
+<meta property="og:url" content="http://www.sreguide.com/2017/09/04/django/class_view_source_code/index.html">
+<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:description" content="前言目的内部的自动化平台一直使用Django做为web框架, 自己也一直使用class view进行后端view的编写, 代码也一直没有整理,最近整理下
+View基类分析as_view方法1234567891011121314151617181920212223242526# django.views.generic.base    @classonlymethod    def as_view(">
+<meta property="og:updated_time" content="2017-09-05T15:45:29.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Django里面的class view实现">
+<meta name="twitter:description" content="前言目的内部的自动化平台一直使用Django做为web框架, 自己也一直使用class view进行后端view的编写, 代码也一直没有整理,最近整理下
+View基类分析as_view方法1234567891011121314151617181920212223242526# django.views.generic.base    @classonlymethod    def as_view(">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2017/09/04/django/class_view_source_code/"/>
+
+
+  <title> Django里面的class view实现 | 8小时的技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">8小时的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Django里面的class view实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2017-09-04T23:00:27+08:00" content="2017-09-04">
+              2017-09-04
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/django/" itemprop="url" rel="index">
+                    <span itemprop="name">django</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h4><h5 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h5><p>内部的自动化平台一直使用Django做为web框架, 自己也一直使用class view进行后端view的编写, 代码也一直没有整理,最近整理下</p>
+<h4 id="View基类分析"><a href="#View基类分析" class="headerlink" title="View基类分析"></a>View基类分析</h4><h5 id="as-view方法"><a href="#as-view方法" class="headerlink" title="as_view方法"></a>as_view方法</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># django.views.generic.base</span></div><div class="line"><span class="meta">    @classonlymethod</span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">as_view</span><span class="params">(cls, **initkwargs)</span>:</span></div><div class="line">        <span class="string">'''...此处省略给class view传递参数那部分的代码'''</span></div><div class="line">        <span class="function"><span class="keyword">def</span> <span class="title">view</span><span class="params">(request, *args, **kwargs)</span>:</span></div><div class="line">            self = cls(**initkwargs)</div><div class="line">            <span class="keyword">if</span> hasattr(self, <span class="string">'get'</span>) <span class="keyword">and</span> <span class="keyword">not</span> hasattr(self, <span class="string">'head'</span>):</div><div class="line">                self.head = self.get</div><div class="line">            self.request = request</div><div class="line">            self.args = args</div><div class="line">            self.kwargs = kwargs</div><div class="line">            <span class="keyword">return</span> self.dispatch(request, *args, **kwargs)</div><div class="line">        view.view_class = cls</div><div class="line">        view.view_initkwargs = initkwargs</div><div class="line"></div><div class="line">        <span class="comment"># update_wrapper函数可以把用一个函数的属性去装饰另外一个对象</span></div><div class="line">        <span class="comment"># 这个地方主要是通过传入不同的view类,获取cls的信息去装饰最后返回的view函数,从而将当前类的信息传递给view函数</span></div><div class="line"></div><div class="line">        <span class="comment"># 第一个函数主要是修改__module__ __name__ __doc_信息</span></div><div class="line">        update_wrapper(view, cls, updated=())</div><div class="line">        <span class="comment"># 下面的函数则是修改__dict__属性</span></div><div class="line">        <span class="comment"># 我们可以通过装饰cls.dpatch方法,去赋予一下属性, 比如我们要关闭csrf_token这种,则可以装饰dispatch方法</span></div><div class="line">        <span class="comment"># 然后通过下面的步骤来将对应的属性传递到view函数</span></div><div class="line">        <span class="comment"># csrf_exempt其实也只是给当前的view函数增加一个属性,然后csrf_token的中间件里面会获取对应的属性,从而实现对指定的view不需要csrf验证下效果</span></div><div class="line">        update_wrapper(view, cls.dispatch, assigned=())</div><div class="line">        <span class="keyword">return</span> view</div></pre></td></tr></table></figure>
+<h5 id="dispatch方法"><a href="#dispatch方法" class="headerlink" title="dispatch方法"></a>dispatch方法</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">dispatch</span><span class="params">(self, request, *args, **kwargs)</span>:</span></div><div class="line">    <span class="comment"># 获取对应的http方法,来获取到对应处理函数,进行对应逻辑的处理</span></div><div class="line">    <span class="comment"># 所以上面的csrf_exxmpt方法你装饰到具体的http请求处理函数上面,并不会有作用,因为它还没产生</span></div><div class="line">    <span class="keyword">if</span> request.method.lower() <span class="keyword">in</span> self.http_method_names:</div><div class="line">        handler = getattr(self, request.method.lower(), self.http_method_not_allowed)</div><div class="line">    <span class="keyword">else</span>:</div><div class="line">        handler = self.http_method_not_allowed</div><div class="line">    <span class="keyword">return</span> handler(request, *args, **kwargs)</div></pre></td></tr></table></figure>
+<h4 id="DetailView的实现"><a href="#DetailView的实现" class="headerlink" title="DetailView的实现"></a>DetailView的实现</h4><h5 id="SingleObjectMixin"><a href="#SingleObjectMixin" class="headerlink" title="SingleObjectMixin"></a>SingleObjectMixin</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># django.views.generic.detail</span></div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">SingleObjectMixin</span><span class="params">(ContextMixin)</span>:</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">SingleObjectMixin</span><span class="params">(ContextMixin)</span>:</span></div><div class="line">    <span class="string">"""</span></div><div class="line">    Provides the ability to retrieve a single object for further manipulation.</div><div class="line">    """</div><div class="line">    model = <span class="keyword">None</span></div><div class="line">    queryset = <span class="keyword">None</span></div><div class="line">    slug_field = <span class="string">'slug'</span></div><div class="line">    context_object_name = <span class="keyword">None</span></div><div class="line">    slug_url_kwarg = <span class="string">'slug'</span></div><div class="line">    pk_url_kwarg = <span class="string">'pk'</span></div><div class="line">    query_pk_and_slug = <span class="keyword">False</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_object</span><span class="params">(self, queryset=None)</span>:</span></div><div class="line">        <span class="comment"># 通过该方法最后会返回一个当前的实力, 呵呵</span></div><div class="line">        <span class="keyword">return</span> obj</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_queryset</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="comment"># 这个地方竟然会获取到所有的查询结果,没下到呀, 我想这种方式可能就是别人说的django里面会慢的地方把, 如果一个表很大, 这不是要挂?</span></div><div class="line">        <span class="keyword">return</span> self.queryset.all()</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_context_data</span><span class="params">(self, **kwargs)</span>:</span></div><div class="line">        context = &#123;&#125;</div><div class="line">        <span class="keyword">if</span> self.object:</div><div class="line">            context[<span class="string">'object'</span>] = self.object</div><div class="line">            context_object_name = self.get_context_object_name(self.object)</div><div class="line">            <span class="keyword">if</span> context_object_name:</div><div class="line">                context[context_object_name] = self.object</div><div class="line">        context.update(kwargs)</div><div class="line">        <span class="keyword">return</span> super(SingleObjectMixin, self).get_context_data(**context)</div></pre></td></tr></table></figure>
+<h5 id="BaseDetailView"><a href="#BaseDetailView" class="headerlink" title="BaseDetailView"></a>BaseDetailView</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseDetailView</span><span class="params">(SingleObjectMixin, View)</span>:</span></div><div class="line">    <span class="string">"""</span></div><div class="line">    A base view for displaying a single object</div><div class="line">    """</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get</span><span class="params">(self, request, *args, **kwargs)</span>:</span></div><div class="line">        self.object = self.get_object()</div><div class="line">        context = self.get_context_data(object=self.object)</div><div class="line">        <span class="keyword">return</span> self.render_to_response(context)</div></pre></td></tr></table></figure>
+<h5 id="DetailView"><a href="#DetailView" class="headerlink" title="DetailView"></a>DetailView</h5><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">DetailView</span><span class="params">(SingleObjectTemplateResponseMixin, BaseDetailView)</span>:</span></div><div class="line">    <span class="string">"""</span></div><div class="line">    Render a "detail" view of an object.</div><div class="line"></div><div class="line">    By default this is a model instance looked up from `self.queryset`, but the</div><div class="line">    view will support display of *any* object by overriding `self.get_object()`.</div><div class="line">    """</div></pre></td></tr></table></figure>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>其他的View里面的代码其实都差不多, 但也可以看到则django里面的这些view都没有使用直接继承的写法,而是通过mixin的方式,将不同的功能类分离,最后则使用的地方进行组合,这应该就是SRP原则则Python里面的实现来把</p>
+<p>感觉看这种代码, 现在比以前轻松一些, 但也有一些不好的地方,　现在还是山是山水是水,　后面继续写一下Django其他的东西, 那几个中间件的实现,还有用户登录和权限方面的东西, 今天就到这吧! Good Night!</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/django/" rel="tag">#django</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/04/26/ansible/ansible_api/" rel="next" title="Ansible Playbook Api测试">
+                <i class="fa fa-chevron-left"></i> Ansible Playbook Api测试
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="8 小时的技术博客" />
+          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
+          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#目的"><span class="nav-number">1.1.</span> <span class="nav-text">目的</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#View基类分析"><span class="nav-number">2.</span> <span class="nav-text">View基类分析</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#as-view方法"><span class="nav-number">2.1.</span> <span class="nav-text">as_view方法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#dispatch方法"><span class="nav-number">2.2.</span> <span class="nav-text">dispatch方法</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DetailView的实现"><span class="nav-number">3.</span> <span class="nav-text">DetailView的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#SingleObjectMixin"><span class="nav-number">3.1.</span> <span class="nav-text">SingleObjectMixin</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#BaseDetailView"><span class="nav-number">3.2.</span> <span class="nav-text">BaseDetailView</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#DetailView"><span class="nav-number">3.3.</span> <span class="nav-text">DetailView</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
