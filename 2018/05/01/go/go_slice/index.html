@@ -1,0 +1,632 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="go语言," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用 slice的表示方式123456// runtime/slice.gotype slice struct &amp;#123;	array unsafe.Poin">
+<meta name="keywords" content="go语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go里面的slice切片">
+<meta property="og:url" content="http://www.sreguide.com/2018/05/01/go/go_slice/index.html">
+<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用 slice的表示方式123456// runtime/slice.gotype slice struct &amp;#123;	array unsafe.Poin">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-05-01T10:50:02.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Go里面的slice切片">
+<meta name="twitter:description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用 slice的表示方式123456// runtime/slice.gotype slice struct &amp;#123;	array unsafe.Poin">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/05/01/go/go_slice/"/>
+
+
+  <title> Go里面的slice切片 | 8小时的技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">8小时的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Go里面的slice切片
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-05-01T18:49:37+08:00" content="2018-05-01">
+              2018-05-01
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="slice是什么"><a href="#slice是什么" class="headerlink" title="slice是什么"></a>slice是什么</h4><p>前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用</p>
+<h4 id="slice的表示方式"><a href="#slice的表示方式" class="headerlink" title="slice的表示方式"></a>slice的表示方式</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// runtime/slice.go</span></span><br><span class="line"><span class="keyword">type</span> slice <span class="keyword">struct</span> &#123;</span><br><span class="line">	array unsafe.Pointer	</span><br><span class="line">	<span class="built_in">len</span>   <span class="keyword">int</span></span><br><span class="line">	<span class="built_in">cap</span>   <span class="keyword">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以看到slice由三部分组成: 指针(指向底层的大数组), len(可用的元素空间), cap(切片的最大容量) </p>
+<h4 id="slice的初始化"><a href="#slice的初始化" class="headerlink" title="slice的初始化"></a>slice的初始化</h4><blockquote>
+<p>测试代码</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">        numbers := <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">10</span>)</span><br><span class="line">        numbers = <span class="built_in">append</span>(numbers, <span class="number">100</span>)</span><br><span class="line">        <span class="built_in">println</span>(numbers[<span class="number">0</span>])</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>gdb</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">(gdb) l</span><br><span class="line">1       package main</span><br><span class="line">2</span><br><span class="line">3       func main() &#123;</span><br><span class="line">4               numbers := make([]int, 10)</span><br><span class="line">5               numbers = append(numbers, 100)</span><br><span class="line">6               println(numbers[0])</span><br><span class="line">7       &#125;</span><br><span class="line">(gdb) l</span><br><span class="line">(gdb) b 5</span><br><span class="line">Breakpoint 2 at 0x44d9f7: file /home/devops/study/src/array/slice.go, line 5.</span><br><span class="line">(gdb) b 6 </span><br><span class="line">(gdb) set disassembly-flavor intel</span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/devops/study/src/array/slice </span><br><span class="line"></span><br><span class="line">Breakpoint 1, main.main () at /home/devops/study/src/array/slice.go:4</span><br><span class="line">4               numbers := make([]int, 10)</span><br><span class="line">(gdb) info locals</span><br><span class="line">numbers = &#123;array = 0xc420045f10, len = 10, cap = 10&#125;</span><br><span class="line">(gdb) p/x &amp;numbers</span><br><span class="line">$1 = 0xc420045f60</span><br><span class="line">(gdb) x/3xg 0xc420045f60</span><br><span class="line"># slice的三部分: 数组指针, 还有两个字段标识其容量, 默认都是10</span><br><span class="line">0xc420045f60:   0x000000c420045f10      0x000000000000000a</span><br><span class="line">0xc420045f70:   0x000000000000000a</span><br><span class="line">(gdb) x/10xg 0x000000c420045f10</span><br><span class="line">0xc420045f10:   0x0000000000000000      0x0000000000000000</span><br><span class="line">0xc420045f20:   0x0000000000000000      0x0000000000000000</span><br><span class="line">0xc420045f30:   0x0000000000000000      0x0000000000000000</span><br><span class="line">0xc420045f40:   0x0000000000000000      0x0000000000000000</span><br><span class="line">0xc420045f50:   0x0000000000000000      0x0000000000000000</span><br><span class="line"># 我们可以看到我们用make生成了一个新的slice, 首先会为我们申请一个数组, 然后吧这个数组的内存空间清0</span><br><span class="line">(gdb) disassemble </span><br><span class="line">Dump of assembler code for function main.main:</span><br><span class="line">   0x000000000044d980 &lt;+0&gt;:     mov    rcx,QWORD PTR fs:0xfffffffffffffff8</span><br><span class="line">   0x000000000044d989 &lt;+9&gt;:     lea    rax,[rsp-0x38]</span><br><span class="line">   0x000000000044d98e &lt;+14&gt;:    cmp    rax,QWORD PTR [rcx+0x10]</span><br><span class="line">   0x000000000044d992 &lt;+18&gt;:    jbe    0x44daa0 &lt;main.main+288&gt;</span><br><span class="line">   0x000000000044d998 &lt;+24&gt;:    sub    rsp,0xb8</span><br><span class="line">   0x000000000044d99f &lt;+31&gt;:    mov    QWORD PTR [rsp+0xb0],rbp</span><br><span class="line">   0x000000000044d9a7 &lt;+39&gt;:    lea    rbp,[rsp+0xb0]</span><br><span class="line">=&gt; 0x000000000044d9af &lt;+47&gt;:    lea    rdi,[rsp+0x48]</span><br><span class="line">   0x000000000044d9b4 &lt;+52&gt;:    xorps  xmm0,xmm0</span><br><span class="line">   0x000000000044d9b7 &lt;+55&gt;:    lea    rdi,[rdi-0x30]</span><br><span class="line">   0x000000000044d9bb &lt;+59&gt;:    mov    QWORD PTR [rsp-0x10],rbp</span><br><span class="line">   0x000000000044d9c0 &lt;+64&gt;:    lea    rbp,[rsp-0x10]</span><br><span class="line">   0x000000000044d9c5 &lt;+69&gt;:    call   0x4481e5 &lt;runtime.duffzero+277&gt;</span><br><span class="line">   0x000000000044d9ca &lt;+74&gt;:    mov    rbp,QWORD PTR [rbp+0x0]</span><br><span class="line">   0x000000000044d9ce &lt;+78&gt;:    lea    rax,[rsp+0x48]</span><br><span class="line">   0x000000000044d9d3 &lt;+83&gt;:    test   BYTE PTR [rax],al</span><br><span class="line">   0x000000000044d9d5 &lt;+85&gt;:    jmp    0x44d9d7 &lt;main.main+87&gt;</span><br><span class="line">   0x000000000044d9d7 &lt;+87&gt;:    mov    QWORD PTR [rsp+0x98],rax</span><br><span class="line">   0x000000000044d9df &lt;+95&gt;:    mov    QWORD PTR [rsp+0xa0],0xa</span><br><span class="line">   0x000000000044d9eb &lt;+107&gt;:   mov    QWORD PTR [rsp+0xa8],0xa</span><br><span class="line">   0x000000000044d9f7 &lt;+119&gt;:   jmp    0x44d9f9 &lt;main.main+121&gt;</span><br></pre></td></tr></table></figure>
+<h4 id="append-slice"><a href="#append-slice" class="headerlink" title="append slice"></a>append slice</h4><p>go里面的append可用往slice里面添加元素, 我们看看这个函数里面都发生了什么<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function main.main:</span><br><span class="line">   0x000000000044d980 &lt;+0&gt;:     mov    rcx,QWORD PTR fs:0xfffffffffffffff8</span><br><span class="line">   0x000000000044d989 &lt;+9&gt;:     lea    rax,[rsp-0x38]</span><br><span class="line">   0x000000000044d98e &lt;+14&gt;:    cmp    rax,QWORD PTR [rcx+0x10]</span><br><span class="line">   0x000000000044d992 &lt;+18&gt;:    jbe    0x44daa0 &lt;main.main+288&gt;</span><br><span class="line">   0x000000000044d998 &lt;+24&gt;:    sub    rsp,0xb8</span><br><span class="line">   0x000000000044d99f &lt;+31&gt;:    mov    QWORD PTR [rsp+0xb0],rbp</span><br><span class="line">   0x000000000044d9a7 &lt;+39&gt;:    lea    rbp,[rsp+0xb0]</span><br><span class="line">   0x000000000044d9af &lt;+47&gt;:    lea    rdi,[rsp+0x48]</span><br><span class="line">   0x000000000044d9b4 &lt;+52&gt;:    xorps  xmm0,xmm0</span><br><span class="line">   0x000000000044d9b7 &lt;+55&gt;:    lea    rdi,[rdi-0x30]</span><br><span class="line">   0x000000000044d9bb &lt;+59&gt;:    mov    QWORD PTR [rsp-0x10],rbp</span><br><span class="line">   0x000000000044d9c0 &lt;+64&gt;:    lea    rbp,[rsp-0x10]</span><br><span class="line">   0x000000000044d9c5 &lt;+69&gt;:    call   0x4481e5 &lt;runtime.duffzero+277&gt;</span><br><span class="line">   0x000000000044d9ca &lt;+74&gt;:    mov    rbp,QWORD PTR [rbp+0x0]</span><br><span class="line">   0x000000000044d9ce &lt;+78&gt;:    lea    rax,[rsp+0x48]</span><br><span class="line">   0x000000000044d9d3 &lt;+83&gt;:    test   BYTE PTR [rax],al</span><br><span class="line">   0x000000000044d9d5 &lt;+85&gt;:    jmp    0x44d9d7 &lt;main.main+87&gt;</span><br><span class="line">   0x000000000044d9d7 &lt;+87&gt;:    mov    QWORD PTR [rsp+0x98],rax</span><br><span class="line">   0x000000000044d9df &lt;+95&gt;:    mov    QWORD PTR [rsp+0xa0],0xa</span><br><span class="line">   0x000000000044d9eb &lt;+107&gt;:   mov    QWORD PTR [rsp+0xa8],0xa</span><br><span class="line">=&gt; 0x000000000044d9f7 &lt;+119&gt;:   jmp    0x44d9f9 &lt;main.main+121&gt;</span><br><span class="line">   0x000000000044d9f9 &lt;+121&gt;:   lea    rcx,[rip+0xa6e0]        # 0x4580e0</span><br><span class="line">   0x000000000044da00 &lt;+128&gt;:   mov    QWORD PTR [rsp],rcx</span><br><span class="line">   0x000000000044da04 &lt;+132&gt;:   mov    QWORD PTR [rsp+0x8],rax</span><br><span class="line">   0x000000000044da09 &lt;+137&gt;:   mov    QWORD PTR [rsp+0x10],0xa</span><br><span class="line">   0x000000000044da12 &lt;+146&gt;:   mov    QWORD PTR [rsp+0x18],0xa</span><br><span class="line">   0x000000000044da1b &lt;+155&gt;:   mov    QWORD PTR [rsp+0x20],0xb</span><br><span class="line">   0x000000000044da24 &lt;+164&gt;:   call   0x434500 &lt;runtime.growslice&gt;	#我们可用看到append最后实际上是会调用growslice这个函数进行操作</span><br><span class="line">   0x000000000044da29 &lt;+169&gt;:   mov    rax,QWORD PTR [rsp+0x28]</span><br><span class="line">   0x000000000044da2e &lt;+174&gt;:   mov    rcx,QWORD PTR [rsp+0x30]</span><br><span class="line">   0x000000000044da33 &lt;+179&gt;:   mov    rdx,QWORD PTR [rsp+0x38]</span><br><span class="line">   0x000000000044da38 &lt;+184&gt;:   inc    rcx</span><br></pre></td></tr></table></figure></p>
+<h4 id="growslice对切片的实现"><a href="#growslice对切片的实现" class="headerlink" title="growslice对切片的实现"></a>growslice对切片的实现</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// growslice handles slice growth during append.</span></span><br><span class="line"><span class="comment">// It is passed the slice element type, the old slice, and the desired new minimum capacity,</span></span><br><span class="line"><span class="comment">// and it returns a new slice with at least that capacity, with the old data</span></span><br><span class="line"><span class="comment">// copied into it.</span></span><br><span class="line"><span class="comment">// The new slice's length is set to the old slice's length,</span></span><br><span class="line"><span class="comment">// NOT to the new requested capacity.</span></span><br><span class="line"><span class="comment">// This is for codegen convenience. The old slice's length is used immediately</span></span><br><span class="line"><span class="comment">// to calculate where to write new values during an append.</span></span><br><span class="line"><span class="comment">// <span class="doctag">TODO:</span> When the old backend is gone, reconsider this decision.</span></span><br><span class="line"><span class="comment">// The SSA backend might prefer the new length or to return only ptr/cap and save stack space.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">growslice</span><span class="params">(et *_type, old slice, <span class="built_in">cap</span> <span class="keyword">int</span>)</span> <span class="title">slice</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> raceenabled &#123;</span><br><span class="line">		callerpc := getcallerpc()</span><br><span class="line">		racereadrangepc(old.array, <span class="keyword">uintptr</span>(old.<span class="built_in">len</span>*<span class="keyword">int</span>(et.size)), callerpc, funcPC(growslice))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> msanenabled &#123;</span><br><span class="line">		msanread(old.array, <span class="keyword">uintptr</span>(old.<span class="built_in">len</span>*<span class="keyword">int</span>(et.size)))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// _type是反射的一种包装对象, 如果穿入的元素的大小是0, go里面有一个标识0变量的变量zerobase把该元素放入到slice里面直接返回</span></span><br><span class="line">	<span class="keyword">if</span> et.size == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">cap</span> &lt; old.<span class="built_in">cap</span> &#123;</span><br><span class="line">			<span class="built_in">panic</span>(errorString(<span class="string">"growslice: cap out of range"</span>))</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// append should not create a slice with nil pointer but non-zero len.</span></span><br><span class="line">		<span class="comment">// We assume that append doesn't need to preserve old.array in this case.</span></span><br><span class="line">		<span class="comment">// 如果添加进来的元素的大小为0, 泽返回一个新的未初始化的内存slice, zerobase是go里面所有大小为0的指向</span></span><br><span class="line">		<span class="keyword">return</span> slice&#123;unsafe.Pointer(&amp;zerobase), old.<span class="built_in">len</span>, <span class="built_in">cap</span>&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	newcap := old.<span class="built_in">cap</span></span><br><span class="line">	doublecap := newcap + newcap</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">cap</span> &gt; doublecap &#123;	<span class="comment">//默认扩容的大小为2倍, 如果当前容量已经为之前的2倍, 泽不需要计算</span></span><br><span class="line">		newcap = <span class="built_in">cap</span></span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> old.<span class="built_in">len</span> &lt; <span class="number">1024</span> &#123;	<span class="comment">//如果原切片的大小小于1024则默认扩容为2倍空间</span></span><br><span class="line">			newcap = doublecap</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">// Check 0 &lt; newcap to detect overflow</span></span><br><span class="line">			<span class="comment">// and prevent an infinite loop.</span></span><br><span class="line">			<span class="keyword">for</span> <span class="number">0</span> &lt; newcap &amp;&amp; newcap &lt; <span class="built_in">cap</span> &#123;	<span class="comment">// 如果元素小于1024, 泽每次扩容25%</span></span><br><span class="line">				newcap += newcap / <span class="number">4</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// Set newcap to the requested cap when</span></span><br><span class="line">			<span class="comment">// the newcap calculation overflowed.</span></span><br><span class="line">			<span class="keyword">if</span> newcap &lt;= <span class="number">0</span> &#123;</span><br><span class="line">				newcap = <span class="built_in">cap</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> overflow <span class="keyword">bool</span></span><br><span class="line">	<span class="keyword">var</span> lenmem, newlenmem, capmem <span class="keyword">uintptr</span></span><br><span class="line">	<span class="keyword">const</span> ptrSize = unsafe.Sizeof((*<span class="keyword">byte</span>)(<span class="literal">nil</span>))</span><br><span class="line">	<span class="comment">//_MaxMem是系统最大可用的堆内存大小-1</span></span><br><span class="line">	<span class="comment">// lenmem表示切片的len</span></span><br><span class="line">	<span class="comment">// capmem表示上面根据计算的切片的cap</span></span><br><span class="line">	<span class="comment">// overflow表示根据上面计算后,重新生成的切片是否会产生越界行为</span></span><br><span class="line">	<span class="keyword">switch</span> et.size &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">		<span class="comment">// 如果新元素还有1个字节的大小</span></span><br><span class="line">		lenmem = <span class="keyword">uintptr</span>(old.<span class="built_in">len</span>)</span><br><span class="line">		newlenmem = <span class="keyword">uintptr</span>(<span class="built_in">cap</span>)</span><br><span class="line">		capmem = roundupsize(<span class="keyword">uintptr</span>(newcap))</span><br><span class="line">		overflow = <span class="keyword">uintptr</span>(newcap) &gt; _MaxMem	 </span><br><span class="line">		newcap = <span class="keyword">int</span>(capmem)</span><br><span class="line">	<span class="keyword">case</span> ptrSize:</span><br><span class="line">		<span class="comment">// 如果是一个指针的大小</span></span><br><span class="line">		lenmem = <span class="keyword">uintptr</span>(old.<span class="built_in">len</span>) * ptrSize	</span><br><span class="line">		newlenmem = <span class="keyword">uintptr</span>(<span class="built_in">cap</span>) * ptrSize</span><br><span class="line">		capmem = roundupsize(<span class="keyword">uintptr</span>(newcap) * ptrSize)</span><br><span class="line">		overflow = <span class="keyword">uintptr</span>(newcap) &gt; _MaxMem/ptrSize	/判断</span><br><span class="line">		newcap = <span class="keyword">int</span>(capmem / ptrSize)</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		<span class="comment">// 根据容量和传入类型的大小来进行计算</span></span><br><span class="line">		lenmem = <span class="keyword">uintptr</span>(old.<span class="built_in">len</span>) * et.size</span><br><span class="line">		newlenmem = <span class="keyword">uintptr</span>(<span class="built_in">cap</span>) * et.size</span><br><span class="line">		capmem = roundupsize(<span class="keyword">uintptr</span>(newcap) * et.size)</span><br><span class="line">		overflow = <span class="keyword">uintptr</span>(newcap) &gt; maxSliceCap(et.size)</span><br><span class="line">		newcap = <span class="keyword">int</span>(capmem / et.size)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// The check of overflow (uintptr(newcap) &gt; maxSliceCap(et.size))</span></span><br><span class="line">	<span class="comment">// in addition to capmem &gt; _MaxMem is needed to prevent an overflow</span></span><br><span class="line">	<span class="comment">// which can be used to trigger a segfault on 32bit architectures</span></span><br><span class="line">	<span class="comment">// with this example program:</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// type T [1&lt;&lt;27 + 1]int64</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// var d T</span></span><br><span class="line">	<span class="comment">// var s []T</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// func main() &#123;</span></span><br><span class="line">	<span class="comment">//   s = append(s, d, d, d, d)</span></span><br><span class="line">	<span class="comment">//   print(len(s), "\n")</span></span><br><span class="line">	<span class="comment">// &#125;</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">cap</span> &lt; old.<span class="built_in">cap</span> || overflow || capmem &gt; _MaxMem &#123;</span><br><span class="line">		<span class="comment">// overflow: 表示新的slcie堆里面已经房不下了， capmem&gt;_MaxMem标识申请的内存超越堆大小的限制了(因为要返回新的slice对象,所以slice底层指向的数组只能倍分配到堆上,所以内存不能超越堆内存的大小)</span></span><br><span class="line">		<span class="built_in">panic</span>(errorString(<span class="string">"growslice: cap out of range"</span>))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> p unsafe.Pointer</span><br><span class="line">	<span class="keyword">if</span> et.kind&amp;kindNoPointers != <span class="number">0</span> &#123;</span><br><span class="line">		<span class="comment">// 如果传入元素的类型没有指针, 则可以直接吧该元素append进去</span></span><br><span class="line">		p = mallocgc(capmem, <span class="literal">nil</span>, <span class="literal">false</span>)</span><br><span class="line">		memmove(p, old.array, lenmem)</span><br><span class="line">		<span class="comment">// The append() that calls growslice is going to overwrite from old.len to cap (which will be the new length).</span></span><br><span class="line">		<span class="comment">// Only clear the part that will not be overwritten.</span></span><br><span class="line">		memclrNoHeapPointers(add(p, newlenmem), capmem-newlenmem)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">// Note: can't use rawmem (which avoids zeroing of memory), because then GC can scan uninitialized memory.</span></span><br><span class="line">		<span class="comment">// 如果是包含指针类型, 则需要对申请的内存进行初始化, gc后续会扫描这种未初始化好的内存</span></span><br><span class="line">		p = mallocgc(capmem, et, <span class="literal">true</span>)</span><br><span class="line">		<span class="keyword">if</span> !writeBarrier.enabled &#123;</span><br><span class="line">			memmove(p, old.array, lenmem)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">for</span> i := <span class="keyword">uintptr</span>(<span class="number">0</span>); i &lt; lenmem; i += et.size &#123;</span><br><span class="line">				typedmemmove(et, add(p, i), add(old.array, i))</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> slice&#123;p, old.<span class="built_in">len</span>, newcap&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/go语言/" rel="tag">#go语言</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/26/go/go_array/" rel="next" title="Go里面的数组">
+                <i class="fa fa-chevron-left"></i> Go里面的数组
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="8 小时的技术博客" />
+          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
+          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">18</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#slice是什么"><span class="nav-number">1.</span> <span class="nav-text">slice是什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#slice的表示方式"><span class="nav-number">2.</span> <span class="nav-text">slice的表示方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#slice的初始化"><span class="nav-number">3.</span> <span class="nav-text">slice的初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#append-slice"><span class="nav-number">4.</span> <span class="nav-text">append slice</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#growslice对切片的实现"><span class="nav-number">5.</span> <span class="nav-text">growslice对切片的实现</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
