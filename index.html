@@ -270,6 +270,126 @@
             
               
                 
+                <a class="post-title-link" href="/2018/08/09/k8s/wait_poll/" itemprop="url">
+                  定时、周期调度、等待时间的工具函数实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-08-09T23:15:52+08:00" content="2018-08-09">
+              2018-08-09
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-07-21-44-20.png" alt=""></p>
+<ul>
+<li>在平台开发过程中，当有些执行完某些操作后，可能还需要等待直到某个条件满足的时候</li>
+<li>比如在CMDB删除了一个项目，CMDB需要一直等待其他系统资源回收完，才能在自身彻底释放对应的资源， 那就需要一直在哪里等待<br><em>今天主要是一个关于定时轮训、等待的工具方法实现</em></li>
+</ul>
+<h3 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> wait</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"errors"</span></span><br><span class="line">	<span class="string">"math/rand"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Jitter 允许时间在一定范围内的波动</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Jitter</span><span class="params">(duration time.Duration, maxFactor <span class="keyword">float64</span>)</span> <span class="title">time</span>.<span class="title">Duration</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> maxFactor &lt;= <span class="number">0.0</span> &#123;</span><br><span class="line">		maxFactor = <span class="number">1.0</span></span><br><span class="line">	&#125;</span><br><span class="line">	wait := duration + time.Duration(rand.Float64()*maxFactor*<span class="keyword">float64</span>(duration))</span><br><span class="line">	<span class="keyword">return</span> wait</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// resetReuseTimer 重置timer</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">resetReuseTimer</span><span class="params">(t *time.Timer, d time.Duration, sawTimeout <span class="keyword">bool</span>)</span> *<span class="title">time</span>.<span class="title">Timer</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> t == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> time.NewTimer(d)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> !t.Stop() &amp;&amp; !sawTimeout &#123;</span><br><span class="line">		&lt;-t.C</span><br><span class="line">	&#125;</span><br><span class="line">	t.Reset(d)</span><br><span class="line">	<span class="keyword">return</span> t</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// HandlerCrash 控制失败异常</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">HandlerCrash</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"crash"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// JitterUtil 周期调度函数执行</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">JitterUtil</span><span class="params">(f <span class="keyword">func</span>()</span>, <span class="title">period</span> <span class="title">time</span>.<span class="title">Duration</span>, <span class="title">jitterFactor</span> <span class="title">float64</span>, <span class="title">sliding</span> <span class="title">bool</span>, <span class="title">stopCh</span> &lt;-<span class="title">chan</span> <span class="title">struct</span></span>&#123;&#125;) &#123;</span><br><span class="line">	<span class="keyword">var</span> t *time.Timer</span><br><span class="line">	<span class="keyword">var</span> sawTimeout <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-stopCh:</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		jitteredPeriod := period</span><br><span class="line">		<span class="keyword">if</span> jitterFactor &gt; <span class="number">0.0</span> &#123;</span><br><span class="line">                   <span class="comment">// 使用jitterFactor可以生成一个范围内随机的time.Duration</span></span><br><span class="line">			jitteredPeriod = Jitter(jitteredPeriod, jitterFactor)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> !sliding &#123;</span><br><span class="line">			t = resetReuseTimer(t, jitteredPeriod, sawTimeout)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			<span class="keyword">defer</span> HandlerCrash()</span><br><span class="line">			f()</span><br><span class="line">		&#125;()</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> sliding &#123;</span><br><span class="line">			t = resetReuseTimer(t, jitteredPeriod, sawTimeout)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-stopCh:</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		<span class="keyword">case</span> &lt;-t.C:</span><br><span class="line">			sawTimeout = <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Util 是封装的JitterUtil并提供了jitterFactor和sliding的默认值</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Util</span><span class="params">(f <span class="keyword">func</span>()</span>, <span class="title">period</span> <span class="title">time</span>.<span class="title">Duration</span>, <span class="title">stopCh</span> &lt;-<span class="title">chan</span> <span class="title">struct</span></span>&#123;&#125;) &#123;</span><br><span class="line">	JitterUtil(f, period, <span class="number">0.0</span>, <span class="literal">true</span>, stopCh)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// WaiterFunc 等待某个函数执行</span></span><br><span class="line"><span class="keyword">type</span> WaitFunc <span class="function"><span class="keyword">func</span><span class="params">(done &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> &lt;-<span class="title">chan</span> <span class="title">struct</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ConditionFunc 等待函数条件呗满足</span></span><br><span class="line"><span class="keyword">type</span> ConditionFunc <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="params">(done <span class="keyword">bool</span>, err error)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line">var ErrWaitTimeout = errors.New("timed out waiting for the condition")</span><br><span class="line"></span><br><span class="line"><span class="comment">// WaitFor 执行某个函数活着某个条件呗满足</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WaitFor</span><span class="params">(wait WaitFunc, fn ConditionFunc, done &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	c := wait(done)</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		_, open := &lt;-c</span><br><span class="line">		ok, err := fn()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> ok &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> !open &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> ErrWaitTimeout</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">poller</span><span class="params">(interval, timeout time.Duration)</span> <span class="title">WaitFunc</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> WaitFunc(<span class="function"><span class="keyword">func</span><span class="params">(done &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> &lt;-<span class="title">chan</span> <span class="title">struct</span></span>&#123;&#125; &#123;</span><br><span class="line">		ch := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			<span class="keyword">defer</span> <span class="built_in">close</span>(ch)</span><br><span class="line"></span><br><span class="line">			tick := time.NewTicker(interval)</span><br><span class="line">			<span class="keyword">defer</span> tick.Stop()</span><br><span class="line"></span><br><span class="line">			<span class="keyword">var</span> after &lt;-<span class="keyword">chan</span> time.Time</span><br><span class="line">			<span class="keyword">if</span> timeout != <span class="number">0</span> &#123;</span><br><span class="line">				timer := time.NewTimer(timeout)</span><br><span class="line">				after = timer.C</span><br><span class="line">				<span class="keyword">defer</span> timer.Stop()</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			<span class="keyword">for</span> &#123;</span><br><span class="line">				<span class="keyword">select</span> &#123;</span><br><span class="line">				<span class="keyword">case</span> &lt;-tick.C:</span><br><span class="line">					<span class="keyword">select</span> &#123;</span><br><span class="line">					<span class="keyword">case</span> ch &lt;- <span class="keyword">struct</span>&#123;&#125;&#123;&#125;:</span><br><span class="line">					<span class="keyword">default</span>:</span><br><span class="line">					&#125;</span><br><span class="line">				<span class="keyword">case</span> &lt;-after:</span><br><span class="line">					<span class="keyword">return</span></span><br><span class="line">				<span class="keyword">case</span> &lt;-done:</span><br><span class="line">					<span class="keyword">return</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;()</span><br><span class="line">		<span class="keyword">return</span> ch</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// pollInternal</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">pollInternal</span><span class="params">(wait WaitFunc, condition ConditionFunc)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	done := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line">	<span class="keyword">defer</span> <span class="built_in">close</span>(done)</span><br><span class="line">	<span class="keyword">return</span> WaitFor(wait, condition, done)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Poll 提供对外统一的接口</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Poll</span><span class="params">(interval, timeout time.Duration, condition ConditionFunc)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> pollInternal(poller(interval, timeout), condition)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码都比较简单， 但在K8s里面很多资源更新方法里面，都使用了这些函数, 比如JOB的更新里面<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// UpdateJobFunc updates the job object. It retries if there is a conflict, throw out error if</span></span><br><span class="line"><span class="comment">// there is any other errors. name is the job name, updateFn is the function updating the</span></span><br><span class="line"><span class="comment">// job object.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">UpdateJobFunc</span><span class="params">(c clientset.Interface, ns, name <span class="keyword">string</span>, updateFn <span class="keyword">func</span>(job *batch.Job)</span>)</span> &#123;</span><br><span class="line">	ExpectNoError(wait.Poll(time.Millisecond*<span class="number">500</span>, time.Second*<span class="number">30</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span> &#123;</span><br><span class="line">		job, err := GetJob(c, ns, name)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span>, fmt.Errorf(<span class="string">"failed to get pod %q: %v"</span>, name, err)</span><br><span class="line">		&#125;</span><br><span class="line">		updateFn(job)</span><br><span class="line">		_, err = UpdateJob(c, ns, job)</span><br><span class="line">		<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">			Logf(<span class="string">"Successfully updated job %q"</span>, name)</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> errors.IsConflict(err) &#123;</span><br><span class="line">			Logf(<span class="string">"Conflicting update to job %q, re-get and re-update: %v"</span>, name, err)</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span>, <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, fmt.Errorf(<span class="string">"failed to update job %q: %v"</span>, name, err)</span><br><span class="line">	&#125;))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>今天写的比较简单，都是晚上回来看的，白天还药做平台开发，今天就这样吧</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/08/08/k8s/lru_cache/" itemprop="url">
                   LRU缓存
                 </a>
@@ -1404,127 +1524,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/04/24/go/go_string/" itemprop="url">
-                  Go里面的字符串
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-04-24T23:01:41+08:00" content="2018-04-24">
-              2018-04-24
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/" itemprop="url" rel="index">
-                    <span itemprop="name">go语言</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h3><h4 id="目标-go字符串内存布局"><a href="#目标-go字符串内存布局" class="headerlink" title="目标: go字符串内存布局"></a>目标: go字符串内存布局</h4><p>了解go里面字符串的底层表示方式和内存布局</p>
-<h4 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"strings"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">        str := strings.Repeat(<span class="string">"hello"</span>, <span class="number">2</span>)</span><br><span class="line">        <span class="built_in">println</span>(str)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go build -gcflags &quot;-N -l&quot; -o test strings.go</span><br></pre></td></tr></table></figure>
-<h4 id="查看汇编"><a href="#查看汇编" class="headerlink" title="查看汇编"></a>查看汇编</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">(gdb) l</span><br><span class="line">1       package main</span><br><span class="line">2</span><br><span class="line">3       import &quot;strings&quot;</span><br><span class="line">4</span><br><span class="line">5       func main() &#123;</span><br><span class="line">6               str := strings.Repeat(&quot;hello&quot;, 2)	//我们通过strings.Repeat生成一个字符串</span><br><span class="line">7               println(str)</span><br><span class="line">8       &#125;</span><br><span class="line">(gdb) l</span><br><span class="line">Line number 9 out of range; /home/devops/study/src/string/strings.go has 8 lines.</span><br><span class="line">(gdb) b 7 </span><br><span class="line">Breakpoint 1 at 0x454be3: file /home/devops/study/src/string/strings.go, line 7.</span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/devops/study/src/string/test </span><br><span class="line"></span><br><span class="line">Breakpoint 1, main.main () at /home/devops/study/src/string/strings.go:7</span><br><span class="line">7               println(str)</span><br><span class="line">(gdb) set disassembly-flavor intel</span><br><span class="line">(gdb) info locals</span><br><span class="line">str = 0xc4200140b0 &quot;hellohello&quot;</span><br><span class="line">(gdb) p/x &amp;str	#查看字符串变量的内存地址</span><br><span class="line">$1 = 0xc420045f68</span><br><span class="line">(gdb) x/2xg 0xc420045f68	# 查看该字符串变量的内存布局</span><br><span class="line">0xc420045f68:   0x000000c4200140b0      0x000000000000000a</span><br><span class="line">(gdb) x/2xg 0xc4200140b0	# 我们可以看到用ascii标识的字符串</span><br><span class="line">0xc4200140b0:   0x6c65686f6c6c6568      0x0000000000006f6c</span><br><span class="line">(gdb) info registers </span><br><span class="line">rax            0xc4200140b0     842350543024</span><br><span class="line">rbx            0xa      10</span><br><span class="line">rcx            0xa      10</span><br><span class="line">rdx            0xa      10</span><br><span class="line">rsi            0xc4200140a0     842350543008</span><br><span class="line">rdi            0xc4200140b0     842350543024</span><br><span class="line">rbp            0xc420045f78     0xc420045f78</span><br><span class="line">rsp            0xc420045f40     0xc420045f40</span><br><span class="line">r8             0x1      1</span><br><span class="line">r9             0x0      0</span><br><span class="line">r10            0xc4200140b0     842350543024</span><br><span class="line">r11            0x8      8</span><br><span class="line">r12            0xc      12</span><br><span class="line">r13            0xb      11</span><br><span class="line">r14            0x200    512</span><br><span class="line">r15            0xc      12</span><br><span class="line">rip            0x454be3 0x454be3 &lt;main.main+83&gt;</span><br><span class="line">eflags         0x202    [ IF ]</span><br><span class="line">cs             0x33     51</span><br><span class="line">ss             0x2b     43</span><br><span class="line">ds             0x0      0</span><br><span class="line">es             0x0      0</span><br><span class="line">fs             0x63     99</span><br><span class="line">gs             0x0      0</span><br><span class="line"># 通过查看寄存器发现我们的栈的位置是0xc420045f78 -0xc420045f40, 而我们的字符串的内存地址0x000000c4200140b0, 并没有在当前栈范围内</span><br></pre></td></tr></table></figure>
-<h4 id="目标-go字符串相加的实现"><a href="#目标-go字符串相加的实现" class="headerlink" title="目标:go字符串相加的实现"></a>目标:go字符串相加的实现</h4><p>go里面字符串的拼接是如何实现的 </p>
-<h4 id="测试代码-1"><a href="#测试代码-1" class="headerlink" title="测试代码"></a>测试代码</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">        s1 := <span class="string">"test"</span></span><br><span class="line">        s2 := <span class="string">"hello"</span></span><br><span class="line">        s3 := s2 + s1</span><br><span class="line">        <span class="built_in">println</span>(s1, s2, s3)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="gdb调试"><a href="#gdb调试" class="headerlink" title="gdb调试"></a>gdb调试</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">gdb) l</span><br><span class="line">1       package main</span><br><span class="line">2</span><br><span class="line">3       func main() &#123;</span><br><span class="line">4</span><br><span class="line">5               s1 := &quot;test&quot;</span><br><span class="line">6               s2 := &quot;hello&quot;</span><br><span class="line">7               s3 := s2 + s1</span><br><span class="line">8               println(s1, s2, s3)</span><br><span class="line">9       &#125;</span><br><span class="line">(gdb) l</span><br><span class="line">Line number 10 out of range; /home/devops/study/src/string/strings2.go has 9 lines.</span><br><span class="line">(gdb) b 7</span><br><span class="line">Breakpoint 1 at 0x44d9dc: file /home/devops/study/src/string/strings2.go, line 7.</span><br><span class="line">(gdb) set disassembly-flavor intel</span><br><span class="line">(gdb) disassemble </span><br><span class="line">Dump of assembler code for function main.main:</span><br><span class="line">   0x000000000044d980 &lt;+0&gt;:     mov    rcx,QWORD PTR fs:0xfffffffffffffff8</span><br><span class="line">   0x000000000044d989 &lt;+9&gt;:     lea    rax,[rsp-0x10]</span><br><span class="line">   0x000000000044d98e &lt;+14&gt;:    cmp    rax,QWORD PTR [rcx+0x10]</span><br><span class="line">   0x000000000044d992 &lt;+18&gt;:    jbe    0x44da9d &lt;main.main+285&gt;</span><br><span class="line">   0x000000000044d998 &lt;+24&gt;:    sub    rsp,0x90</span><br><span class="line">   0x000000000044d99f &lt;+31&gt;:    mov    QWORD PTR [rsp+0x88],rbp</span><br><span class="line">   0x000000000044d9a7 &lt;+39&gt;:    lea    rbp,[rsp+0x88]</span><br><span class="line">   0x000000000044d9af &lt;+47&gt;:    lea    rax,[rip+0x1d69c]        # 0x46b052</span><br><span class="line">   0x000000000044d9b6 &lt;+54&gt;:    mov    QWORD PTR [rsp+0x78],rax</span><br><span class="line">   0x000000000044d9bb &lt;+59&gt;:    mov    QWORD PTR [rsp+0x80],0x4</span><br><span class="line">   0x000000000044d9c7 &lt;+71&gt;:    lea    rax,[rip+0x1d718]        # 0x46b0e6</span><br><span class="line">   0x000000000044d9ce &lt;+78&gt;:    mov    QWORD PTR [rsp+0x68],rax</span><br><span class="line">   0x000000000044d9d3 &lt;+83&gt;:    mov    QWORD PTR [rsp+0x70],0x5</span><br><span class="line">=&gt; 0x000000000044d9dc &lt;+92&gt;:    lea    rax,[rsp+0x38]</span><br><span class="line">   0x000000000044d9e1 &lt;+97&gt;:    mov    QWORD PTR [rsp],rax</span><br><span class="line">   # 我们可以看到下面调用了一个runtie.concatstring2的函数,所以下面这部分汇编代码主要是为完成字符串对象的拷贝(字符串地址和长度)</span><br><span class="line">   0x000000000044d9e5 &lt;+101&gt;:   mov    rax,QWORD PTR [rsp+0x68]	</span><br><span class="line">   0x000000000044d9ea &lt;+106&gt;:   mov    rcx,QWORD PTR [rsp+0x70]</span><br><span class="line">   0x000000000044d9ef &lt;+111&gt;:   mov    QWORD PTR [rsp+0x8],rax</span><br><span class="line">   0x000000000044d9f4 &lt;+116&gt;:   mov    QWORD PTR [rsp+0x10],rcx</span><br><span class="line">   0x000000000044d9f9 &lt;+121&gt;:   mov    rax,QWORD PTR [rsp+0x78]</span><br><span class="line">   0x000000000044d9fe &lt;+126&gt;:   mov    rcx,QWORD PTR [rsp+0x80]</span><br><span class="line">   0x000000000044da06 &lt;+134&gt;:   mov    QWORD PTR [rsp+0x18],rax</span><br><span class="line">   0x000000000044da0b &lt;+139&gt;:   mov    QWORD PTR [rsp+0x20],rcx</span><br><span class="line">   0x000000000044da10 &lt;+144&gt;:   call   0x437c70 &lt;runtime.concatstring2&gt;</span><br><span class="line">   0x000000000044da15 &lt;+149&gt;:   mov    rax,QWORD PTR [rsp+0x28]</span><br><span class="line">   0x000000000044da1a &lt;+154&gt;:   mov    rcx,QWORD PTR [rsp+0x30]</span><br><span class="line">   0x000000000044da1f &lt;+159&gt;:   mov    QWORD PTR [rsp+0x58],rax</span><br><span class="line">   0x000000000044da24 &lt;+164&gt;:   mov    QWORD PTR [rsp+0x60],rcx</span><br><span class="line">   0x000000000044da29 &lt;+169&gt;:   call   0x422670 &lt;runtime.printlock&gt;</span><br><span class="line">   0x000000000044da2e &lt;+174&gt;:   mov    rax,QWORD PTR [rsp+0x78]</span><br><span class="line">   0x000000000044da33 &lt;+179&gt;:   mov    rcx,QWORD PTR [rsp+0x80]</span><br><span class="line">   0x000000000044da3b &lt;+187&gt;:   mov    QWORD PTR [rsp],ra</span><br></pre></td></tr></table></figure>
-<h4 id="runtime-concatstring2"><a href="#runtime-concatstring2" class="headerlink" title="runtime.concatstring2"></a>runtime.concatstring2</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">/ concatstrings implements a Go <span class="keyword">string</span> concatenation x+y+z+...</span><br><span class="line"><span class="comment">// The operands are passed in the slice a.</span></span><br><span class="line"><span class="comment">// If buf != nil, the compiler has determined that the result does not</span></span><br><span class="line"><span class="comment">// escape the calling function, so the string data can be stored in buf</span></span><br><span class="line"><span class="comment">// if small enough.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">concatstrings</span><span class="params">(buf *tmpBuf, a []<span class="keyword">string</span>)</span> <span class="title">string</span></span> &#123;</span><br><span class="line">        idx := <span class="number">0</span></span><br><span class="line">        l := <span class="number">0</span></span><br><span class="line">        count := <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> i, x := <span class="keyword">range</span> a &#123;</span><br><span class="line">                n := <span class="built_in">len</span>(x)</span><br><span class="line">                <span class="keyword">if</span> n == <span class="number">0</span> &#123;</span><br><span class="line">                        <span class="keyword">continue</span></span><br><span class="line">				&#125;</span><br><span class="line">				<span class="comment">//想想什么时候这个地方会成立？l := 0是声明一个int类型的整数,如果拼接字符串的长度超过了int类型，就会出现越界问题(江老师告诉的)</span></span><br><span class="line">                <span class="keyword">if</span> l+n &lt; l &#123;	</span><br><span class="line">                        throw(<span class="string">"string concatenation too long"</span>)</span><br><span class="line">                &#125;</span><br><span class="line">                l += n</span><br><span class="line">                count++</span><br><span class="line">                idx = i</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> count == <span class="number">0</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="string">""</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If there is just one string and either it is not on the stack</span></span><br><span class="line">        <span class="comment">// or our result does not escape the calling frame (buf != nil),</span></span><br><span class="line">        <span class="comment">// then we can return that string directly.</span></span><br><span class="line">        <span class="keyword">if</span> count == <span class="number">1</span> &amp;&amp; (buf != <span class="literal">nil</span> || !stringDataOnStack(a[idx])) &#123;</span><br><span class="line">                <span class="keyword">return</span> a[idx]</span><br><span class="line">        &#125;</span><br><span class="line">        s, b := rawstringtmp(buf, l)</span><br><span class="line">        <span class="keyword">for</span> _, x := <span class="keyword">range</span> a &#123;</span><br><span class="line">                <span class="built_in">copy</span>(b, x)</span><br><span class="line">                b = b[<span class="built_in">len</span>(x):]</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> s</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">concatstring2</span><span class="params">(buf *tmpBuf, a [2]<span class="keyword">string</span>)</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> concatstrings(buf, a[:])</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 可以看到go里面的字符串相加会首先计算要拼接的字符串的长度, 然后根据总长度申请一块内存完成拷贝</span></span><br></pre></td></tr></table></figure>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>字符串对象由两部分组成: 字符串指针和字符串长度<br>字符串的内存分配不在当前栈范围内，而是在<code>堆</code>上<br>字符串的相加操作并不存在python里面重复内存申请的问题</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1570,7 +1569,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">25</span>
+              <span class="site-state-item-count">26</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
