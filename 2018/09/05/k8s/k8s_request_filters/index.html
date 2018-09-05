@@ -1,0 +1,655 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="k8s,k8s那些天," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中  RequestInfo 12345678910111213141516//">
+<meta name="keywords" content="k8s,k8s那些天">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8s中的request与filters">
+<meta property="og:url" content="http://www.sreguide.com/2018/09/05/k8s/k8s_request_filters/index.html">
+<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中  RequestInfo 12345678910111213141516//">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-09-05T07:45:31.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="K8s中的request与filters">
+<meta name="twitter:description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中  RequestInfo 12345678910111213141516//">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/09/05/k8s/k8s_request_filters/"/>
+
+
+  <title> K8s中的request与filters | 8小时的技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">8小时的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                K8s中的request与filters
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-05T15:37:40+08:00" content="2018-09-05">
+              2018-09-05
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Request与RequestInfoFactory"><a href="#Request与RequestInfoFactory" class="headerlink" title="Request与RequestInfoFactory"></a>Request与RequestInfoFactory</h3><p>k8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中</p>
+<ul>
+<li><p>RequestInfo</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// RequestInfo 从http.Request中解析出请求数据</span></span><br><span class="line"><span class="keyword">type</span> RequestInfo <span class="keyword">struct</span> &#123;</span><br><span class="line">	IsResourceRequest <span class="keyword">bool</span></span><br><span class="line">	Path              <span class="keyword">string</span></span><br><span class="line">	Verb              <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	APIPrefix  <span class="keyword">string</span></span><br><span class="line">	APIGroup   <span class="keyword">string</span></span><br><span class="line">	APIVersion <span class="keyword">string</span></span><br><span class="line">	Namespace  <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	Resource    <span class="keyword">string</span></span><br><span class="line">	Subresource <span class="keyword">string</span></span><br><span class="line">	Name        <span class="keyword">string</span></span><br><span class="line">	Parts       []<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>RequestInfoFactory: 从原始的http.Request中解析出上面的RequestInfo</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *RequestInfoFactory)</span> <span class="title">NewRequestInfo</span><span class="params">(req *http.Request)</span> <span class="params">(*RequestInfo, error)</span></span> &#123;</span><br><span class="line">	<span class="comment">// start with a non-resource * until proven otherwise</span></span><br><span class="line">	requestInfo := RequestInfo&#123;</span><br><span class="line">		IsResourceRequest: <span class="literal">false</span>,</span><br><span class="line">		Path:              req.URL.Path,</span><br><span class="line">		Verb:              strings.ToLower(req.Method),</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	currentParts := splitPath(req.URL.Path)</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(currentParts) &lt; <span class="number">3</span> &#123;</span><br><span class="line">		<span class="comment">// return a non-resource request</span></span><br><span class="line">		<span class="keyword">return</span> &amp;requestInfo, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> !r.APIPrefixes.Has(currentParts[<span class="number">0</span>]) &#123;</span><br><span class="line">		<span class="comment">// return a non-resource request</span></span><br><span class="line">		<span class="keyword">return</span> &amp;requestInfo, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	requestInfo.APIPrefix = currentParts[<span class="number">0</span>]</span><br><span class="line">	currentParts = currentParts[<span class="number">1</span>:]</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> !r.GrouplessAPIPrefixes.Has(requestInfo.APIPrefix) &#123;</span><br><span class="line">		<span class="comment">// one part (APIPrefix) has already been consumed, so this is actually "do we have four parts?"</span></span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(currentParts) &lt; <span class="number">3</span> &#123;</span><br><span class="line">			<span class="comment">// return a non-resource request</span></span><br><span class="line">			<span class="keyword">return</span> &amp;requestInfo, <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		requestInfo.APIGroup = currentParts[<span class="number">0</span>]</span><br><span class="line">		currentParts = currentParts[<span class="number">1</span>:]</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	requestInfo.IsResourceRequest = <span class="literal">true</span></span><br><span class="line">	requestInfo.APIVersion = currentParts[<span class="number">0</span>]</span><br><span class="line">	currentParts = currentParts[<span class="number">1</span>:]</span><br><span class="line"></span><br><span class="line">	<span class="comment">// handle input of form /&#123;specialVerb&#125;/*</span></span><br><span class="line">	<span class="keyword">if</span> specialVerbs.Has(currentParts[<span class="number">0</span>]) &#123;</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(currentParts) &lt; <span class="number">2</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> &amp;requestInfo, fmt.Errorf(<span class="string">"unable to determine kind and namespace from url, %v"</span>, req.URL)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		requestInfo.Verb = currentParts[<span class="number">0</span>]</span><br><span class="line">		currentParts = currentParts[<span class="number">1</span>:]</span><br><span class="line"></span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">switch</span> req.Method &#123;</span><br><span class="line">		<span class="keyword">case</span> <span class="string">"POST"</span>:</span><br><span class="line">			requestInfo.Verb = <span class="string">"create"</span></span><br><span class="line">		<span class="keyword">case</span> <span class="string">"GET"</span>, <span class="string">"HEAD"</span>:</span><br><span class="line">			requestInfo.Verb = <span class="string">"get"</span></span><br><span class="line">		<span class="keyword">case</span> <span class="string">"PUT"</span>:</span><br><span class="line">			requestInfo.Verb = <span class="string">"update"</span></span><br><span class="line">		<span class="keyword">case</span> <span class="string">"PATCH"</span>:</span><br><span class="line">			requestInfo.Verb = <span class="string">"patch"</span></span><br><span class="line">		<span class="keyword">case</span> <span class="string">"DELETE"</span>:</span><br><span class="line">			requestInfo.Verb = <span class="string">"delete"</span></span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			requestInfo.Verb = <span class="string">""</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// URL forms: /namespaces/&#123;namespace&#125;/&#123;kind&#125;/*, where parts are adjusted to be relative to kind</span></span><br><span class="line">	<span class="keyword">if</span> currentParts[<span class="number">0</span>] == <span class="string">"namespaces"</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(currentParts) &gt; <span class="number">1</span> &#123;</span><br><span class="line">			requestInfo.Namespace = currentParts[<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">			<span class="comment">// if there is another step after the namespace name and it is not a known namespace subresource</span></span><br><span class="line">			<span class="comment">// move currentParts to include it as a resource in its own right</span></span><br><span class="line">			<span class="keyword">if</span> <span class="built_in">len</span>(currentParts) &gt; <span class="number">2</span> &amp;&amp; !namespaceSubresources.Has(currentParts[<span class="number">2</span>]) &#123;</span><br><span class="line">				currentParts = currentParts[<span class="number">2</span>:]</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		requestInfo.Namespace = metav1.NamespaceNone</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// parsing successful, so we now know the proper value for .Parts</span></span><br><span class="line">	requestInfo.Parts = currentParts</span><br><span class="line"></span><br><span class="line">	<span class="comment">// parts look like: resource/resourceName/subresource/other/stuff/we/don't/interpret</span></span><br><span class="line">	<span class="keyword">switch</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="built_in">len</span>(requestInfo.Parts) &gt;= <span class="number">3</span> &amp;&amp; !specialVerbsNoSubresources.Has(requestInfo.Verb):</span><br><span class="line">		requestInfo.Subresource = requestInfo.Parts[<span class="number">2</span>]</span><br><span class="line">		<span class="keyword">fallthrough</span></span><br><span class="line">	<span class="keyword">case</span> <span class="built_in">len</span>(requestInfo.Parts) &gt;= <span class="number">2</span>:</span><br><span class="line">		requestInfo.Name = requestInfo.Parts[<span class="number">1</span>]</span><br><span class="line">		<span class="keyword">fallthrough</span></span><br><span class="line">	<span class="keyword">case</span> <span class="built_in">len</span>(requestInfo.Parts) &gt;= <span class="number">1</span>:</span><br><span class="line">		requestInfo.Resource = requestInfo.Parts[<span class="number">0</span>]</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// if there's no name on the request and we thought it was a get before, then the actual verb is a list or a watch</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(requestInfo.Name) == <span class="number">0</span> &amp;&amp; requestInfo.Verb == <span class="string">"get"</span> &#123;</span><br><span class="line">		opts := metainternalversion.ListOptions&#123;&#125;</span><br><span class="line">		<span class="keyword">if</span> err := metainternalversion.ParameterCodec.DecodeParameters(req.URL.Query(), metav1.SchemeGroupVersion, &amp;opts); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// An error in parsing request will result in default to "list" and not setting "name" field.</span></span><br><span class="line">			glog.Errorf(<span class="string">"Couldn't parse request %#v: %v"</span>, req.URL.Query(), err)</span><br><span class="line">			<span class="comment">// Reset opts to not rely on partial results from parsing.</span></span><br><span class="line">			<span class="comment">// However, if watch is set, let's report it.</span></span><br><span class="line">			opts = metainternalversion.ListOptions&#123;&#125;</span><br><span class="line">			<span class="keyword">if</span> values := req.URL.Query()[<span class="string">"watch"</span>]; <span class="built_in">len</span>(values) &gt; <span class="number">0</span> &#123;</span><br><span class="line">				<span class="keyword">switch</span> strings.ToLower(values[<span class="number">0</span>]) &#123;</span><br><span class="line">				<span class="keyword">case</span> <span class="string">"false"</span>, <span class="string">"0"</span>:</span><br><span class="line">				<span class="keyword">default</span>:</span><br><span class="line">					opts.Watch = <span class="literal">true</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> opts.Watch &#123;</span><br><span class="line">			requestInfo.Verb = <span class="string">"watch"</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			requestInfo.Verb = <span class="string">"list"</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> opts.FieldSelector != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> name, ok := opts.FieldSelector.RequiresExactMatch(<span class="string">"metadata.name"</span>); ok &#123;</span><br><span class="line">				<span class="keyword">if</span> <span class="built_in">len</span>(path.IsValidPathSegmentName(name)) == <span class="number">0</span> &#123;</span><br><span class="line">					requestInfo.Name = name</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// if there's no name on the request and we thought it was a delete before, then the actual verb is deletecollection</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(requestInfo.Name) == <span class="number">0</span> &amp;&amp; requestInfo.Verb == <span class="string">"delete"</span> &#123;</span><br><span class="line">		requestInfo.Verb = <span class="string">"deletecollection"</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> &amp;requestInfo, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="filter"><a href="#filter" class="headerlink" title="filter"></a>filter</h3><p>对于每一个http请求都需要做一些类似身份认证、请求格式化、记录等操作，apiserver中通过filters来进行统一进行处理, 基础的filters主要由DefaultBuildHandlerChain来进行定义<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">DefaultBuildHandlerChain</span><span class="params">(apiHandler http.Handler, c *Config)</span> <span class="title">http</span>.<span class="title">Handler</span></span> &#123;</span><br><span class="line">	handler := genericapifilters.WithAuthorization(apiHandler, c.Authorization.Authorizer, c.Serializer)</span><br><span class="line">	handler = genericfilters.WithMaxInFlightLimit(handler, c.MaxRequestsInFlight, c.MaxMutatingRequestsInFlight, c.LongRunningFunc)</span><br><span class="line">	handler = genericapifilters.WithImpersonation(handler, c.Authorization.Authorizer, c.Serializer)</span><br><span class="line">	<span class="keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(features.AdvancedAuditing) &#123;</span><br><span class="line">		handler = genericapifilters.WithAudit(handler, c.AuditBackend, c.AuditPolicyChecker, c.LongRunningFunc)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		handler = genericapifilters.WithLegacyAudit(handler, c.LegacyAuditWriter)</span><br><span class="line">	&#125;</span><br><span class="line">	failedHandler := genericapifilters.Unauthorized(c.Serializer, c.Authentication.SupportsBasicAuth)</span><br><span class="line">	<span class="keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(features.AdvancedAuditing) &#123;</span><br><span class="line">		failedHandler = genericapifilters.WithFailedAuthenticationAudit(failedHandler, c.AuditBackend, c.AuditPolicyChecker)</span><br><span class="line">	&#125;</span><br><span class="line">	handler = genericapifilters.WithAuthentication(handler, c.Authentication.Authenticator, failedHandler)</span><br><span class="line">	handler = genericfilters.WithCORS(handler, c.CorsAllowedOriginList, <span class="literal">nil</span>, <span class="literal">nil</span>, <span class="literal">nil</span>, <span class="string">"true"</span>)</span><br><span class="line">	handler = genericfilters.WithTimeoutForNonLongRunningRequests(handler, c.LongRunningFunc, c.RequestTimeout)</span><br><span class="line">	handler = genericfilters.WithWaitGroup(handler, c.LongRunningFunc, c.HandlerChainWaitGroup)</span><br><span class="line">	handler = genericapifilters.WithRequestInfo(handler, c.RequestInfoResolver)</span><br><span class="line">	handler = genericfilters.WithPanicRecovery(handler)</span><br><span class="line">	<span class="keyword">return</span> handler</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="感兴趣的几个filters"><a href="#感兴趣的几个filters" class="headerlink" title="感兴趣的几个filters"></a>感兴趣的几个filters</h3><p>并没有全部都看，抽了几个自己感兴趣的抄了下</p>
+<ul>
+<li>WithAuthorization<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// WithAuthorizationCheck passes all authorized requests on to handler, and returns a forbidden error otherwise.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithAuthorization</span><span class="params">(handler http.Handler, a authorizer.Authorizer, s runtime.NegotiatedSerializer)</span> <span class="title">http</span>.<span class="title">Handler</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> a == <span class="literal">nil</span> &#123;</span><br><span class="line">		glog.Warningf(<span class="string">"Authorization is disabled"</span>)</span><br><span class="line">		<span class="keyword">return</span> handler</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> http.HandlerFunc(<span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;</span><br><span class="line">		ctx := req.Context()</span><br><span class="line">		ae := request.AuditEventFrom(ctx)</span><br><span class="line"></span><br><span class="line">		attributes, err := GetAuthorizerAttributes(ctx)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			responsewriters.InternalError(w, req, err)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		authorized, reason, err := a.Authorize(attributes)</span><br><span class="line">		<span class="comment">// an authorizer like RBAC could encounter evaluation errors and still allow the request, so authorizer decision is checked before error here.</span></span><br><span class="line">		<span class="keyword">if</span> authorized == authorizer.DecisionAllow &#123;</span><br><span class="line">			audit.LogAnnotation(ae, decisionAnnotationKey, decisionAllow)</span><br><span class="line">			audit.LogAnnotation(ae, reasonAnnotationKey, reason)</span><br><span class="line">			handler.ServeHTTP(w, req)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			audit.LogAnnotation(ae, reasonAnnotationKey, reasonError)</span><br><span class="line">			responsewriters.InternalError(w, req, err)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		glog.V(<span class="number">4</span>).Infof(<span class="string">"Forbidden: %#v, Reason: %q"</span>, req.RequestURI, reason)</span><br><span class="line">		audit.LogAnnotation(ae, decisionAnnotationKey, decisionForbid)</span><br><span class="line">		audit.LogAnnotation(ae, reasonAnnotationKey, reason)</span><br><span class="line">		responsewriters.Forbidden(ctx, attributes, w, req, <span class="string">""</span>, s)</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="WithCORS"><a href="#WithCORS" class="headerlink" title="WithCORS"></a>WithCORS</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cors</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">	<span class="string">"regexp"</span></span><br><span class="line">	<span class="string">"strings"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"github.com/golang/glog"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// WithCORS 跨域请求设置</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithCORS</span><span class="params">(handler http.Handler, allowedOriginPatterns []<span class="keyword">string</span>, allowedMethods []<span class="keyword">string</span>, allowedHeaders []<span class="keyword">string</span>, exposedHeaders []<span class="keyword">string</span>, allowCredentials <span class="keyword">string</span>)</span> <span class="title">http</span>.<span class="title">Handler</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(allowedOriginPatterns) == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> handler</span><br><span class="line">	&#125;</span><br><span class="line">	allowedOriginPatthersnREs := allowedOriginRegexps(allowedOriginPatterns)</span><br><span class="line">	<span class="keyword">return</span> http.HandlerFunc(<span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;</span><br><span class="line">		origin := req.Header.Get(<span class="string">"Origin"</span>)</span><br><span class="line">		<span class="keyword">if</span> origin != <span class="string">""</span> &#123;</span><br><span class="line">			allowed := <span class="literal">false</span></span><br><span class="line">			<span class="keyword">for</span> _, re := <span class="keyword">range</span> allowedOriginPatthersnREs &#123;</span><br><span class="line">				<span class="keyword">if</span> allowed = re.MatchString(origin); allowed &#123;</span><br><span class="line">					<span class="keyword">break</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> allowed &#123;</span><br><span class="line">				w.Header().Set(<span class="string">"Access-Control-Allow-Origin"</span>, origin)</span><br><span class="line">				<span class="keyword">if</span> allowedMethods == <span class="literal">nil</span> &#123;</span><br><span class="line">					allowedMethods = []<span class="keyword">string</span>&#123;<span class="string">"POST"</span>, <span class="string">"GET"</span>, <span class="string">"OPTIONS"</span>, <span class="string">"PUT"</span>, <span class="string">"DELETE"</span>, <span class="string">"PATCH"</span>&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">if</span> allowedHeaders == <span class="literal">nil</span> &#123;</span><br><span class="line">					allowedHeaders = []<span class="keyword">string</span>&#123;<span class="string">"Content-Type"</span>, <span class="string">"Content-Length"</span>, <span class="string">"Accept-Encoding"</span>, <span class="string">"X-CSRF-Token"</span>, <span class="string">"Authorization"</span>, <span class="string">"X-Requested-With"</span>, <span class="string">"If-Modified-Since"</span>&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">if</span> exposedHeaders == <span class="literal">nil</span> &#123;</span><br><span class="line">					exposedHeaders = []<span class="keyword">string</span>&#123;<span class="string">"Date"</span>&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				w.Header().Set(<span class="string">"Access-Control-Allow-Methods"</span>, strings.Join(allowedMethods, <span class="string">", "</span>))</span><br><span class="line">				w.Header().Set(<span class="string">"Access-Control-Allow-Headers"</span>, strings.Join(allowedHeaders, <span class="string">", "</span>))</span><br><span class="line">				w.Header().Set(<span class="string">"Access-Control-Expose-Headers"</span>, strings.Join(exposedHeaders, <span class="string">", "</span>))</span><br><span class="line">				w.Header().Set(<span class="string">"Access-Control-Allow-Credentials"</span>, allowCredentials)</span><br><span class="line">				<span class="keyword">if</span> req.Method == <span class="string">"OPTIONS"</span> &#123;</span><br><span class="line">					w.WriteHeader(http.StatusNoContent)</span><br><span class="line">					<span class="keyword">return</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		handler.ServeHTTP(w, req)</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">allowedOriginRegexps</span><span class="params">(allowedOrigins []<span class="keyword">string</span>)</span> []*<span class="title">regexp</span>.<span class="title">Regexp</span></span> &#123;</span><br><span class="line">	res, err := compileRegexps(allowedOrigins)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		glog.Fatalf(<span class="string">"Invalidas cors allowed origin --cors-allowed-origins flga was set to %v - %v"</span>, strings.Join(allowedOrigins, <span class="string">","</span>), err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> res</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">compileRegexps</span><span class="params">(regexpStrings []<span class="keyword">string</span>)</span> <span class="params">([]*regexp.Regexp, error)</span></span> &#123;</span><br><span class="line">	regexps := []*regexp.Regexp&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> _, regexpStr := <span class="keyword">range</span> regexpStrings &#123;</span><br><span class="line">		r, err := regexp.Compile(regexpStr)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> []*regexp.Regexp&#123;&#125;, err</span><br><span class="line">		&#125;</span><br><span class="line">		regexps = <span class="built_in">append</span>(regexps, r)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> regexps, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>WithWaitGroup<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> graceful</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"errors"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">	<span class="string">"strings"</span></span><br><span class="line">	<span class="string">"sync"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// SafeWaitGroup 封装sync.WaitGroup</span></span><br><span class="line"><span class="keyword">type</span> SafeWaitGroup <span class="keyword">struct</span> &#123;</span><br><span class="line">	wg   sync.WaitGroup</span><br><span class="line">	mu   sync.RWMutex</span><br><span class="line">	wait <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Add 如果wait为true则标识服务器已经停止,不允许继续进行http请求</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wg *SafeWaitGroup)</span> <span class="title">Add</span><span class="params">(delta <span class="keyword">int</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	wg.mu.RLock()</span><br><span class="line">	<span class="keyword">defer</span> wg.mu.RUnlock()</span><br><span class="line">	<span class="keyword">if</span> wg.wait &amp;&amp; delta &gt; <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"add with positive delta after Wait is forbidden"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	wg.wg.Add(delta)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Done 等待结束</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wg *SafeWaitGroup)</span> <span class="title">Done</span><span class="params">()</span></span> &#123;</span><br><span class="line">	wg.wg.Done()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Wait 设置wait并等待请求退出</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wg *SafeWaitGroup)</span> <span class="title">Wait</span><span class="params">()</span></span> &#123;</span><br><span class="line">	wg.mu.Lock()</span><br><span class="line">	wg.wait = <span class="literal">true</span></span><br><span class="line">	wg.mu.Unlock()</span><br><span class="line">	wg.wg.Wait()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// RequestInfo 从http.Request中解析出请求数据</span></span><br><span class="line"><span class="keyword">type</span> RequestInfo <span class="keyword">struct</span> &#123;</span><br><span class="line">	IsResourceRequest <span class="keyword">bool</span></span><br><span class="line">	Path              <span class="keyword">string</span></span><br><span class="line">	Verb              <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	APIPrefix  <span class="keyword">string</span></span><br><span class="line">	APIGroup   <span class="keyword">string</span></span><br><span class="line">	APIVersion <span class="keyword">string</span></span><br><span class="line">	Namespace  <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	Resource    <span class="keyword">string</span></span><br><span class="line">	Subresource <span class="keyword">string</span></span><br><span class="line">	Name        <span class="keyword">string</span></span><br><span class="line">	Parts       []<span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> requestInfoKeyType <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> requestInfoKey requestInfoKeyType = <span class="literal">iota</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// RequestInfoForm  从http中获取Request对象</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">RequestInfoForm</span><span class="params">(ctx context.Context)</span> <span class="params">(*RequestInfo, <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	info, ok := ctx.Value(requestInfoKey).(*RequestInfo)</span><br><span class="line">	<span class="keyword">return</span> info, ok</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> sanitizer = strings.NewReplacer(<span class="string">`&amp;`</span>, <span class="string">"&amp;amp;"</span>, <span class="string">`&lt;`</span>, <span class="string">"&amp;lt;"</span>, <span class="string">`&gt;`</span>, <span class="string">"&amp;gt;"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// LongRunningRequestCheck 如果是长时间运行的http请求返回true</span></span><br><span class="line"><span class="keyword">type</span> LongRunningRequestCheck <span class="function"><span class="keyword">func</span><span class="params">(r *http.Request, requestInfo *RequestInfo)</span> <span class="title">bool</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">// <span class="title">WithWaitGroup</span> <span class="title">go</span>-<span class="title">restful</span>中的<span class="title">filter</span>实现</span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="title">WithWaitGroup</span><span class="params">(handler http.Handler, longRunning LongRunningRequestCheck, wg *SafeWaitGroup)</span> <span class="title">http</span>.<span class="title">Handler</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> http.HandlerFunc(<span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;</span><br><span class="line">		ctx := req.Context()</span><br><span class="line">		requestInfo, ok := RequestInfoForm(ctx)</span><br><span class="line">		<span class="keyword">if</span> !ok &#123;</span><br><span class="line">			err := errors.New(<span class="string">"no RequestInfo Found in the context"</span>)</span><br><span class="line">			http.Error(w, sanitizer.Replace(fmt.Sprintf(<span class="string">"Internel Server Error: %q: %v"</span>, req.RequestURI, err)), http.StatusInternalServerError)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> !longRunning(req, requestInfo) &#123;</span><br><span class="line">			<span class="keyword">if</span> err := wg.Add(<span class="number">1</span>); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				http.Error(w, <span class="string">"apiserver is shutting donw"</span>, http.StatusInternalServerError)</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		&#125;</span><br><span class="line">		handler.ServeHTTP(w, req)</span><br><span class="line"></span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>今天先这样,路漫漫何其漫长,岁月静好，老老实实写代码</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag">#k8s</a>
+          
+            <a href="/tags/k8s那些天/" rel="tag">#k8s那些天</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/19/k8s/cahce_watch/" rel="next" title="Cache Watcher ListWatch">
+                <i class="fa fa-chevron-left"></i> Cache Watcher ListWatch
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="8 小时的技术博客" />
+          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
+          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">29</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Request与RequestInfoFactory"><span class="nav-number">1.</span> <span class="nav-text">Request与RequestInfoFactory</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#filter"><span class="nav-number">2.</span> <span class="nav-text">filter</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#感兴趣的几个filters"><span class="nav-number">3.</span> <span class="nav-text">感兴趣的几个filters</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#WithCORS"><span class="nav-number">4.</span> <span class="nav-text">WithCORS</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
