@@ -1,0 +1,690 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="k8s,k8s那些天,informer," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="概况k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发  客户端   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作 为了减轻对apiserver的压力, 客户端实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变">
+<meta name="keywords" content="k8s,k8s那些天,informer">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes informer 图解">
+<meta property="og:url" content="http://www.sreguide.com/2018/09/28/k8s/k8s_basic_infomer/index.html">
+<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:description" content="概况k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发  客户端   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作 为了减轻对apiserver的压力, 客户端实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-27-16-10-09.png">
+<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-24-29.png">
+<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-48-07.png">
+<meta property="og:updated_time" content="2018-09-28T02:03:23.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kubernetes informer 图解">
+<meta name="twitter:description" content="概况k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发  客户端   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作 为了减轻对apiserver的压力, 客户端实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变">
+<meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-27-16-10-09.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/09/28/k8s/k8s_basic_infomer/"/>
+
+
+  <title> Kubernetes informer 图解 | 8小时的技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">8小时的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Kubernetes informer 图解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-28T10:00:50+08:00" content="2018-09-28">
+              2018-09-28
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/informer/" itemprop="url" rel="index">
+                    <span itemprop="name">informer</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发</p>
+<p> <em>客户端</em>   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作</p>
+<p>为了减轻对apiserver的压力, <em>客户端</em>实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变化</p>
+<p>并且接受其他组件的ResourceEventHandler, 再事件发生时,  调用对应事件类型的处理函数, 来进行业务逻辑的处理</p>
+<h3 id="初识"><a href="#初识" class="headerlink" title="初识"></a>初识</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-27-16-10-09.png" alt=""></p>
+<p>informer就是为了减轻核心apiserver数据交互的压力而抽象出来的一个 <code>cache</code> 层, 客户端对apiserver数据的 <code>读取</code>和 <code>监听</code> 操作都通过本地informer进行</p>
+<h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-24-29.png" alt=""></p>
+<ul>
+<li>Reflector 负责获取和监听服务端数据变化</li>
+<li>store 负责Reflector 数据的存储<ul>
+<li>items 主要是存放key-value的数据索引</li>
+<li>indices 存储对象的所有索引映射</li>
+<li>indexer 存储通过当前索引生成的索引映射</li>
+</ul>
+</li>
+<li>DeltaFIFO 是一个事件队列，Refletor接收数据变化之后, 将数据传给store和ResouceEventHandler</li>
+</ul>
+<h4 id="通信"><a href="#通信" class="headerlink" title="通信"></a>通信</h4><p>informer在创建的时候,  会包装客户端 <code>controller</code> 的 <code>Config</code> 的Process方法, 接收两个参数 <code>objType</code> 和 <code>ResourceEventHandler</code> , 通过objType将获取的事件进行数据转换, ResourceEventHandler则是由对应的调用者去实现不同事件的处理方式</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><h4 id="创建Informer"><a href="#创建Informer" class="headerlink" title="创建Informer"></a>创建Informer</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewInformer</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	lw ListerWatcher,</span></span></span><br><span class="line"><span class="function"><span class="params">	objType runtime.Object,</span></span></span><br><span class="line"><span class="function"><span class="params">	resyncPeriod time.Duration,</span></span></span><br><span class="line"><span class="function"><span class="params">	h ResourceEventHandler,</span></span></span><br><span class="line"><span class="function"><span class="params">)</span> <span class="params">(Store, Controller)</span></span> &#123;</span><br><span class="line">    <span class="comment">// NewStore创建一个threadSafeMap用于存储客户端的所有事件</span></span><br><span class="line">    <span class="comment">// 默认传递的keyFUNC是通过namespace+resouce_name生成对象key</span></span><br><span class="line">	clientState := NewStore(DeletionHandlingMetaNamespaceKeyFunc)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建DeltaFIFO队列, 用于获取对应的事件</span></span><br><span class="line"><span class="comment">// 第一个参数是keyFunc生成对象key, 第二参数则是KeyListerGetter, 用于实现从上面提的store中通过key获取对象列表</span></span><br><span class="line">	fifo := NewDeltaFIFO(MetaNamespaceKeyFunc, clientState)</span><br><span class="line"></span><br><span class="line">	cfg := &amp;Config&#123;</span><br><span class="line">		Queue:            fifo,</span><br><span class="line">		ListerWatcher:    lw,</span><br><span class="line">		ObjectType:       objType,</span><br><span class="line">		FullResyncPeriod: resyncPeriod,</span><br><span class="line">		RetryOnError:     <span class="literal">false</span>,</span><br><span class="line"></span><br><span class="line">		Process: <span class="function"><span class="keyword">func</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">            <span class="comment">// Process主要作用是根据事件的类型, 转发到EventResourceHandler不同的处理函数</span></span><br><span class="line">			<span class="keyword">for</span> _, d := <span class="keyword">range</span> obj.(Deltas) &#123;</span><br><span class="line">				<span class="keyword">switch</span> d.Type &#123;</span><br><span class="line">				<span class="keyword">case</span> Sync, Added, Updated:</span><br><span class="line">                                <span class="comment">// 调用store的Get方法查询对应的object是否存在</span></span><br><span class="line">					<span class="keyword">if</span> old, exists, err := clientState.Get(d.Object); err == <span class="literal">nil</span> &amp;&amp; exists &#123;</span><br><span class="line">						<span class="comment">// 如果已经存在对应的数据,  就更新</span></span><br><span class="line">						<span class="keyword">if</span> err := clientState.Update(d.Object); err != <span class="literal">nil</span> &#123;</span><br><span class="line">							<span class="keyword">return</span> err</span><br><span class="line">						&#125;</span><br><span class="line">						<span class="comment">// 调用传递进来的对应的ResourceEventHandler里面的对应的方法</span></span><br><span class="line">						h.OnUpdate(old, d.Object)</span><br><span class="line">					&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">						<span class="comment">// 如果数据不存在, 就直接调用add方法</span></span><br><span class="line">						<span class="keyword">if</span> err := clientState.Add(d.Object); err != <span class="literal">nil</span> &#123;</span><br><span class="line">							<span class="keyword">return</span> err</span><br><span class="line">						&#125;</span><br><span class="line">						h.OnAdd(d.Object)</span><br><span class="line">					&#125;</span><br><span class="line">				<span class="keyword">case</span> Deleted:</span><br><span class="line">					<span class="keyword">if</span> err := clientState.Delete(d.Object); err != <span class="literal">nil</span> &#123;</span><br><span class="line">						<span class="keyword">return</span> err</span><br><span class="line">					&#125;</span><br><span class="line">					h.OnDelete(d.Object)</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// New最后返回一个对应的controller, controller负责从DeltaFIFO队列中取出数据传递给process</span></span><br><span class="line">	<span class="keyword">return</span> clientState, New(cfg)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>informer这些代码是关键代码, 注意对应数据的传递以及变量的共享</p>
+<h4 id="controller"><a href="#controller" class="headerlink" title="controller"></a>controller</h4><ul>
+<li><p>数据结构</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> controller <span class="keyword">struct</span> &#123;</span><br><span class="line">	config         Config</span><br><span class="line">	reflector      *Reflector</span><br><span class="line">	reflectorMutex sync.RWMutex</span><br><span class="line">	clock          clock.Clock</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>运行方法</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *controller)</span> <span class="title">Run</span><span class="params">(stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> utilruntime.HandleCrash()</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		&lt;-stopCh</span><br><span class="line">		c.config.Queue.Close()</span><br><span class="line">	&#125;()</span><br><span class="line">    <span class="comment">// controller使用NewInformer中传递的Config对象的Queue和lw来进行Reflector的实例化</span></span><br><span class="line">	r := NewReflector(</span><br><span class="line">		c.config.ListerWatcher,</span><br><span class="line">		c.config.ObjectType,</span><br><span class="line">		c.config.Queue,	<span class="comment">// 这里就是reflector中的store</span></span><br><span class="line">		c.config.FullResyncPeriod,</span><br><span class="line">	)</span><br><span class="line">	r.ShouldResync = c.config.ShouldResync</span><br><span class="line">	r.clock = c.clock</span><br><span class="line"></span><br><span class="line">	c.reflectorMutex.Lock()</span><br><span class="line">	c.reflector = r</span><br><span class="line">	c.reflectorMutex.Unlock()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> wg wait.Group</span><br><span class="line">	<span class="keyword">defer</span> wg.Wait()</span><br><span class="line">    <span class="comment">// 启动Reflector</span></span><br><span class="line">	wg.StartWithChannel(stopCh, r.Run)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// processLoop不端的从队列中获取数据, 然后调用对应的处理方法</span></span><br><span class="line">	wait.Until(c.processLoop, time.Second, stopCh)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *controller)</span> <span class="title">processLoop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="comment">// Pop的时候, 我们可以传递一个处理函数, 该处理函数就是Config里面的process， 根据不同的事件类型调用下面的eventHandler对应的方法</span></span><br><span class="line">		obj, err := c.config.Queue.Pop(PopProcessFunc(c.config.Process))</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err == FIFOClosedError &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> c.config.RetryOnError &#123;</span><br><span class="line">				<span class="comment">// This is the safe way to re-enqueue.</span></span><br><span class="line">				<span class="comment">// 如果允许重试，可以重新将对象数据放回到队列中进行处理</span></span><br><span class="line">				c.config.Queue.AddIfNotPresent(obj)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="Reflector"><a href="#Reflector" class="headerlink" title="Reflector"></a>Reflector</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">ListAndWatch</span><span class="params">(stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">// ResourceVersion为0表示当前数据直接从apiserver的cache中获取, 然后从当前的返回的数据中取出当前的resourceVersion, 后续调用Watch进行数据变化的监听</span></span><br><span class="line">	options := metav1.ListOptions&#123;ResourceVersion: <span class="string">"0"</span>&#125;</span><br><span class="line">	<span class="comment">// 获取当前类型的所有数据</span></span><br><span class="line">	list, err := r.listerWatcher.List(options)</span><br><span class="line">	<span class="comment">// 获取当前数据的resourceVersion</span></span><br><span class="line">	resourceVersion = listMetaInterface.GetResourceVersion()</span><br><span class="line">	items, err := meta.ExtractList(list)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 将获取的数据和resourceVersion，替换到当前的store里面, 这里的store就是Queue</span></span><br><span class="line">	<span class="keyword">if</span> err := r.syncWith(items, resourceVersion); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"%s: Unable to sync list result: %v"</span>, r.name, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 设置最后同步的资源版本</span></span><br><span class="line">	r.setLastSyncResourceVersion(resourceVersion)</span><br><span class="line">            <span class="comment">// 通过之前获取的resouceVersion生成一个http request的watch继续watch后续数据的额变化</span></span><br><span class="line">		options = metav1.ListOptions&#123;</span><br><span class="line">			ResourceVersion: resourceVersion,</span><br><span class="line">			<span class="comment">// We want to avoid situations of hanging watchers. Stop any wachers that do not</span></span><br><span class="line">			<span class="comment">// receive any events within the timeout window.</span></span><br><span class="line">			TimeoutSeconds: &amp;timeoutSeconds,</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		w, err := r.listerWatcher.Watch(options)</span><br><span class="line">		<span class="comment">// 生成一个 watcher后续watcher会监听数据变化， 同时提供w.ResultChan给watchHandler获取watch到的事件</span></span><br><span class="line">		<span class="keyword">if</span> err := r.watchHandler(w, &amp;resourceVersion, resyncerrc, stopCh); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err != errorStopRequested &#123;</span><br><span class="line">				glog.Warningf(<span class="string">"%s: watch of %v ended with: %v"</span>, r.name, r.expectedType, err)</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// syncWith replaces the store's items with the given list.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">syncWith</span><span class="params">(items []runtime.Object, resourceVersion <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	found := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, <span class="number">0</span>, <span class="built_in">len</span>(items))</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> items &#123;</span><br><span class="line">		found = <span class="built_in">append</span>(found, item)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> r.store.Replace(found, resourceVersion)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// watchHandler watches w and keeps *resourceVersion up to date.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">watchHandler</span><span class="params">(w watch.Interface, resourceVersion *<span class="keyword">string</span>, errc <span class="keyword">chan</span> error, stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line"></span><br><span class="line">loop:</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-stopCh:</span><br><span class="line">			<span class="keyword">return</span> errorStopRequested</span><br><span class="line">		<span class="keyword">case</span> err := &lt;-errc:</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">            <span class="comment">// 监听到数据变化 , 然后获取对应数据的变化, 调用store对应的方法, 修改数据</span></span><br><span class="line">		<span class="keyword">case</span> event, ok := &lt;-w.ResultChan():</span><br><span class="line">			newResourceVersion := meta.GetResourceVersion()</span><br><span class="line">			<span class="keyword">switch</span> event.Type &#123;</span><br><span class="line">			<span class="keyword">case</span> watch.Added:</span><br><span class="line">				err := r.store.Add(event.Object)</span><br><span class="line">				<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">					utilruntime.HandleError(fmt.Errorf(<span class="string">"%s: unable to add watch event object (%#v) to store: %v"</span>, r.name, event.Object, err))</span><br><span class="line">				&#125;</span><br><span class="line">                    <span class="comment">//. 设置新的resouceVersion后续请求使用新的watch opyions</span></span><br><span class="line">                    <span class="comment">// 注意这里是使用的指针直接进行了对应资源的修改</span></span><br><span class="line">			*resourceVersion = newResourceVersion</span><br><span class="line">			r.setLastSyncResourceVersion(newResourceVersion)</span><br><span class="line">			eventCount++</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	watchDuration := r.clock.Now().Sub(start)</span><br><span class="line">	<span class="keyword">if</span> watchDuration &lt; <span class="number">1</span>*time.Second &amp;&amp; eventCount == <span class="number">0</span> &#123;</span><br><span class="line">		r.metrics.numberOfShortWatches.Inc()</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"very short watch: %s: Unexpected watch close - watch lasted less than a second and no items received"</span>, r.name)</span><br><span class="line">	&#125;</span><br><span class="line">	glog.V(<span class="number">4</span>).Infof(<span class="string">"%s: Watch close - %v total %v items received"</span>, r.name, r.expectedType, eventCount)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">syncWith</span><span class="params">(items []runtime.Object, resourceVersion <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	found := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, <span class="number">0</span>, <span class="built_in">len</span>(items))</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> items &#123;</span><br><span class="line">		found = <span class="built_in">append</span>(found, item)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> r.store.Replace(found, resourceVersion)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="threadSafeMap"><a href="#threadSafeMap" class="headerlink" title="threadSafeMap"></a>threadSafeMap</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-48-07.png" alt=""><br>threadSafeMap其实就相当于informer中的一个 <code>数据库</code> , 负责存储对应数据的key-&gt;object的映射, 同时接收外部传递进来的indexers,  为当前object构建对应的 <code>索引</code> , 上图中updateIndices和indexer, 当cache (就是上面的store)接收到一个数据的时候, 首先通过keyFunc生成object对应的key, 然后就调用threadSafeMap中的增删改查方法, 在增改删中都会调用跟indices有关的方法(增改是updateIndices, 删是deleteFromIndices), 更新本地索引</p>
+<ul>
+<li><p>结构体</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// threadSafeMap implements ThreadSafeStore</span></span><br><span class="line"><span class="keyword">type</span> threadSafeMap <span class="keyword">struct</span> &#123;</span><br><span class="line">	lock  sync.RWMutex</span><br><span class="line">	items <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// indexers maps a name to an IndexFunc</span></span><br><span class="line">	indexers Indexers</span><br><span class="line">	<span class="comment">// indices maps a name to an Index</span></span><br><span class="line">	indices Indices</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>生成索引</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *threadSafeMap)</span> <span class="title">updateIndices</span><span class="params">(oldObj <span class="keyword">interface</span>&#123;&#125;, newObj <span class="keyword">interface</span>&#123;&#125;, key <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// if we got an old object, we need to remove it before we add it again</span></span><br><span class="line">	<span class="keyword">if</span> oldObj != <span class="literal">nil</span> &#123;</span><br><span class="line">		c.deleteFromIndices(oldObj, key)</span><br><span class="line">	&#125;</span><br><span class="line">        <span class="comment">// 遍历所有的indexer, 生成当前object的values, 然后吧所有的values都存放在Index中, 其中value就是key</span></span><br><span class="line">	<span class="keyword">for</span> name, indexFunc := <span class="keyword">range</span> c.indexers &#123;</span><br><span class="line">		<span class="comment">// 通过indexer的 indexFunc, 获取当前对象的key, 返回的是一个列表</span></span><br><span class="line">		indexValues, err := indexFunc(newObj)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="built_in">panic</span>(fmt.Errorf(<span class="string">"unable to calculate an index entry for key %q on index %q: %v"</span>, key, name, err))</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 从indices中获取当前index的索引的数据</span></span><br><span class="line">		index := c.indices[name]</span><br><span class="line">		<span class="keyword">if</span> index == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// 如果为空就至为一个值, 就新建一个索引</span></span><br><span class="line">			index = Index&#123;&#125;</span><br><span class="line">			c.indices[name] = index</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 注意，这个地方通过上面的indexFunc,生成了一个indexValues, 会在当前index将所有value的映射都设置为传递进来的**key**</span></span><br><span class="line">		<span class="comment">// **key**是由add或者update 等方法为当前对象生成的一个key, 该key映射到items里面对应的object</span></span><br><span class="line">		<span class="keyword">for</span> _, indexValue := <span class="keyword">range</span> indexValues &#123;</span><br><span class="line">			<span class="comment">// 遍历当前object的所有indexValues, 设置当前index的缓存的索引的值</span></span><br><span class="line">			set := index[indexValue]</span><br><span class="line">			<span class="keyword">if</span> set == <span class="literal">nil</span> &#123;</span><br><span class="line">				set = sets.String&#123;&#125;</span><br><span class="line">				index[indexValue] = set</span><br><span class="line">			&#125;</span><br><span class="line">			set.Insert(key)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag">#k8s</a>
+          
+            <a href="/tags/k8s那些天/" rel="tag">#k8s那些天</a>
+          
+            <a href="/tags/informer/" rel="tag">#informer</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/09/17/k8s/admission_design/" rel="next" title="Kubernetes 准入控制模块实现">
+                <i class="fa fa-chevron-left"></i> Kubernetes 准入控制模块实现
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="8 小时的技术博客" />
+          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
+          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">31</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#概况"><span class="nav-number">1.</span> <span class="nav-text">概况</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#初识"><span class="nav-number">2.</span> <span class="nav-text">初识</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#组成"><span class="nav-number">3.</span> <span class="nav-text">组成</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#通信"><span class="nav-number">3.1.</span> <span class="nav-text">通信</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码"><span class="nav-number">4.</span> <span class="nav-text">代码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#创建Informer"><span class="nav-number">4.1.</span> <span class="nav-text">创建Informer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#controller"><span class="nav-number">4.2.</span> <span class="nav-text">controller</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Reflector"><span class="nav-number">4.3.</span> <span class="nav-text">Reflector</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#threadSafeMap"><span class="nav-number">4.4.</span> <span class="nav-text">threadSafeMap</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

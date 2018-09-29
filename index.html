@@ -270,6 +270,180 @@
             
               
                 
+                <a class="post-title-link" href="/2018/09/28/k8s/k8s_basic_infomer/" itemprop="url">
+                  Kubernetes informer 图解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-28T10:00:50+08:00" content="2018-09-28">
+              2018-09-28
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/informer/" itemprop="url" rel="index">
+                    <span itemprop="name">informer</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发</p>
+<p> <em>客户端</em>   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作</p>
+<p>为了减轻对apiserver的压力, <em>客户端</em>实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变化</p>
+<p>并且接受其他组件的ResourceEventHandler, 再事件发生时,  调用对应事件类型的处理函数, 来进行业务逻辑的处理</p>
+<h3 id="初识"><a href="#初识" class="headerlink" title="初识"></a>初识</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-27-16-10-09.png" alt=""></p>
+<p>informer就是为了减轻核心apiserver数据交互的压力而抽象出来的一个 <code>cache</code> 层, 客户端对apiserver数据的 <code>读取</code>和 <code>监听</code> 操作都通过本地informer进行</p>
+<h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-24-29.png" alt=""></p>
+<ul>
+<li>Reflector 负责获取和监听服务端数据变化</li>
+<li>store 负责Reflector 数据的存储<ul>
+<li>items 主要是存放key-value的数据索引</li>
+<li>indices 存储对象的所有索引映射</li>
+<li>indexer 存储通过当前索引生成的索引映射</li>
+</ul>
+</li>
+<li>DeltaFIFO 是一个事件队列，Refletor接收数据变化之后, 将数据传给store和ResouceEventHandler</li>
+</ul>
+<h4 id="通信"><a href="#通信" class="headerlink" title="通信"></a>通信</h4><p>informer在创建的时候,  会包装客户端 <code>controller</code> 的 <code>Config</code> 的Process方法, 接收两个参数 <code>objType</code> 和 <code>ResourceEventHandler</code> , 通过objType将获取的事件进行数据转换, ResourceEventHandler则是由对应的调用者去实现不同事件的处理方式</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><h4 id="创建Informer"><a href="#创建Informer" class="headerlink" title="创建Informer"></a>创建Informer</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewInformer</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	lw ListerWatcher,</span></span></span><br><span class="line"><span class="function"><span class="params">	objType runtime.Object,</span></span></span><br><span class="line"><span class="function"><span class="params">	resyncPeriod time.Duration,</span></span></span><br><span class="line"><span class="function"><span class="params">	h ResourceEventHandler,</span></span></span><br><span class="line"><span class="function"><span class="params">)</span> <span class="params">(Store, Controller)</span></span> &#123;</span><br><span class="line">    <span class="comment">// NewStore创建一个threadSafeMap用于存储客户端的所有事件</span></span><br><span class="line">    <span class="comment">// 默认传递的keyFUNC是通过namespace+resouce_name生成对象key</span></span><br><span class="line">	clientState := NewStore(DeletionHandlingMetaNamespaceKeyFunc)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建DeltaFIFO队列, 用于获取对应的事件</span></span><br><span class="line"><span class="comment">// 第一个参数是keyFunc生成对象key, 第二参数则是KeyListerGetter, 用于实现从上面提的store中通过key获取对象列表</span></span><br><span class="line">	fifo := NewDeltaFIFO(MetaNamespaceKeyFunc, clientState)</span><br><span class="line"></span><br><span class="line">	cfg := &amp;Config&#123;</span><br><span class="line">		Queue:            fifo,</span><br><span class="line">		ListerWatcher:    lw,</span><br><span class="line">		ObjectType:       objType,</span><br><span class="line">		FullResyncPeriod: resyncPeriod,</span><br><span class="line">		RetryOnError:     <span class="literal">false</span>,</span><br><span class="line"></span><br><span class="line">		Process: <span class="function"><span class="keyword">func</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">            <span class="comment">// Process主要作用是根据事件的类型, 转发到EventResourceHandler不同的处理函数</span></span><br><span class="line">			<span class="keyword">for</span> _, d := <span class="keyword">range</span> obj.(Deltas) &#123;</span><br><span class="line">				<span class="keyword">switch</span> d.Type &#123;</span><br><span class="line">				<span class="keyword">case</span> Sync, Added, Updated:</span><br><span class="line">                                <span class="comment">// 调用store的Get方法查询对应的object是否存在</span></span><br><span class="line">					<span class="keyword">if</span> old, exists, err := clientState.Get(d.Object); err == <span class="literal">nil</span> &amp;&amp; exists &#123;</span><br><span class="line">						<span class="comment">// 如果已经存在对应的数据,  就更新</span></span><br><span class="line">						<span class="keyword">if</span> err := clientState.Update(d.Object); err != <span class="literal">nil</span> &#123;</span><br><span class="line">							<span class="keyword">return</span> err</span><br><span class="line">						&#125;</span><br><span class="line">						<span class="comment">// 调用传递进来的对应的ResourceEventHandler里面的对应的方法</span></span><br><span class="line">						h.OnUpdate(old, d.Object)</span><br><span class="line">					&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">						<span class="comment">// 如果数据不存在, 就直接调用add方法</span></span><br><span class="line">						<span class="keyword">if</span> err := clientState.Add(d.Object); err != <span class="literal">nil</span> &#123;</span><br><span class="line">							<span class="keyword">return</span> err</span><br><span class="line">						&#125;</span><br><span class="line">						h.OnAdd(d.Object)</span><br><span class="line">					&#125;</span><br><span class="line">				<span class="keyword">case</span> Deleted:</span><br><span class="line">					<span class="keyword">if</span> err := clientState.Delete(d.Object); err != <span class="literal">nil</span> &#123;</span><br><span class="line">						<span class="keyword">return</span> err</span><br><span class="line">					&#125;</span><br><span class="line">					h.OnDelete(d.Object)</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// New最后返回一个对应的controller, controller负责从DeltaFIFO队列中取出数据传递给process</span></span><br><span class="line">	<span class="keyword">return</span> clientState, New(cfg)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>informer这些代码是关键代码, 注意对应数据的传递以及变量的共享</p>
+<h4 id="controller"><a href="#controller" class="headerlink" title="controller"></a>controller</h4><ul>
+<li><p>数据结构</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> controller <span class="keyword">struct</span> &#123;</span><br><span class="line">	config         Config</span><br><span class="line">	reflector      *Reflector</span><br><span class="line">	reflectorMutex sync.RWMutex</span><br><span class="line">	clock          clock.Clock</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>运行方法</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *controller)</span> <span class="title">Run</span><span class="params">(stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> utilruntime.HandleCrash()</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		&lt;-stopCh</span><br><span class="line">		c.config.Queue.Close()</span><br><span class="line">	&#125;()</span><br><span class="line">    <span class="comment">// controller使用NewInformer中传递的Config对象的Queue和lw来进行Reflector的实例化</span></span><br><span class="line">	r := NewReflector(</span><br><span class="line">		c.config.ListerWatcher,</span><br><span class="line">		c.config.ObjectType,</span><br><span class="line">		c.config.Queue,	<span class="comment">// 这里就是reflector中的store</span></span><br><span class="line">		c.config.FullResyncPeriod,</span><br><span class="line">	)</span><br><span class="line">	r.ShouldResync = c.config.ShouldResync</span><br><span class="line">	r.clock = c.clock</span><br><span class="line"></span><br><span class="line">	c.reflectorMutex.Lock()</span><br><span class="line">	c.reflector = r</span><br><span class="line">	c.reflectorMutex.Unlock()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> wg wait.Group</span><br><span class="line">	<span class="keyword">defer</span> wg.Wait()</span><br><span class="line">    <span class="comment">// 启动Reflector</span></span><br><span class="line">	wg.StartWithChannel(stopCh, r.Run)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// processLoop不端的从队列中获取数据, 然后调用对应的处理方法</span></span><br><span class="line">	wait.Until(c.processLoop, time.Second, stopCh)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *controller)</span> <span class="title">processLoop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="comment">// Pop的时候, 我们可以传递一个处理函数, 该处理函数就是Config里面的process， 根据不同的事件类型调用下面的eventHandler对应的方法</span></span><br><span class="line">		obj, err := c.config.Queue.Pop(PopProcessFunc(c.config.Process))</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err == FIFOClosedError &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> c.config.RetryOnError &#123;</span><br><span class="line">				<span class="comment">// This is the safe way to re-enqueue.</span></span><br><span class="line">				<span class="comment">// 如果允许重试，可以重新将对象数据放回到队列中进行处理</span></span><br><span class="line">				c.config.Queue.AddIfNotPresent(obj)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="Reflector"><a href="#Reflector" class="headerlink" title="Reflector"></a>Reflector</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">ListAndWatch</span><span class="params">(stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">// ResourceVersion为0表示当前数据直接从apiserver的cache中获取, 然后从当前的返回的数据中取出当前的resourceVersion, 后续调用Watch进行数据变化的监听</span></span><br><span class="line">	options := metav1.ListOptions&#123;ResourceVersion: <span class="string">"0"</span>&#125;</span><br><span class="line">	<span class="comment">// 获取当前类型的所有数据</span></span><br><span class="line">	list, err := r.listerWatcher.List(options)</span><br><span class="line">	<span class="comment">// 获取当前数据的resourceVersion</span></span><br><span class="line">	resourceVersion = listMetaInterface.GetResourceVersion()</span><br><span class="line">	items, err := meta.ExtractList(list)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 将获取的数据和resourceVersion，替换到当前的store里面, 这里的store就是Queue</span></span><br><span class="line">	<span class="keyword">if</span> err := r.syncWith(items, resourceVersion); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"%s: Unable to sync list result: %v"</span>, r.name, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 设置最后同步的资源版本</span></span><br><span class="line">	r.setLastSyncResourceVersion(resourceVersion)</span><br><span class="line">            <span class="comment">// 通过之前获取的resouceVersion生成一个http request的watch继续watch后续数据的额变化</span></span><br><span class="line">		options = metav1.ListOptions&#123;</span><br><span class="line">			ResourceVersion: resourceVersion,</span><br><span class="line">			<span class="comment">// We want to avoid situations of hanging watchers. Stop any wachers that do not</span></span><br><span class="line">			<span class="comment">// receive any events within the timeout window.</span></span><br><span class="line">			TimeoutSeconds: &amp;timeoutSeconds,</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		w, err := r.listerWatcher.Watch(options)</span><br><span class="line">		<span class="comment">// 生成一个 watcher后续watcher会监听数据变化， 同时提供w.ResultChan给watchHandler获取watch到的事件</span></span><br><span class="line">		<span class="keyword">if</span> err := r.watchHandler(w, &amp;resourceVersion, resyncerrc, stopCh); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err != errorStopRequested &#123;</span><br><span class="line">				glog.Warningf(<span class="string">"%s: watch of %v ended with: %v"</span>, r.name, r.expectedType, err)</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// syncWith replaces the store's items with the given list.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">syncWith</span><span class="params">(items []runtime.Object, resourceVersion <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	found := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, <span class="number">0</span>, <span class="built_in">len</span>(items))</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> items &#123;</span><br><span class="line">		found = <span class="built_in">append</span>(found, item)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> r.store.Replace(found, resourceVersion)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// watchHandler watches w and keeps *resourceVersion up to date.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">watchHandler</span><span class="params">(w watch.Interface, resourceVersion *<span class="keyword">string</span>, errc <span class="keyword">chan</span> error, stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line"></span><br><span class="line">loop:</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-stopCh:</span><br><span class="line">			<span class="keyword">return</span> errorStopRequested</span><br><span class="line">		<span class="keyword">case</span> err := &lt;-errc:</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">            <span class="comment">// 监听到数据变化 , 然后获取对应数据的变化, 调用store对应的方法, 修改数据</span></span><br><span class="line">		<span class="keyword">case</span> event, ok := &lt;-w.ResultChan():</span><br><span class="line">			newResourceVersion := meta.GetResourceVersion()</span><br><span class="line">			<span class="keyword">switch</span> event.Type &#123;</span><br><span class="line">			<span class="keyword">case</span> watch.Added:</span><br><span class="line">				err := r.store.Add(event.Object)</span><br><span class="line">				<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">					utilruntime.HandleError(fmt.Errorf(<span class="string">"%s: unable to add watch event object (%#v) to store: %v"</span>, r.name, event.Object, err))</span><br><span class="line">				&#125;</span><br><span class="line">                    <span class="comment">//. 设置新的resouceVersion后续请求使用新的watch opyions</span></span><br><span class="line">                    <span class="comment">// 注意这里是使用的指针直接进行了对应资源的修改</span></span><br><span class="line">			*resourceVersion = newResourceVersion</span><br><span class="line">			r.setLastSyncResourceVersion(newResourceVersion)</span><br><span class="line">			eventCount++</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	watchDuration := r.clock.Now().Sub(start)</span><br><span class="line">	<span class="keyword">if</span> watchDuration &lt; <span class="number">1</span>*time.Second &amp;&amp; eventCount == <span class="number">0</span> &#123;</span><br><span class="line">		r.metrics.numberOfShortWatches.Inc()</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"very short watch: %s: Unexpected watch close - watch lasted less than a second and no items received"</span>, r.name)</span><br><span class="line">	&#125;</span><br><span class="line">	glog.V(<span class="number">4</span>).Infof(<span class="string">"%s: Watch close - %v total %v items received"</span>, r.name, r.expectedType, eventCount)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">syncWith</span><span class="params">(items []runtime.Object, resourceVersion <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	found := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, <span class="number">0</span>, <span class="built_in">len</span>(items))</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> items &#123;</span><br><span class="line">		found = <span class="built_in">append</span>(found, item)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> r.store.Replace(found, resourceVersion)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="threadSafeMap"><a href="#threadSafeMap" class="headerlink" title="threadSafeMap"></a>threadSafeMap</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-48-07.png" alt=""><br>threadSafeMap其实就相当于informer中的一个 <code>数据库</code> , 负责存储对应数据的key-&gt;object的映射, 同时接收外部传递进来的indexers,  为当前object构建对应的 <code>索引</code> , 上图中updateIndices和indexer, 当cache (就是上面的store)接收到一个数据的时候, 首先通过keyFunc生成object对应的key, 然后就调用threadSafeMap中的增删改查方法, 在增改删中都会调用跟indices有关的方法(增改是updateIndices, 删是deleteFromIndices), 更新本地索引</p>
+<ul>
+<li><p>结构体</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// threadSafeMap implements ThreadSafeStore</span></span><br><span class="line"><span class="keyword">type</span> threadSafeMap <span class="keyword">struct</span> &#123;</span><br><span class="line">	lock  sync.RWMutex</span><br><span class="line">	items <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// indexers maps a name to an IndexFunc</span></span><br><span class="line">	indexers Indexers</span><br><span class="line">	<span class="comment">// indices maps a name to an Index</span></span><br><span class="line">	indices Indices</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>生成索引</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *threadSafeMap)</span> <span class="title">updateIndices</span><span class="params">(oldObj <span class="keyword">interface</span>&#123;&#125;, newObj <span class="keyword">interface</span>&#123;&#125;, key <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// if we got an old object, we need to remove it before we add it again</span></span><br><span class="line">	<span class="keyword">if</span> oldObj != <span class="literal">nil</span> &#123;</span><br><span class="line">		c.deleteFromIndices(oldObj, key)</span><br><span class="line">	&#125;</span><br><span class="line">        <span class="comment">// 遍历所有的indexer, 生成当前object的values, 然后吧所有的values都存放在Index中, 其中value就是key</span></span><br><span class="line">	<span class="keyword">for</span> name, indexFunc := <span class="keyword">range</span> c.indexers &#123;</span><br><span class="line">		<span class="comment">// 通过indexer的 indexFunc, 获取当前对象的key, 返回的是一个列表</span></span><br><span class="line">		indexValues, err := indexFunc(newObj)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="built_in">panic</span>(fmt.Errorf(<span class="string">"unable to calculate an index entry for key %q on index %q: %v"</span>, key, name, err))</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 从indices中获取当前index的索引的数据</span></span><br><span class="line">		index := c.indices[name]</span><br><span class="line">		<span class="keyword">if</span> index == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// 如果为空就至为一个值, 就新建一个索引</span></span><br><span class="line">			index = Index&#123;&#125;</span><br><span class="line">			c.indices[name] = index</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 注意，这个地方通过上面的indexFunc,生成了一个indexValues, 会在当前index将所有value的映射都设置为传递进来的**key**</span></span><br><span class="line">		<span class="comment">// **key**是由add或者update 等方法为当前对象生成的一个key, 该key映射到items里面对应的object</span></span><br><span class="line">		<span class="keyword">for</span> _, indexValue := <span class="keyword">range</span> indexValues &#123;</span><br><span class="line">			<span class="comment">// 遍历当前object的所有indexValues, 设置当前index的缓存的索引的值</span></span><br><span class="line">			set := index[indexValue]</span><br><span class="line">			<span class="keyword">if</span> set == <span class="literal">nil</span> &#123;</span><br><span class="line">				set = sets.String&#123;&#125;</span><br><span class="line">				index[indexValue] = set</span><br><span class="line">			&#125;</span><br><span class="line">			set.Insert(key)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/09/17/k8s/admission_design/" itemprop="url">
                   Kubernetes 准入控制模块实现
                 </a>
@@ -1524,133 +1698,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/05/16/go/go_restful_01/" itemprop="url">
-                  go-restful框架学习
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-05-16T23:29:12+08:00" content="2018-05-16">
-              2018-05-16
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/" itemprop="url" rel="index">
-                    <span itemprop="name">go语言</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="go-restful初步了解"><a href="#go-restful初步了解" class="headerlink" title="go-restful初步了解"></a>go-restful初步了解</h3><h4 id="go-restful介绍"><a href="#go-restful介绍" class="headerlink" title="go-restful介绍"></a>go-restful介绍</h4><p>go-restful是一个基于go里面net/http构建的一个rest风格的包，这个库并没有做过多的封装， 再kubernets和蓝鲸的cmdb里面都有使用</p>
-<h4 id="上手"><a href="#上手" class="headerlink" title="上手"></a>上手</h4><p>因为库本身就比较简单，作者连文档都懒得写, 可见这个库是多么的易用, 感觉基本上吧example里面的栗子都看一遍就美啥问题了, 建议抄一遍，然后正常跑通</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//https://github.com/emicklei/go-restful/blob/master/examples/restful-user-resource.go</span></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">	<span class="string">"github.com/emicklei/go-restful"</span></span><br><span class="line">	restfulspec <span class="string">"github.com/emicklei/go-restful-openapi"</span></span><br><span class="line">	<span class="string">"github.com/go-openapi/spec"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span> <span class="params">()</span></span> &#123;</span><br><span class="line">	u := UserResource&#123;<span class="keyword">map</span>[<span class="keyword">string</span>]User&#123;&#125;&#125;</span><br><span class="line">	restful.DefaultContainer.Add(u.WebService())</span><br><span class="line"></span><br><span class="line">	config := restfulspec.Config&#123;</span><br><span class="line">		WebServices: restful.RegisteredWebServices(),</span><br><span class="line">		APIPath: <span class="string">"/apidoccs.json"</span>,</span><br><span class="line">		PostBuildSwaggerObjectHandler: enrichSwaggerObject&#125;</span><br><span class="line">	</span><br><span class="line">	restful.DefaultContainer.Add(restfulspec.NewOpenAPIService(config))</span><br><span class="line">	http.Handle(<span class="string">"/apidocs/"</span>, http.StripPrefix(<span class="string">"/apidocs/"</span>, http.FileServer(http.Dir(<span class="string">"/data/self/swagger/ui"</span>))))</span><br><span class="line"></span><br><span class="line">	log.Printf(<span class="string">"start listen on localhost:8080"</span>)</span><br><span class="line">	log.Fatal(http.ListenAndServe(<span class="string">":8080"</span>, <span class="literal">nil</span>))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> User <span class="keyword">struct</span> &#123;</span><br><span class="line">	ID   <span class="keyword">string</span> <span class="string">`json:"id" description: "identifier of the user`</span></span><br><span class="line">	Name <span class="keyword">string</span> <span class="string">`json:"name" description: "name of the user" defaut: "john"`</span></span><br><span class="line">	Age  <span class="keyword">int</span>    <span class="string">`json:"age" description: "age of the user" default: "21"`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> UserResource <span class="keyword">struct</span> &#123;</span><br><span class="line">	users <span class="keyword">map</span>[<span class="keyword">string</span>]User</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u UserResource)</span> <span class="title">findAllUsers</span><span class="params">(request *restful.Request, response *restful.Response)</span></span> &#123;</span><br><span class="line">	list := []User&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> _, each := <span class="keyword">range</span> u.users &#123;</span><br><span class="line">		list = <span class="built_in">append</span>(list, each)</span><br><span class="line">	&#125;</span><br><span class="line">	response.WriteEntity(list)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u UserResource)</span> <span class="title">findUser</span><span class="params">(request *restful.Request, response *restful.Response)</span></span> &#123;</span><br><span class="line">	user := <span class="built_in">new</span>(User)</span><br><span class="line">	err := request.ReadEntity(&amp;user)</span><br><span class="line">	<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">		u.users[user.ID] = *user</span><br><span class="line">		response.WriteEntity(user)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		response.WriteError(http.StatusInternalServerError, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u UserResource)</span> <span class="title">updateUser</span><span class="params">(request *restful.Request, response *restful.Response)</span></span> &#123;</span><br><span class="line">	user := <span class="built_in">new</span>(User)</span><br><span class="line">	err := request.ReadEntity(&amp;user)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">		u.users[user.ID] = *user</span><br><span class="line">		response.WriteEntity(user)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		response.WriteError(http.StatusInternalServerError, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u UserResource)</span> <span class="title">createUser</span><span class="params">(request *restful.Request, response *restful.Response)</span></span> &#123;</span><br><span class="line">	user := User&#123;ID: request.PathParameter(<span class="string">"user-id"</span>)&#125;</span><br><span class="line">	err := request.ReadEntity(&amp;user)</span><br><span class="line">	<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">		u.users[user.ID] = user</span><br><span class="line">		response.WriteHeaderAndEntity(http.StatusCreated, user)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		response.WriteError(http.StatusInternalServerError, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u UserResource)</span> <span class="title">removeUser</span><span class="params">(request *restful.Request, response *restful.Response)</span></span> &#123;</span><br><span class="line">	id := request.PathParameter(<span class="string">"user-id"</span>)</span><br><span class="line">	<span class="built_in">delete</span>(u.users, id)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u UserResource)</span> <span class="title">WebService</span><span class="params">()</span> *<span class="title">restful</span>.<span class="title">WebService</span></span> &#123;</span><br><span class="line">	ws := <span class="built_in">new</span>(restful.WebService)</span><br><span class="line">	ws.Path(<span class="string">"/users"</span>).</span><br><span class="line">		Consumes(restful.MIME_JSON, restful.MIME_XML).</span><br><span class="line">		Produces(restful.MIME_JSON, restful.MIME_XML)</span><br><span class="line">	tags := []<span class="keyword">string</span>&#123;<span class="string">"users"</span>&#125;</span><br><span class="line">	ws.Route(ws.GET(<span class="string">"/"</span>).To(u.findAllUsers).</span><br><span class="line">			Doc(<span class="string">"get all users"</span>).</span><br><span class="line">			Metadata(restfulspec.KeyOpenAPITags, tags).</span><br><span class="line">			Writes([]User&#123;&#125;).</span><br><span class="line">			Returns(<span class="number">200</span>, <span class="string">"OK"</span>, []User&#123;&#125;))</span><br><span class="line">	ws.Route(ws.GET(<span class="string">"/&#123;user-id&#125;"</span>).To(u.findUser).</span><br><span class="line">			Doc(<span class="string">"get a user"</span>).</span><br><span class="line">			Param(ws.PathParameter(<span class="string">"user-id"</span>, <span class="string">"identifier of the user"</span>).DataType(<span class="string">"integer"</span>).DefaultValue(<span class="string">"1"</span>)).</span><br><span class="line">			Metadata(restfulspec.KeyOpenAPITags, tags).</span><br><span class="line">			Writes(User&#123;&#125;).</span><br><span class="line">			Returns(<span class="number">200</span>, <span class="string">"OK"</span>, User&#123;&#125;).</span><br><span class="line">			Returns(<span class="number">404</span>, <span class="string">"Not Found"</span>, <span class="literal">nil</span>))</span><br><span class="line">	</span><br><span class="line">	ws.Route(ws.PUT(<span class="string">"/&#123;user-id&#125;"</span>).To(u.updateUser).</span><br><span class="line">			Doc(<span class="string">"update a user"</span>).</span><br><span class="line">			Param(ws.PathParameter(<span class="string">"user-id"</span>, <span class="string">"identifier of user"</span>).DataType(<span class="string">"string"</span>)).</span><br><span class="line">			Metadata(restfulspec.KeyOpenAPITags, tags).</span><br><span class="line">			Reads(User&#123;&#125;))</span><br><span class="line"></span><br><span class="line">	ws.Route(ws.DELETE(<span class="string">"/&#123;user-id&#125;"</span>).To(u.removeUser).</span><br><span class="line">			Doc(<span class="string">"delete a user"</span>).</span><br><span class="line">			Metadata(restfulspec.KeyOpenAPITags, tags).</span><br><span class="line">			Param(ws.PathParameter(<span class="string">"user-id"</span>, <span class="string">"identifier of user"</span>).DataType(<span class="string">"string"</span>)))</span><br><span class="line"></span><br><span class="line">	ws.Route(ws.PUT(<span class="string">""</span>).To(u.createUser).</span><br><span class="line">			Doc(<span class="string">"Create a user"</span>).</span><br><span class="line">			Metadata(restfulspec.KeyOpenAPITags, tags).</span><br><span class="line">			Reads(User&#123;&#125;))</span><br><span class="line">	<span class="keyword">return</span> ws</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">enrichSwaggerObject</span><span class="params">(swo *spec.Swagger)</span></span> &#123;</span><br><span class="line">	swo.Info = &amp;spec.Info&#123;</span><br><span class="line">		InfoProps: spec.InfoProps&#123;</span><br><span class="line">			Title:       <span class="string">"UserService"</span>,</span><br><span class="line">			Description: <span class="string">"Resource for managing Users"</span>,</span><br><span class="line">			Contact: &amp;spec.ContactInfo&#123;</span><br><span class="line">				Name:  <span class="string">"john"</span>,</span><br><span class="line">				Email: <span class="string">"john@doe.rp"</span>,</span><br><span class="line">				URL:   <span class="string">"http://johndoe.org"</span>,</span><br><span class="line">			&#125;,</span><br><span class="line">			License: &amp;spec.License&#123;</span><br><span class="line">				Name: <span class="string">"MIT"</span>,</span><br><span class="line">				URL:  <span class="string">"http://mit.org"</span>,</span><br><span class="line">			&#125;,</span><br><span class="line">			Version: <span class="string">"1.0.0"</span>,</span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">	swo.Tags = []spec.Tag&#123;spec.Tag&#123;TagProps: spec.TagProps&#123;</span><br><span class="line">		Name:        <span class="string">"users"</span>,</span><br><span class="line">		Description: <span class="string">"Managing users"</span>&#125;&#125;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h4><p>用的vscode里面的rest client<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">#### 创建用户</span><br><span class="line">PUT http://localhost:8080/users/1 HTTP/1.1</span><br><span class="line">content-type: application/json</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    &quot;id&quot;: &quot;1&quot;,</span><br><span class="line">    &quot;name&quot;: &quot;test3&quot;,</span><br><span class="line">    &quot;age&quot;: 100</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#### 获取所有用户</span><br><span class="line"></span><br><span class="line">GET http://localhost:8080/users/ HTTP/1.1</span><br><span class="line"></span><br><span class="line">### 获取apidoc</span><br><span class="line"></span><br><span class="line">GET http://localhost:8080/apidocs/</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#### 删除用户</span><br><span class="line">DELETE http://localhost:8080/users/2 HTTP/1.1</span><br></pre></td></tr></table></figure></p>
-<h4 id="简单分析执行过程"><a href="#简单分析执行过程" class="headerlink" title="简单分析执行过程"></a>简单分析执行过程</h4><p><img src="http://olg58pct7.bkt.clouddn.com/go-restful.jpg" alt=""></p>
-<h5 id="Filter"><a href="#Filter" class="headerlink" title="Filter"></a>Filter</h5><p>如果之前看过django里面的middleware,一定会感觉这个东西特别亲切, Filter主要作用就是在请求的处理之前或者之后来进行一些额外的操作, 比如记录日志、错误处理等等, go-restful里面针对Container、webService、Route都可以加入filter对象 ， 为了串联起这些filter, go-restful里面使用了ChanFilter来保存当前路由的所有关联filter</p>
-<h5 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h5><p>容器这个概念比较迷惑人, 通常写web的时候，我们最少要进行两个操作， 写一个业务处理逻辑的handler， 然后定义一个路由吧这个路由绑定到我们的web框架上, 但很多rest框架(drf)，都需要很多自定义的逻辑处理, 这时候大家通畅会做一个抽象的实现, 比如router -&gt; dispatch -&gt; handler, 在路由和实际的处理方法之间加入一个dispatch的阶段, 用于自己逻辑的处理和对应请求的转发, go-restful里面的Container主要是实现了一个dispatch方法用来实现上面的chanFilter和陆游查找功能</p>
-<h5 id="WebService"><a href="#WebService" class="headerlink" title="WebService"></a>WebService</h5><p>在rest里面通常需要定义各种各样的资源, 比如用户、商品等, 不同的资源通常都会有一个endpoint来标识这一类比如User、Product等等, WebService其实就可以理解位一个资源的集合, 比如用户服务, 我们可以吧UserResource这类资源定义成一个web service, 所有用户的服务都在这一个wbe serice里面， 同时大家的rootpath也都是易用的/users(类似于drf 里面的viewset， 不过drf里面的viewset转发是直接通过router来实现, 它这是直接生成一个router)</p>
-<h5 id="Route"><a href="#Route" class="headerlink" title="Route"></a>Route</h5><p>Route就比较简单了, 一个Route里面会保存它的路径、请求方法、处理函数等基本问题</p>
-<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>一些详细的参数传递和api docs之类的嗨美看, 感觉go里面的框架封装还是没python里面的厉害，框架之间基本上都是类似的， 得多写点go代码，练练手,GO GO GO !</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1691,7 +1743,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">30</span>
+              <span class="site-state-item-count">31</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1699,7 +1751,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">10</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1708,7 +1760,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">10</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
