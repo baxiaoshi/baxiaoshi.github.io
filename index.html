@@ -270,6 +270,213 @@
             
               
                 
+                <a class="post-title-link" href="/2018/10/09/devops/devops_baidu_ark/" itemprop="url">
+                  智能运维ARK框架
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-09T12:14:56+08:00" content="2018-10-09">
+              2018-10-09
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/ark/" itemprop="url" rel="index">
+                    <span itemprop="name">ark</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/ark/百度/" itemprop="url" rel="index">
+                    <span itemprop="name">百度</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/ark/百度/智能运维/" itemprop="url" rel="index">
+                    <span itemprop="name">智能运维</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-12-12-10.png" alt=""><br><strong>图片来自官方</strong></p>
+<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>ARK系统是一个基于事件驱动的智能运维开发框架，主要解决下面两个问题</p>
+<ul>
+<li>部分组件自动化，代价是控制策略简单，风险较大。典型如使用报警回调方式自动故障发现和自动故障处理执行。</li>
+<li>固化完整运维操作的控制、处理流程，代价是可扩展性较差，业务变化需要大规模的调整流程。</li>
+</ul>
+<p>ARK 提供了以下功能用于解决上面的问题</p>
+<ul>
+<li>按照运维操作流程和操作模式抽象，而非提供原生的技术实现抽象</li>
+<li>实际的技术抽象隐藏在用户视野之外，避免将功能组件用于非预期的场合</li>
+<li>基于监听、决策、执行三个组件和graph图模型算法, 实现基于事件驱动的智能运维开发框架</li>
+<li>基于zk和es实现框架的高可用</li>
+</ul>
+<h3 id="ARK框架架构"><a href="#ARK框架架构" class="headerlink" title="ARK框架架构"></a>ARK框架架构</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-08-17-45-14.png" alt=""><br><strong>一个node就是一个ARK实例</strong></p>
+<p>ARK框架由四部分组成：sensor(感知器)、Node(节点master/slave)、zookeeper、elasticsearch组成, 每部分功能如下</p>
+<ul>
+<li><code>sensor</code> 支持多种数据来源, 目前官方提供了三种MQ、Elasticsearch、File三种方式, sensor负责事件的产生,  Node节点不断的从各种sensor中获取事件, 然后转发到<code>消息泵</code></li>
+<li><code>node</code> 节点负责ARK框架数据流的分发和监听，是<code>事件驱动</code> 的核心模块, node基于zookeeper实现了框架的高可用机制</li>
+<li><code>zookeeper</code> 负责node节点的主从选举和node节点运行上下文数据的存储</li>
+<li><code>Elasticsearch</code> 负责整个框架运行日志和事件的存储</li>
+</ul>
+<h3 id="事件驱动机制"><a href="#事件驱动机制" class="headerlink" title="事件驱动机制"></a>事件驱动机制</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-08-18-45-57.png" alt=""><br>ARK本身是一个事件驱动的系统，核心是感知、决策、执行三部分相互之间通过消息机制进行通讯，流程驱动步骤如下</p>
+<ul>
+<li><code>感知器</code>根据数据源获取到对应的event, 放入到<code>消息泵</code>中</li>
+<li>当消息到来<code>消息泵</code>将事件分发给<code>决策器</code>、<code>感知器</code>、<code>执行器</code></li>
+<li><code>决策器</code>和<code>执行器</code>根据事件类型， 来决定当前事件是否关心</li>
+<li><code>感知器</code>则尝试从当前的数据源中获取数据, 继续往<strong>消息泵</strong>发送消息, 触发下一个事件驱动</li>
+</ul>
+<h3 id="消息泵"><a href="#消息泵" class="headerlink" title="消息泵"></a>消息泵</h3><p><code>消息泵</code>负责当前系统事件驱动和分发处理是整个数据驱动的核心，ARK系统目前是以一个list, 来存放各种消息, 消息泵内部逻辑如下<br><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-11-26-00.png" alt=""></p>
+<p>事件来源主要有下面两种</p>
+<ul>
+<li><code>监听器事件</code> 由监听器监听外部事件源获得</li>
+<li><code>空闲事件</code> 则是由消息泵自身产生, 主要是用来驱动监听器(监听器监听外部事件的线程只负责将消息房到自身的queue中, 并不直接发送到消息泵), 将监听器本地队列里面的事件发送到消息泵中，触发新事件的处理流程</li>
+</ul>
+<h3 id="Listener"><a href="#Listener" class="headerlink" title="Listener"></a>Listener</h3><p> Listener是ARK中事件处理的基类, 决策、监听、执行都会继承该类, 主要提供了下面几个功能</p>
+<ul>
+<li><code>register</code>和<code>deregister</code> 增加或删除关注的事件类型</li>
+<li><code>bind_pump</code> 绑定消息泵</li>
+<li><code>on_message</code> 当消息到来时, 根据不同的Listener, 执行不同的调用方法</li>
+<li><code>send</code> 负责发送消息到消息泵, 同时保存任务的运行状态到Zookeeper</li>
+</ul>
+<h3 id="GuardianFramework"><a href="#GuardianFramework" class="headerlink" title="GuardianFramework"></a>GuardianFramework</h3><p><code>GuardianFramework</code> 是ARK框架的里面的核心框架(消息泵), 在消息泵的基础上, 增加了高可用和数据持久化的操作(基于zk)</p>
+<h3 id="Graph控制模型-官方介绍"><a href="#Graph控制模型-官方介绍" class="headerlink" title="Graph控制模型(官方介绍)"></a>Graph控制模型(官方介绍)</h3><p><strong>graph</strong> 模块提供了基于图论的长流程控制模型，封装了两种长流程执行的标准作业流程。</p>
+<p>当前普遍的运维操作方法，与最早起的全手工相比，已经有了很大变化，但基本模式并没有本质的<br>不同，其核心仍然是：查看服务状态→执行操作→检查执行结果的循环。</p>
+<p>过去我们通过两种主要的方式来提升运维效率：</p>
+<ol>
+<li>部分组件自动化，代价是控制策略简单，风险较大。典型如使用报警回调方式自动故障发现和自动故障处理执行。</li>
+<li>固化完整运维操作的控制、处理流程，代价是可扩展性较差，业务变化需要大规模的调整流程。</li>
+</ol>
+<p>ARK框架从过去的运维处理中，抽象核心的模式固化成框架，解决风险和扩展性不能两全的问题：</p>
+<ol>
+<li>按照运维操作流程和操作模式抽象，而非提供原生的技术实现抽象</li>
+<li>实际的技术抽象隐藏在用户视野之外，避免将功能组件用于非预期的场合</li>
+</ol>
+<p>基于此，我们抽象出基于图算法的处理模式：通过定义一组离散可枚举的状态，及各状态下所对应的处理动作，实现面向状态的执行处理。根据状态间切换的确定性与否，又细分为两种运行模型：</p>
+<ol>
+<li>状态机模型(StateMachine)：各状态处理完成后的后续状态是确定的，可直接进行后续状态的执行。</li>
+<li>流程图模型(DepedencyFlow)：状态处理完成后的后续状态是不确定的，此时需要对各状态进行检查，确认是否进入该状态的处理。</li>
+</ol>
+<p>使用标准作业流程的好处：</p>
+<ol>
+<li>面向状态运维，状态处理具有可复用性，并且流程动态生成，可以应对复杂业务变化，具有强大的扩展能力。</li>
+<li>长流程分步执行，可在运行关键点处进行checkpoint，更好地解决了单实例故障时的可用性问题。</li>
+</ol>
+<h3 id="Graph控制模型-非官方"><a href="#Graph控制模型-非官方" class="headerlink" title="Graph控制模型(非官方)"></a>Graph控制模型(非官方)</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-11-52-07.png" alt=""></p>
+<p><code>Graph</code> 控制模型是基于图算法, 图中由<code>顶点</code>和<code>边</code>两部分组成, 其中顶点就是我们的一个个任务节点, 边就是这个任务产生的结果, 和下一个任务的方向</p>
+<p>流程图模型和状态机模型最大的差异在于， 状态机的方向是确定的(可以有多个, 但是有向的<code>有向无环图</code>), 事件只会分发给对应的节点，而流程图模型, 则可以分发到所有节点，由每个节点自身决定是否执行</p>
+<h3 id="事件驱动流程"><a href="#事件驱动流程" class="headerlink" title="事件驱动流程"></a>事件驱动流程</h3><p>上面拆分了ARK部分的基础组件, 整理流程如下<br><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-12-09-13.png" alt=""></p>
+<h3 id="一些想法"><a href="#一些想法" class="headerlink" title="一些想法"></a>一些想法</h3><p>ARK框架自己感觉还是上层的一个系统，底层可能嗨需要依赖CMDB、自动化、发布等系统<br>ARK框架，目前开源的部分要真正使用可能还需要等待, 当前只是一个编程框架,需要我们去结合自己的一些具体场景，构建自己的事件驱动系统</p>
+<p>事件驱动的核心，应该同k8s类似， 给定一个资源和事件，产生一个预期的结果，最终达到整个资源最终的状态<br>运维系统里面的事件驱动，我自己理解至少需要能明确两个事情，一个是资源，一个是事件，基于事件和资源的组合就是我们自己的运维场景；</p>
+<p>目前对ARK嗨不是恨理解，在应用上自己嗨缺少一些具体应用场景的理解，希望未来百度能继续开源这个框架, 目前应该不支持python3， 有些语法py3下跑不起来，期待官方吧</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/09/29/k8s/k8s_shared_informer/" itemprop="url">
                   Kubernetes sharedInformer 图解
                 </a>
@@ -1604,129 +1811,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/06/24/data_struct/ring_queue/" itemprop="url">
-                  环状队列的实现与应用
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-06-24T16:19:26+08:00" content="2018-06-24">
-              2018-06-24
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/数据结构/" itemprop="url" rel="index">
-                    <span itemprop="name">数据结构</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="一个基于数组的环状队列的实现"><a href="#一个基于数组的环状队列的实现" class="headerlink" title="一个基于数组的环状队列的实现"></a>一个基于数组的环状队列的实现</h3><p>队列概念上很简单，就是一个FIFO的数据结构，通常使用链表或者数组来实现，队列在使用方式上只允许从头里面插入，然后从尾部读取，插入和读取的时间复杂度都是0(1)</p>
-<h4 id="队列的数据结构"><a href="#队列的数据结构" class="headerlink" title="队列的数据结构"></a>队列的数据结构</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> RingGrowing <span class="keyword">struct</span> &#123;</span><br><span class="line">	data		[]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	n			<span class="keyword">int</span>	<span class="comment">// 初始队列的初始长度</span></span><br><span class="line">	beg			<span class="keyword">int</span> <span class="comment">// First available element</span></span><br><span class="line">	readable	<span class="keyword">int</span> <span class="comment">// Number of data items available</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="队列的读取和写入操作"><a href="#队列的读取和写入操作" class="headerlink" title="队列的读取和写入操作"></a>队列的读取和写入操作</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *RingGrowing)</span> <span class="title">ReadOne</span><span class="params">()</span>  <span class="params">(data <span class="keyword">interface</span>&#123;&#125;, ok <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r.readable == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span>		<span class="comment">//如果当前没有通知消息, 则返回nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	r.readable--</span><br><span class="line">	element := r.data[r.beg]</span><br><span class="line">	r.data[r.beg] = <span class="literal">nil</span>	<span class="comment">// Remove reference to the object to help GC</span></span><br><span class="line">	<span class="keyword">if</span> r.beg == r.n <span class="number">-1</span> &#123;</span><br><span class="line">		r.beg = <span class="number">0</span></span><br><span class="line">	&#125;<span class="keyword">else</span> &#123;</span><br><span class="line">		r.beg ++</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> element, <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *RingGrowing)</span> <span class="title">WriteOne</span> <span class="params">(data <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r.readable == r.n &#123;		<span class="comment">// 如果已经满了就自动扩容</span></span><br><span class="line">		newN := r.n * <span class="number">2</span></span><br><span class="line">		newData := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, newN)</span><br><span class="line">		to := r.beg + r.readable</span><br><span class="line">		<span class="keyword">if</span> to &lt;= r.n &#123;							<span class="comment">// 如果当前并没有写满过, 就直接拷贝数据</span></span><br><span class="line">			<span class="built_in">copy</span>(newData, r.data[r.beg:to])</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">// 当数据超过r.n就会分为两个区间: [:to%r.n][] [r.beg:]</span></span><br><span class="line">			copied := <span class="built_in">copy</span>(newData, r.data[r.beg:])</span><br><span class="line">			<span class="built_in">copy</span>(newData[copied:], r.data[:to%r.n])</span><br><span class="line">		&#125;</span><br><span class="line">		r.beg = <span class="number">0</span></span><br><span class="line">		r.data = newData</span><br><span class="line">		r.n = newN</span><br><span class="line">	&#125;</span><br><span class="line">	r.data[(r.readable+r.beg)%r.n] = data</span><br><span class="line">	r.readable++</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h3><h4 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h4><p><img src="./_image/2018-06-24/2018-08-05-15-57-21.png" alt=""></p>
-<p>listener首先注册消息的回调<br>生产者调用listener写入消息<br>接受到消息后调用handler进行处理</p>
-<h4 id="listener定义与实现"><a href="#listener定义与实现" class="headerlink" title="listener定义与实现"></a>listener定义与实现</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">type</span> processorListener <span class="keyword">struct</span> &#123;</span><br><span class="line">	nextCh <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	addCh  <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">	handler *ResourceHandler</span><br><span class="line">	pendingNotifications *RingGrowing</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newProcessLitener</span> <span class="params">(bufferSize <span class="keyword">int</span>)</span> *<span class="title">processorListener</span></span> &#123;</span><br><span class="line">	ret := &amp;processorListener&#123;</span><br><span class="line">		nextCh:					<span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;),</span><br><span class="line">		addCh:					<span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;),</span><br><span class="line">		handler:				&amp;ResourceHandler&#123;&#125;,</span><br><span class="line">		pendingNotifications: 	NewRingGrowing(bufferSize),</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> ret</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *processorListener)</span> <span class="title">pop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> <span class="built_in">close</span>(p.nextCh)</span><br><span class="line">	<span class="keyword">var</span> nextCh <span class="keyword">chan</span> &lt;- <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">var</span> notification <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> nextCh &lt;- notification:</span><br><span class="line">			<span class="comment">// 如果notification不为空, 则就吧数据放入到nextCh中</span></span><br><span class="line">			<span class="comment">// 同时再次从pendingNotifications中读取, 如果没有数据则notification设置为nil</span></span><br><span class="line">			<span class="keyword">var</span> ok <span class="keyword">bool</span></span><br><span class="line">			notification, ok = p.pendingNotifications.ReadOne()</span><br><span class="line">			<span class="built_in">println</span>(<span class="string">"Pop next notification"</span>, notification, ok, nextCh, p.nextCh)</span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				nextCh = <span class="literal">nil</span></span><br><span class="line">			&#125;</span><br><span class="line">		<span class="keyword">case</span> notificationAdd, ok :=  &lt;- p.addCh:</span><br><span class="line">			<span class="built_in">println</span>(<span class="string">"Pop:Get notification from addCh"</span>, notificationAdd, ok, notification == <span class="literal">nil</span>)</span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// 当从pendingNotifications中读取不到数据后,notification会设置为空,</span></span><br><span class="line">			<span class="comment">// 则当添加事件的时候, 就会重新设置notification</span></span><br><span class="line">			<span class="keyword">if</span> notification == <span class="literal">nil</span> &#123;</span><br><span class="line">				notification = notificationAdd</span><br><span class="line">				nextCh = p.nextCh</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				p.pendingNotifications.WriteOne(notificationAdd)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// run函数负责从环状队列里面获取数据，然后调用注册的回调handler来进行处理</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *processorListener)</span> <span class="title">run</span> <span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Start listener run"</span>)</span><br><span class="line">	stopCh := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line"></span><br><span class="line">	wait.Until(<span class="function"><span class="keyword">func</span> <span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> next := <span class="keyword">range</span> p.nextCh &#123;</span><br><span class="line">			<span class="keyword">switch</span> notification := next.(<span class="keyword">type</span>) &#123;</span><br><span class="line">			<span class="keyword">case</span> updateNotification:</span><br><span class="line">				p.handler.onUpdate(notification.oldObj, notification.newObj)</span><br><span class="line">			<span class="keyword">case</span> addNotification:</span><br><span class="line">				p.handler.onAdd(notification.newObj)</span><br><span class="line">			<span class="keyword">case</span> deleteNotification:</span><br><span class="line">				p.handler.onDel(notification.oldObj)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">close</span>(stopCh)</span><br><span class="line">	&#125;, <span class="number">1</span>* time.Second, stopCh)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="hanlder的简单定义"><a href="#hanlder的简单定义" class="headerlink" title="hanlder的简单定义"></a>hanlder的简单定义</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 实际上handler可以抽象成一个接口，然后具体实现呦真正的操作来进行实现</span></span><br><span class="line"><span class="keyword">type</span> ResourceHandler <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ResourceHandler)</span> <span class="title">onUpdate</span> <span class="params">(newObj, oldObj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Update Handler"</span>, newObj, oldObj)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ResourceHandler)</span> <span class="title">onAdd</span> <span class="params">(newObj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Add Handler"</span>, newObj)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ResourceHandler)</span> <span class="title">onDel</span> <span class="params">(oldObj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Del Handler"</span>, oldObj)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="简单生产者的实现"><a href="#简单生产者的实现" class="headerlink" title="简单生产者的实现"></a>简单生产者的实现</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义三类不同的通知类型，然后回调的时候分别调用对应的实现</span></span><br><span class="line"><span class="keyword">type</span> updateNotification <span class="keyword">struct</span> &#123;</span><br><span class="line">	newObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	oldObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> addNotification <span class="keyword">struct</span> &#123;</span><br><span class="line">	newObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> deleteNotification <span class="keyword">struct</span> &#123;</span><br><span class="line">	oldObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line">	<span class="keyword">go</span> wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		number := rand.Intn(<span class="number">100</span>)</span><br><span class="line">		<span class="built_in">println</span>(number)</span><br><span class="line">		<span class="keyword">var</span> notification <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">		<span class="keyword">if</span> number &lt; <span class="number">20</span> &#123;</span><br><span class="line">			notification = addNotification&#123;newObj: number&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> number &lt; <span class="number">50</span> &#123;</span><br><span class="line">			notification = updateNotification&#123;newObj:number, oldObj:number&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			notification = deleteNotification&#123;oldObj: number&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		listener.add(notification)</span><br><span class="line">	&#125;, <span class="number">1</span>*time.Second, stopCh)</span><br></pre></td></tr></table></figure>
-<h3 id="完整的代码"><a href="#完整的代码" class="headerlink" title="完整的代码"></a>完整的代码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"k8s.io/apimachinery/pkg/util/wait"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line">	<span class="string">"math/rand"</span></span><br><span class="line">	<span class="string">"sync"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> RingGrowing <span class="keyword">struct</span> &#123;</span><br><span class="line">	data		[]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	n			<span class="keyword">int</span>	<span class="comment">// size of data</span></span><br><span class="line">	beg			<span class="keyword">int</span> <span class="comment">// First available element</span></span><br><span class="line">	readable	<span class="keyword">int</span> <span class="comment">// Number of data items available</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewRingGrowing</span> <span class="params">(initialSize <span class="keyword">int</span>)</span> * <span class="title">RingGrowing</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;RingGrowing&#123;</span><br><span class="line">		data: <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, initialSize),</span><br><span class="line">		n:    initialSize,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *RingGrowing)</span> <span class="title">ReadOne</span><span class="params">()</span>  <span class="params">(data <span class="keyword">interface</span>&#123;&#125;, ok <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r.readable == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span>		<span class="comment">//如果当前没有通知消息, 则返回nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	r.readable--</span><br><span class="line">	element := r.data[r.beg]</span><br><span class="line">	r.data[r.beg] = <span class="literal">nil</span>	<span class="comment">// Remove reference to the object to help GC</span></span><br><span class="line">	<span class="keyword">if</span> r.beg == r.n <span class="number">-1</span> &#123;</span><br><span class="line">		r.beg = <span class="number">0</span></span><br><span class="line">	&#125;<span class="keyword">else</span> &#123;</span><br><span class="line">		r.beg ++</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> element, <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *RingGrowing)</span> <span class="title">WriteOne</span> <span class="params">(data <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r.readable == r.n &#123;		<span class="comment">// 如果已经满了就自动扩容</span></span><br><span class="line">		newN := r.n * <span class="number">2</span></span><br><span class="line">		newData := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, newN)</span><br><span class="line">		to := r.beg + r.readable</span><br><span class="line">		<span class="keyword">if</span> to &lt;= r.n &#123;							<span class="comment">// 如果当前并没有写满过, 就直接拷贝数据</span></span><br><span class="line">			<span class="built_in">copy</span>(newData, r.data[r.beg:to])</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">// 当数据超过r.n就会分为两个区间: [:to%r.n][] [r.beg:]</span></span><br><span class="line">			copied := <span class="built_in">copy</span>(newData, r.data[r.beg:])</span><br><span class="line">			<span class="built_in">copy</span>(newData[copied:], r.data[:to%r.n])</span><br><span class="line">		&#125;</span><br><span class="line">		r.beg = <span class="number">0</span></span><br><span class="line">		r.data = newData</span><br><span class="line">		r.n = newN</span><br><span class="line">	&#125;</span><br><span class="line">	r.data[(r.readable+r.beg)%r.n] = data</span><br><span class="line">	r.readable++</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> processorListener <span class="keyword">struct</span> &#123;</span><br><span class="line">	nextCh <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	addCh  <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">	handler *ResourceHandler</span><br><span class="line">	pendingNotifications *RingGrowing</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newProcessLitener</span> <span class="params">(bufferSize <span class="keyword">int</span>)</span> *<span class="title">processorListener</span></span> &#123;</span><br><span class="line">	ret := &amp;processorListener&#123;</span><br><span class="line">		nextCh:					<span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;),</span><br><span class="line">		addCh:					<span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;),</span><br><span class="line">		handler:				&amp;ResourceHandler&#123;&#125;,</span><br><span class="line">		pendingNotifications: 	NewRingGrowing(bufferSize),</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> ret</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *processorListener)</span> <span class="title">pop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> <span class="built_in">close</span>(p.nextCh)</span><br><span class="line">	<span class="keyword">var</span> nextCh <span class="keyword">chan</span> &lt;- <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">var</span> notification <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> nextCh &lt;- notification:</span><br><span class="line">			<span class="comment">// 如果notification不为空, 则就吧数据放入到nextCh中</span></span><br><span class="line">			<span class="comment">// 同时再次从pendingNotifications中读取, 如果没有数据则notification设置为nil</span></span><br><span class="line">			<span class="keyword">var</span> ok <span class="keyword">bool</span></span><br><span class="line">			notification, ok = p.pendingNotifications.ReadOne()</span><br><span class="line">			<span class="built_in">println</span>(<span class="string">"Pop next notification"</span>, notification, ok, nextCh, p.nextCh)</span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				nextCh = <span class="literal">nil</span></span><br><span class="line">			&#125;</span><br><span class="line">		<span class="keyword">case</span> notificationAdd, ok :=  &lt;- p.addCh:</span><br><span class="line">			<span class="built_in">println</span>(<span class="string">"Pop:Get notification from addCh"</span>, notificationAdd, ok, notification == <span class="literal">nil</span>)</span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// 当从pendingNotifications中读取不到数据后,notification会设置为空,</span></span><br><span class="line">			<span class="comment">// 则当添加事件的时候, 就会重新设置notification</span></span><br><span class="line">			<span class="keyword">if</span> notification == <span class="literal">nil</span> &#123;</span><br><span class="line">				notification = notificationAdd</span><br><span class="line">				nextCh = p.nextCh</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				p.pendingNotifications.WriteOne(notificationAdd)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> DefaultRetry = wait.Backoff&#123;</span><br><span class="line">	Steps:		<span class="number">5</span>,</span><br><span class="line">	Duration:	<span class="number">10</span> * time.Millisecond,</span><br><span class="line">	Factor:		<span class="number">5.0</span>,</span><br><span class="line">	Jitter:		<span class="number">0.1</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> updateNotification <span class="keyword">struct</span> &#123;</span><br><span class="line">	newObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	oldObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> addNotification <span class="keyword">struct</span> &#123;</span><br><span class="line">	newObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> deleteNotification <span class="keyword">struct</span> &#123;</span><br><span class="line">	oldObj	<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ResourceHandler <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ResourceHandler)</span> <span class="title">onUpdate</span> <span class="params">(newObj, oldObj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Update Handler"</span>, newObj, oldObj)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ResourceHandler)</span> <span class="title">onAdd</span> <span class="params">(newObj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Add Handler"</span>, newObj)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ResourceHandler)</span> <span class="title">onDel</span> <span class="params">(oldObj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Del Handler"</span>, oldObj)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *processorListener)</span> <span class="title">run</span> <span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="built_in">println</span>(<span class="string">"Start listener run"</span>)</span><br><span class="line">	stopCh := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line"></span><br><span class="line">	wait.Until(<span class="function"><span class="keyword">func</span> <span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> next := <span class="keyword">range</span> p.nextCh &#123;</span><br><span class="line">			<span class="keyword">switch</span> notification := next.(<span class="keyword">type</span>) &#123;</span><br><span class="line">			<span class="keyword">case</span> updateNotification:</span><br><span class="line">				p.handler.onUpdate(notification.oldObj, notification.newObj)</span><br><span class="line">			<span class="keyword">case</span> addNotification:</span><br><span class="line">				p.handler.onAdd(notification.newObj)</span><br><span class="line">			<span class="keyword">case</span> deleteNotification:</span><br><span class="line">				p.handler.onDel(notification.oldObj)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">close</span>(stopCh)</span><br><span class="line">	&#125;, <span class="number">1</span>* time.Second, stopCh)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *processorListener)</span> <span class="title">add</span> <span class="params">(notification <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	p.addCh &lt;- notification</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span> <span class="params">()</span></span> &#123;</span><br><span class="line">	listener := newProcessLitener(<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line"></span><br><span class="line">	stopCh := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line">	<span class="keyword">go</span> wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		number := rand.Intn(<span class="number">100</span>)</span><br><span class="line">		<span class="built_in">println</span>(number)</span><br><span class="line">		<span class="keyword">var</span> notification <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">		<span class="keyword">if</span> number &lt; <span class="number">20</span> &#123;</span><br><span class="line">			notification = addNotification&#123;newObj: number&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> number &lt; <span class="number">50</span> &#123;</span><br><span class="line">			notification = updateNotification&#123;newObj:number, oldObj:number&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			notification = deleteNotification&#123;oldObj: number&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		listener.add(notification)</span><br><span class="line">	&#125;, <span class="number">1</span>*time.Second, stopCh)</span><br><span class="line">	wg.Add(<span class="number">1</span>)</span><br><span class="line">	<span class="keyword">go</span> listener.run()</span><br><span class="line">	wg.Add(<span class="number">1</span>)</span><br><span class="line">	<span class="keyword">go</span> listener.pop()</span><br><span class="line">	wg.Add(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>上面的代码取自k8s里面的share_informer里面，这部分逻辑主要是实现，当watch到事件变化后加入到FIFO队列后，sharedIndexInformer里面的HandleDeltas发现变换后，生成对应的事件，然后吧事件传回到之前定义的processlitener里面，然后就由上面的processorListener进行后续的处理</p>
-<p>学习到的地方，一个是环状队列的生产实现，事件、事件处理函数、环状队列之间的解耦与组合，嗨呦select拿精妙的用法</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1772,7 +1856,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">32</span>
+              <span class="site-state-item-count">33</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1780,7 +1864,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">12</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1789,7 +1873,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
