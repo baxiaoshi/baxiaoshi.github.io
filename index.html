@@ -270,6 +270,204 @@
             
               
                 
+                <a class="post-title-link" href="/2018/10/14/devops/devop_event_sourcing/" itemprop="url">
+                  事件溯源在运维场景的应用
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-14T08:23:59+08:00" content="2018-10-14">
+              2018-10-14
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/事件驱动/" itemprop="url" rel="index">
+                    <span itemprop="name">事件驱动</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/事件驱动/事件溯源/" itemprop="url" rel="index">
+                    <span itemprop="name">事件溯源</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/事件驱动/事件溯源/运维平台/" itemprop="url" rel="index">
+                    <span itemprop="name">运维平台</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>国庆回来看了百度的ARK和K8s的Job Controller, 核心都是一个基于<code>事件驱动</code>的实现一些运维场景的处理，然后就顺便看到了<code>事件溯源</code></p>
+<h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Capture all changes to an application state as a sequence of events.</span><br></pre></td></tr></table></figure>
+<p>事件溯源并不是新的概念而是由martin fowler在2005年他的文章Event source(链接)提出, 核心是记录应用状态变更的所有事件, 然后通过事件驱动的方式, 实现应用的最终状态</p>
+<h3 id="业务模式"><a href="#业务模式" class="headerlink" title="业务模式"></a>业务模式</h3><p><img src="http://olg58pct7.bkt.clouddn.com//2018-10-13-17-03-37.png" alt=""></p>
+<ul>
+<li>左侧是传统CRUD开发的模式, 我们在业务逻辑处理层,修改完数据, 并将业务状态存放到<code>业务数据库</code></li>
+<li>右侧基于<code>事件溯源</code>的业务开发场景, 业务逻辑处理完成后将修改的事件发到<code>事件数据库</code>然后对应的<code>事件处理器</code>, 接收事件处理, 又会产生新的事件, 或者修改业务数据库</li>
+</ul>
+<h3 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h3><h4 id="传统模式"><a href="#传统模式" class="headerlink" title="传统模式"></a>传统模式</h4><p>传统模式更关注 <em>状态存储</em> , 主要问题如下</p>
+<ul>
+<li>无法追溯应用的变更过程(<em>当然记录日志也可以, 但大多数业务并没有</em>)</li>
+<li>扩展业务不灵活(<em>需要修改业务层, 来添加新的业务逻辑</em>)</li>
+<li>微服务多业务场景下的一致性(<em>分布式事务的保证</em>)</li>
+</ul>
+<h4 id="事件溯源"><a href="#事件溯源" class="headerlink" title="事件溯源"></a>事件溯源</h4><p>事件溯源则更关注<code>事件</code>, 特点如下</p>
+<ul>
+<li>一切变更事件皆可追溯(<em>事件存储数据库</em>)</li>
+<li>增加新的事件逻辑, 可能只需要增加的新的<code>事件控制器</code>就可以了</li>
+<li>所有业务状态数据可以通过事件回溯来进行恢复</li>
+</ul>
+<h4 id="银弹"><a href="#银弹" class="headerlink" title="银弹"></a>银弹</h4><p>事件溯源相对于传统模式几下几个方面的对比</p>
+<ul>
+<li>设计复杂度<ul>
+<li>事件溯源将整个业务逻辑从传统逻辑层拆分, 将业务逻辑分离成为两个部分<code>业务事件源</code>和<code>事件控制器</code> 两个部分</li>
+<li><code>业务事件源</code>负责应用事件的产生, <code>事件控制器</code>负责事件的处理, 甚至新事件的产生</li>
+</ul>
+</li>
+<li>可控性和稳定性<ul>
+<li>事件溯源增加了事件存储和事件控制器</li>
+<li>所有业务都是分布式的, 需要处理各个层如何从故障中恢复</li>
+</ul>
+</li>
+<li>查询<ul>
+<li>存储的都是事件，如果查询数据, 可能需要对事件进行回溯才能获取最新数据(<em>可以添加一个修改的事件处理器,直接同步到业务数据库中</em>)</li>
+<li>会由一定的延迟(<em>事件发送, 后续由别的部分控制</em>)</li>
+</ul>
+</li>
+</ul>
+<h3 id="运维场景"><a href="#运维场景" class="headerlink" title="运维场景"></a>运维场景</h3><h3 id="理想背景"><a href="#理想背景" class="headerlink" title="理想背景"></a>理想背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-35-32.png" alt=""><br>当我们添加一个<code>主机</code>和<code>项目</code>等资源到运维平台中, 那我们的cmdb、发布、自动化、监控、日志、负载均衡等系统，可以自动进行操作，直至到最终上线, 后面再去结合一些上层系统，比如容量规划等系统，实现资源计算，自动进行扩容缩容等操作，实现整个系统的自动化<br><strong>假设每个子系统都能保证当前系统的都是幂等的</strong></p>
+<h4 id="普通做法"><a href="#普通做法" class="headerlink" title="普通做法"></a>普通做法</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-42-49.png" alt=""><br>通常情况下都是增加一个<code>工单</code>、<code>调度</code>或者<code>流程</code>系统, 由这一个系统去调度各个子系统, 这样做的优缺点</p>
+<ul>
+<li>优点<ul>
+<li>系统简单, 都由一个系统来调度, 所有操作都它去调度, 后面系统只需要提供接口</li>
+<li>可控性强一个系统就搞定,不需要担心别的系统依赖</li>
+</ul>
+</li>
+<li>缺点<ul>
+<li>后端接口数据修改, 当前系统也需要修改, 耦合性</li>
+<li>扩展性差(新加系统需要修改当前系统)</li>
+</ul>
+</li>
+</ul>
+<h4 id="事件溯源-1"><a href="#事件溯源-1" class="headerlink" title="事件溯源"></a>事件溯源</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-54-33.png" alt=""><br><code>事件溯源</code>设计则是产生一个事件，然后所有系统只需要订阅自己关心的事件处理就可以了, 后续如果需要增加别的系统，只需要去<strong>事件中心</strong>订阅自己关心的事件，就可以实现新业务逻辑的处理了</p>
+<h4 id="系统设计"><a href="#系统设计" class="headerlink" title="系统设计"></a>系统设计</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-14-08-11-28.png" alt=""><br>系统使用<code>mysql</code>和<code>rabbitmq</code>来进行事件的存储和事件的广播, 主要流程如下</p>
+<ul>
+<li>产生变更写入到事件数据库中</li>
+<li>消费者负责读取数据库中的事件来存入rabbitmq</li>
+<li>各个系统订阅自己事件, 然后进行业务逻辑处理, 处理完成后发送ack给rabbitmq(如果需要则产生事件)</li>
+<li>如果系统异常, 则进行<code>补偿</code>业务逻辑处理，重新业务逻辑的处理</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><code>事件溯源</code>是 <em>事件驱动</em>的一种, 其核心是<strong>溯源</strong>, 事件驱动关心的<strong>事件</strong>, 通过对事件的 <strong>溯源</strong>, 我们可以获取一个确定的最终状态</p>
+<p><code>快照</code>是对事件进行<strong>溯源</strong>后的一个当前状态的保存, 主要目的是为了保存状态和减少后续溯源的事件流, 后续<strong>回溯</strong>只需关注当前快照版本和之后的事件就可以了</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/10/11/k8s/k8s_job_controller/" itemprop="url">
                   Job Controller 源码实现
                 </a>
@@ -1762,136 +1960,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/08/08/k8s/lru_cache/" itemprop="url">
-                  LRU缓存
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-08T22:56:23+08:00" content="2018-08-08">
-              2018-08-08
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-08-22-43-32.png" alt=""></p>
-<p>在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法</p>
-<ul>
-<li>清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存</li>
-<li>数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下<br><em>今天说的主要是第二种, 每次都强制更新当前最新状态</em></li>
-</ul>
-<h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><ul>
-<li><p>LRUExpireCache</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LRUExpireCache LRU上面的一层封装, 主要作用是避免返回过期时间的数据</span></span><br><span class="line"><span class="keyword">type</span> LRUExpireCache <span class="keyword">struct</span> &#123;</span><br><span class="line">	clock Clock</span><br><span class="line"></span><br><span class="line">	cache *lru.Cache</span><br><span class="line">	lock  sync.Mutex</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>cacheEntry</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 缓存项的一个包装, 如果缓存时间超过过期时间，会删除该key, 返回nil</span></span><br><span class="line"><span class="keyword">type</span> cacheEntry <span class="keyword">struct</span> &#123;</span><br><span class="line">	value      <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	expireTime time.Time</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<h3 id="完整实现"><a href="#完整实现" class="headerlink" title="完整实现"></a>完整实现</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"sync"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"github.com/hashicorp/golang-lru"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Clock 一个抽象的时间工具接口</span></span><br><span class="line"><span class="keyword">type</span> Clock <span class="keyword">interface</span> &#123;</span><br><span class="line">	Now() time.Time</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> realClock <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(realClock)</span> <span class="title">Now</span><span class="params">()</span> <span class="title">time</span>.<span class="title">Time</span></span> &#123; <span class="keyword">return</span> time.Now() &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// LRUExpireCache LRU上面的一层封装, 主要作用是避免返回过期时间的数据</span></span><br><span class="line"><span class="keyword">type</span> LRUExpireCache <span class="keyword">struct</span> &#123;</span><br><span class="line">	clock Clock</span><br><span class="line"></span><br><span class="line">	cache *lru.Cache</span><br><span class="line">	lock  sync.Mutex</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Add 添加一个元素并且指定过期时间</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *LRUExpireCache)</span> <span class="title">Add</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;, value <span class="keyword">interface</span>&#123;&#125;, ttl time.Duration)</span></span> &#123;</span><br><span class="line">	c.lock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.lock.Unlock()</span><br><span class="line">	c.cache.Add(key, &amp;cacheEntry&#123;value, c.clock.Now().Add(ttl)&#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get 从LRU缓存中获取一个元素，并且元素不能过期</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *LRUExpireCache)</span> <span class="title">Get</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">(<span class="keyword">interface</span>&#123;&#125;, <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	c.lock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.lock.Unlock()</span><br><span class="line">	e, ok := c.cache.Get(key)</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> c.clock.Now().After(e.(*cacheEntry).expireTime) &#123;</span><br><span class="line">		c.cache.Remove(key)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> e.(*cacheEntry).value, <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Remove 移除一个元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *LRUExpireCache)</span> <span class="title">Remove</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	c.lock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.lock.Unlock()</span><br><span class="line">	c.cache.Remove(key)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Keys 获取所有的key</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *LRUExpireCache)</span> <span class="title">Keys</span><span class="params">()</span> []<span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	c.lock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.lock.Unlock()</span><br><span class="line">	<span class="keyword">return</span> c.cache.Keys()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> cacheEntry <span class="keyword">struct</span> &#123;</span><br><span class="line">	value      <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	expireTime time.Time</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewLRUExpireCache 返回一个Lru cache</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewLRUExpireCache</span><span class="params">(maxSize <span class="keyword">int</span>)</span> *<span class="title">LRUExpireCache</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> NewLRUExpireCacheWithClock(maxSize, realClock&#123;&#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewLRUExpireCacheWithClock 指定一个时间的抽象接口</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewLRUExpireCacheWithClock</span><span class="params">(maxSize <span class="keyword">int</span>, clock Clock)</span> *<span class="title">LRUExpireCache</span></span> &#123;</span><br><span class="line">	cache, err := lru.New(maxSize)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;LRUExpireCache&#123;clock: clock, cache: cache&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>上面说的场景在k8s里面是用于namespace生命周期审计的一个功能, 当发现一个删除操作的时候, 会吧它加入到当前的lrucache里面<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> a.GetKind().GroupKind() == v1.SchemeGroupVersion.WithKind(<span class="string">"Namespace"</span>).GroupKind() &#123;</span><br><span class="line">	<span class="comment">// if a namespace is deleted, we want to prevent all further creates into it</span></span><br><span class="line">	<span class="comment">// while it is undergoing termination.  to reduce incidences where the cache</span></span><br><span class="line">	<span class="comment">// is slow to update, we add the namespace into a force live lookup list to ensure</span></span><br><span class="line">	<span class="comment">// we are not looking at stale state.</span></span><br><span class="line">	<span class="keyword">if</span> a.GetOperation() == admission.Delete &#123;</span><br><span class="line">		l.forceLiveLookupCache.Add(a.GetName(), <span class="literal">true</span>, forceLiveLookupTTL)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// allow all operations to namespaces</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>如果检测到有了这个缓存就每次都更新下当前namespace的缓存<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// forceLiveLookup if true will skip looking at local cache state and instead always make a live call to server.</span></span><br><span class="line">forceLiveLookup := <span class="literal">false</span></span><br><span class="line"><span class="keyword">if</span> _, ok := l.forceLiveLookupCache.Get(a.GetNamespace()); ok &#123;</span><br><span class="line">	<span class="comment">// we think the namespace was marked for deletion, but our current local cache says otherwise, we will force a live lookup.</span></span><br><span class="line">	forceLiveLookup = exists &amp;&amp; namespace.Status.Phase == v1.NamespaceActive</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// refuse to operate on non-existent namespaces</span></span><br><span class="line"><span class="keyword">if</span> !exists || forceLiveLookup &#123;</span><br><span class="line">	<span class="comment">// as a last resort, make a call directly to storage</span></span><br><span class="line">	namespace, err = l.client.CoreV1().Namespaces().Get(a.GetNamespace(), metav1.GetOptions&#123;&#125;)</span><br><span class="line">	<span class="keyword">switch</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> errors.IsNotFound(err):</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	<span class="keyword">case</span> err != <span class="literal">nil</span>:</span><br><span class="line">		<span class="keyword">return</span> errors.NewInternalError(err)</span><br><span class="line">	&#125;</span><br><span class="line">	glog.V(<span class="number">4</span>).Infof(<span class="string">"found %s via storage lookup"</span>, a.GetNamespace())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>大概思路就是这样，要是有个能交流的人就好了，继续 Again!</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1937,7 +2005,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">34</span>
+              <span class="site-state-item-count">35</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1945,7 +2013,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">16</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1954,7 +2022,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
