@@ -84,18 +84,18 @@
 
 
 
-<meta name="description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用 slice的表示方式123456// runtime/slice.gotype slice struct &amp;#123;	array unsafe.Poin">
+<meta name="description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用">
 <meta name="keywords" content="go语言">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Go里面的slice,切片,底层实现">
 <meta property="og:url" content="http://www.sreguide.com/2018/05/01/go/go_slice/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用 slice的表示方式123456// runtime/slice.gotype slice struct &amp;#123;	array unsafe.Poin">
+<meta property="og:description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-05-01T11:35:13.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:56:43.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go里面的slice,切片,底层实现">
-<meta name="twitter:description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用 slice的表示方式123456// runtime/slice.gotype slice struct &amp;#123;	array unsafe.Poin">
+<meta name="twitter:description" content="slice是什么前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用">
 
 
 
@@ -329,6 +329,7 @@
 
       
         <h4 id="slice是什么"><a href="#slice是什么" class="headerlink" title="slice是什么"></a>slice是什么</h4><p>前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用</p>
+<a id="more"></a>
 <h4 id="slice的表示方式"><a href="#slice的表示方式" class="headerlink" title="slice的表示方式"></a>slice的表示方式</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// runtime/slice.go</span></span><br><span class="line"><span class="keyword">type</span> slice <span class="keyword">struct</span> &#123;</span><br><span class="line">	array unsafe.Pointer	</span><br><span class="line">	<span class="built_in">len</span>   <span class="keyword">int</span></span><br><span class="line">	<span class="built_in">cap</span>   <span class="keyword">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们可以看到slice由三部分组成: 指针(指向底层的大数组), len(可用的元素空间), cap(切片的最大容量) </p>
 <h4 id="slice的初始化"><a href="#slice的初始化" class="headerlink" title="slice的初始化"></a>slice的初始化</h4><blockquote>

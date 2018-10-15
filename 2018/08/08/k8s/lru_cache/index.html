@@ -84,19 +84,19 @@
 
 
 
-<meta name="description" content="背景 在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法  清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存 数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下今天说的主要是第二种, 每次都强制更新当前最新状态  数据结构 LRUExpireCach">
+<meta name="description" content="背景 在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法  清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存 数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下今天说的主要是第二种, 每次都强制更新当前最新状态">
 <meta name="keywords" content="k8s">
 <meta property="og:type" content="article">
 <meta property="og:title" content="LRU缓存">
 <meta property="og:url" content="http://www.sreguide.com/2018/08/08/k8s/lru_cache/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="背景 在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法  清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存 数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下今天说的主要是第二种, 每次都强制更新当前最新状态  数据结构 LRUExpireCach">
+<meta property="og:description" content="背景 在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法  清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存 数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下今天说的主要是第二种, 每次都强制更新当前最新状态">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-08-22-43-32.png">
-<meta property="og:updated_time" content="2018-08-08T14:57:42.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:54:22.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="LRU缓存">
-<meta name="twitter:description" content="背景 在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法  清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存 数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下今天说的主要是第二种, 每次都强制更新当前最新状态  数据结构 LRUExpireCach">
+<meta name="twitter:description" content="背景 在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法  清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存 数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下今天说的主要是第二种, 每次都强制更新当前最新状态">
 <meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-08-22-43-32.png">
 
 
@@ -336,6 +336,7 @@
 <li>清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存</li>
 <li>数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下<br><em>今天说的主要是第二种, 每次都强制更新当前最新状态</em></li>
 </ul>
+<a id="more"></a>
 <h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><ul>
 <li><p>LRUExpireCache</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LRUExpireCache LRU上面的一层封装, 主要作用是避免返回过期时间的数据</span></span><br><span class="line"><span class="keyword">type</span> LRUExpireCache <span class="keyword">struct</span> &#123;</span><br><span class="line">	clock Clock</span><br><span class="line"></span><br><span class="line">	cache *lru.Cache</span><br><span class="line">	lock  sync.Mutex</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>

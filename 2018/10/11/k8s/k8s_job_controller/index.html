@@ -84,13 +84,13 @@
 
 
 
-<meta name="description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法  Controller简介Controller是k8s的控制器，每类资源都有一个controller, Controller只做两件事  监听Apiserver产">
+<meta name="description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法">
 <meta name="keywords" content="k8s,controller,job">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Job Controller 源码实现">
 <meta property="og:url" content="http://www.sreguide.com/2018/10/11/k8s/k8s_job_controller/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法  Controller简介Controller是k8s的控制器，每类资源都有一个controller, Controller只做两件事  监听Apiserver产">
+<meta property="og:description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-11-09-10-58.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-11-09-35-12.png">
@@ -101,10 +101,10 @@
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-11-16-53-26.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-11-17-26-03.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-11-17-30-06.png">
-<meta property="og:updated_time" content="2018-10-11T15:43:54.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:51:28.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Job Controller 源码实现">
-<meta name="twitter:description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法  Controller简介Controller是k8s的控制器，每类资源都有一个controller, Controller只做两件事  监听Apiserver产">
+<meta name="twitter:description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法">
 <meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-11-09-10-58.png">
 
 
@@ -369,6 +369,7 @@
 <li>几种不同job模式的内部实现</li>
 <li>controller使用的算法</li>
 </ul>
+<a id="more"></a>
 <h3 id="Controller简介"><a href="#Controller简介" class="headerlink" title="Controller简介"></a>Controller简介</h3><p>Controller是k8s的控制器，每类资源都有一个controller, Controller只做两件事</p>
 <ul>
 <li>监听Apiserver产生的事件</li>

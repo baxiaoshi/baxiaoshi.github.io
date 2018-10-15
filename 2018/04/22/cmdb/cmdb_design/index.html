@@ -99,7 +99,7 @@
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_host_table.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_easyops_show.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_business_tree.png">
-<meta property="og:updated_time" content="2018-08-05T08:18:56.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:55:37.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="CMDB的设计">
 <meta name="twitter:description" content="CMDB简介CMDB是什么Configuration Management Database(配置管理数据库)简称CMDBCMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性 CMDB的作用上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心 存储设备的各种信息: CMDB">
@@ -339,6 +339,7 @@
         <h4 id="CMDB简介"><a href="#CMDB简介" class="headerlink" title="CMDB简介"></a>CMDB简介</h4><h5 id="CMDB是什么"><a href="#CMDB是什么" class="headerlink" title="CMDB是什么"></a>CMDB是什么</h5><p>Configuration Management Database(配置管理数据库)简称CMDB<br>CMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性</p>
 <h5 id="CMDB的作用"><a href="#CMDB的作用" class="headerlink" title="CMDB的作用"></a>CMDB的作用</h5><p>上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心</p>
 <p>存储设备的各种信息: CMDB要能存储各种的信息,包括底层的主机信息和上层业务信息<br>流程的流转,发挥配置信息的价值: CMDB里面的数据要提供一定的消费接口,供其它系统消费<br>流程,准确性: 跟其他系统打通,提供准确的数据消费,同时也获取最新的数据</p>
+<a id="more"></a>
 <h5 id="自己的理解"><a href="#自己的理解" class="headerlink" title="自己的理解"></a>自己的理解</h5><p>CMDB是自动化运维基础数据的提供者,上层其他系统都依赖于CMDB中的数据; CMDB要有与其他系统集成的功能,以便获取最新的数据变更,同时也要提供订阅功能,方便其他系统及时获取到最新的数据变更消息; CMDB任重而道远, 需要根据实际的使用者来反复迭代, 它是一个入口,而不是一个终点</p>
 <h4 id="CMDB的设计"><a href="#CMDB的设计" class="headerlink" title="CMDB的设计"></a>CMDB的设计</h4><p>一千家公司可能会有1000个CMDB, 之前也跟做CMDB的网友聊过, 他们的CMDB做了一年重构了两次, 现在才在公司内部用起来,可见一个好的有价值的CMDB是多么难得</p>
 <p>也有许多产品级别的CMDB, 蓝鲸丶优云丶EasyOPS每一家都有每一家的特点, 其中蓝鲸是定义了一些CMDB的基础属性,以业务、模块、集群、主机四个模块来进行基础CMDB架构的描述, 而优云和EasyOPS都以资源模型的方式, 底层通过定义基础的数据模型,方便用户基础数据的填充,上层通过让用户自定义资源模型, 来实现扩展, 满足用户需求</p>
@@ -394,16 +395,16 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/04/22/ansible/ansible_api/" rel="next" title="Ansible Playbook Api测试">
-                <i class="fa fa-chevron-left"></i> Ansible Playbook Api测试
+              <a href="/2018/04/22/django_rest_auth_00/" rel="next" title="opstask web api的编写">
+                <i class="fa fa-chevron-left"></i> opstask web api的编写
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/04/22/1. cloudify_system_event_bus_01/" rel="prev" title="cloudify的任务执行流程">
-                cloudify的任务执行流程 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/04/22/ansible/ansible_api/" rel="prev" title="Ansible Playbook Api测试">
+                Ansible Playbook Api测试 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>

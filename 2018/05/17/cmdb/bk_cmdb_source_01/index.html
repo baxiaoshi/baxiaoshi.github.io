@@ -84,21 +84,21 @@
 
 
 
-<meta name="description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它 API">
+<meta name="description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它">
 <meta name="keywords" content="cmdb">
 <meta property="og:type" content="article">
 <meta property="og:title" content="看蓝鲸学CMDB设计 API 网关与 API SERVER">
 <meta property="og:url" content="http://www.sreguide.com/2018/05/17/cmdb/bk_cmdb_source_01/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它 API">
+<meta property="og:description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/micro_service.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/bk_cmdb_topo_service.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/chanpin_sikao.png">
-<meta property="og:updated_time" content="2018-08-05T08:26:20.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:55:43.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="看蓝鲸学CMDB设计 API 网关与 API SERVER">
-<meta name="twitter:description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它 API">
+<meta name="twitter:description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它">
 <meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/micro_service.png">
 
 
@@ -335,6 +335,7 @@
         <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/micro_service.png" alt=""></p>
 <p>现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它!</p>
 <p>但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它</p>
+<a id="more"></a>
 <h3 id="API-SERVER-Gateway"><a href="#API-SERVER-Gateway" class="headerlink" title="API SERVER(Gateway)"></a>API SERVER(Gateway)</h3><h4 id="思考实现"><a href="#思考实现" class="headerlink" title="思考实现"></a>思考实现</h4><p>从上面的图我们可以看到API Server其实更类似一个Proxy的功能, 在将前端的各种请求转发到具体的服务， 同时在这个基础上加入一些辅助功能, 那我们就可以归纳出下面最基础的几个功能点</p>
 <ul>
 <li><p>请求转发: 负责将前端的各种请求转发到后端(因为大家都同在一个屋檐下通常大家的请求响应数据结构都是类似的,所以一些脏数据可能在请求转发之前就被干掉了)</p>

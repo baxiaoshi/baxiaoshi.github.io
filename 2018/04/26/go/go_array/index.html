@@ -84,18 +84,18 @@
 
 
 
-<meta name="description" content="数组数组是一个常用得基础的数据结构, 其主要特点是: 内存上是一段连续的内存地址、便于CPU缓存、寻址速度快(直接通过指针加偏移量就可以访问,还有可能被编译器优化使用直接寻址方式) 几个汇编指令说明 xmmX寄存器: 是一个128位的寄存器, 每个寄存器可以存储4个单精度浮点数 xorps: 用于寄存器清0  go里面数组的汇编表示代码1234567package mainfunc main()">
+<meta name="description" content="数组数组是一个常用得基础的数据结构, 其主要特点是: 内存上是一段连续的内存地址、便于CPU缓存、寻址速度快(直接通过指针加偏移量就可以访问,还有可能被编译器优化使用直接寻址方式)">
 <meta name="keywords" content="go语言">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Go里面的数组">
 <meta property="og:url" content="http://www.sreguide.com/2018/04/26/go/go_array/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="数组数组是一个常用得基础的数据结构, 其主要特点是: 内存上是一段连续的内存地址、便于CPU缓存、寻址速度快(直接通过指针加偏移量就可以访问,还有可能被编译器优化使用直接寻址方式) 几个汇编指令说明 xmmX寄存器: 是一个128位的寄存器, 每个寄存器可以存储4个单精度浮点数 xorps: 用于寄存器清0  go里面数组的汇编表示代码1234567package mainfunc main()">
+<meta property="og:description" content="数组数组是一个常用得基础的数据结构, 其主要特点是: 内存上是一段连续的内存地址、便于CPU缓存、寻址速度快(直接通过指针加偏移量就可以访问,还有可能被编译器优化使用直接寻址方式)">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-04-25T23:08:23.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:56:53.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go里面的数组">
-<meta name="twitter:description" content="数组数组是一个常用得基础的数据结构, 其主要特点是: 内存上是一段连续的内存地址、便于CPU缓存、寻址速度快(直接通过指针加偏移量就可以访问,还有可能被编译器优化使用直接寻址方式) 几个汇编指令说明 xmmX寄存器: 是一个128位的寄存器, 每个寄存器可以存储4个单精度浮点数 xorps: 用于寄存器清0  go里面数组的汇编表示代码1234567package mainfunc main()">
+<meta name="twitter:description" content="数组数组是一个常用得基础的数据结构, 其主要特点是: 内存上是一段连续的内存地址、便于CPU缓存、寻址速度快(直接通过指针加偏移量就可以访问,还有可能被编译器优化使用直接寻址方式)">
 
 
 
@@ -329,6 +329,7 @@
 
       
         <h3 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h3><p>数组是一个常用得基础的数据结构, 其主要特点是: 内存上是一段连续的内存地址、便于CPU缓存、寻址速度快(直接通过指针加偏移量就可以访问,还有可能被编译器优化使用直接寻址方式)</p>
+<a id="more"></a>
 <h4 id="几个汇编指令说明"><a href="#几个汇编指令说明" class="headerlink" title="几个汇编指令说明"></a>几个汇编指令说明</h4><ul>
 <li>xmmX寄存器: 是一个128位的寄存器, 每个寄存器可以存储4个单精度浮点数</li>
 <li>xorps: 用于寄存器清0</li>

@@ -95,7 +95,7 @@
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-27-16-10-09.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-24-29.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-48-07.png">
-<meta property="og:updated_time" content="2018-09-29T03:58:54.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:52:16.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kubernetes informer 图解">
 <meta name="twitter:description" content="概况k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发  客户端   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作 为了减轻对apiserver的压力, 客户端实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变">
@@ -348,6 +348,7 @@
 <p> <em>客户端</em>   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作</p>
 <p>为了减轻对apiserver的压力, <em>客户端</em>实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变化</p>
 <p>并且接受其他组件的ResourceEventHandler, 再事件发生时,  调用对应事件类型的处理函数, 来进行业务逻辑的处理</p>
+<a id="more"></a>
 <h3 id="初识"><a href="#初识" class="headerlink" title="初识"></a>初识</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-27-16-10-09.png" alt=""></p>
 <p>informer就是为了减轻核心apiserver数据交互的压力而抽象出来的一个 <code>cache</code> 层, 客户端对apiserver数据的 <code>读取</code>和 <code>监听</code> 操作都通过本地informer进行</p>
 <h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-28-09-24-29.png" alt=""></p>

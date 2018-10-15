@@ -94,7 +94,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-12-14-43-16.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-12-15-18-10.png">
-<meta property="og:updated_time" content="2018-08-12T07:30:52.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:54:12.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="k8s watchCache 缓存滑动窗口">
 <meta name="twitter:description" content="背景  通常在运维开发中, 为了避免后端存储的压力，都会增加一个缓存，缓存资源数据，避免每次都从后端获取 今天介绍另外一个好玩的东西watchCache watchCache是一个固定大小的用于监测缓存数据变化的数组    主要作用是缓存固定大小的最新的数据, 因为有些情况下，我们并不一定需要一个全量的数据， 比如在k8s开始watch一个资源对象, 那其实只需要吧watch的对应的版本最新的数据">
@@ -340,6 +340,7 @@
 <blockquote>
 <p> 主要作用是缓存固定大小的最新的数据, 因为有些情况下，我们并不一定需要一个全量的数据， 比如在k8s开始watch一个资源对象, 那其实只需要吧watch的对应的版本最新的数据，给你最近一批被修改的数据就可以了，并不需要全部的数据</p>
 </blockquote>
+<a id="more"></a>
 <h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><ul>
 <li><p>事件类型</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// EventType 事件类型</span></span><br><span class="line"><span class="keyword">type</span> EventType <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	<span class="comment">// Added 事件类型</span></span><br><span class="line">	Added EventType = <span class="string">"ADDED"</span></span><br><span class="line">	<span class="comment">// Moidifed 修改</span></span><br><span class="line">	Moidifed EventType = <span class="string">"MODIFED"</span></span><br><span class="line">	<span class="comment">// Deleted 删除</span></span><br><span class="line">	Deleted EventType = <span class="string">"DELETED"</span></span><br><span class="line">	<span class="comment">// Error 错误</span></span><br><span class="line">	Error EventType = <span class="string">"ERROR"</span></span><br><span class="line">)</span><br><span class="line"><span class="comment">// Event 事件类型</span></span><br><span class="line"><span class="keyword">type</span> Event <span class="keyword">struct</span> &#123;</span><br><span class="line">	Type   EventType</span><br><span class="line">	Object Object</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>

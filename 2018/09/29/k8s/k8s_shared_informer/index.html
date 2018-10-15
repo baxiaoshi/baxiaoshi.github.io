@@ -95,7 +95,7 @@
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-29-09-26-50.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-29-11-51-47.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-09-29-11-17-09.png">
-<meta property="og:updated_time" content="2018-09-29T04:01:02.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:51:51.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kubernetes sharedInformer 图解">
 <meta name="twitter:description" content="概况informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod) shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer,">
@@ -346,6 +346,7 @@
       
         <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod)</p>
 <p>shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer, 如果其他的controller关注对应的资源, 就只注册一个对应的处理函数, 当事件发生的时候, 由shared informer统一进行事件的分发处理(有点类似观察者模式, 但是里面的消息传递大量使用了go里面channel)</p>
+<a id="more"></a>
 <h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-09-29-09-26-50.png" alt=""></p>
 <ul>
 <li>controller调用ctx.InformerFactory获取关心的informer</li>

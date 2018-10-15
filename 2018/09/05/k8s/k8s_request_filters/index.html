@@ -84,18 +84,18 @@
 
 
 
-<meta name="description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中  RequestInfo 12345678910111213141516//">
+<meta name="description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中">
 <meta name="keywords" content="k8s,k8s那些天">
 <meta property="og:type" content="article">
 <meta property="og:title" content="K8s中的request与filters">
 <meta property="og:url" content="http://www.sreguide.com/2018/09/05/k8s/k8s_request_filters/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中  RequestInfo 12345678910111213141516//">
+<meta property="og:description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-09-05T07:45:31.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:53:05.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="K8s中的request与filters">
-<meta name="twitter:description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中  RequestInfo 12345678910111213141516//">
+<meta name="twitter:description" content="Request与RequestInfoFactoryk8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中">
 
 
 
@@ -341,6 +341,7 @@
 
       
         <h3 id="Request与RequestInfoFactory"><a href="#Request与RequestInfoFactory" class="headerlink" title="Request与RequestInfoFactory"></a>Request与RequestInfoFactory</h3><p>k8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中</p>
+<a id="more"></a>
 <ul>
 <li><p>RequestInfo</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// RequestInfo 从http.Request中解析出请求数据</span></span><br><span class="line"><span class="keyword">type</span> RequestInfo <span class="keyword">struct</span> &#123;</span><br><span class="line">	IsResourceRequest <span class="keyword">bool</span></span><br><span class="line">	Path              <span class="keyword">string</span></span><br><span class="line">	Verb              <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	APIPrefix  <span class="keyword">string</span></span><br><span class="line">	APIGroup   <span class="keyword">string</span></span><br><span class="line">	APIVersion <span class="keyword">string</span></span><br><span class="line">	Namespace  <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	Resource    <span class="keyword">string</span></span><br><span class="line">	Subresource <span class="keyword">string</span></span><br><span class="line">	Name        <span class="keyword">string</span></span><br><span class="line">	Parts       []<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>

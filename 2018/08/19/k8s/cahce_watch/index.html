@@ -84,21 +84,21 @@
 
 
 
-<meta name="description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享 功能拆解 store: 提供对数据的操作接口，比如增删改查和watch watcher: 监听s">
+<meta name="description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
 <meta name="keywords" content="k8s">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cache Watcher ListWatch">
 <meta property="og:url" content="http://www.sreguide.com/2018/08/19/k8s/cahce_watch/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享 功能拆解 store: 提供对数据的操作接口，比如增删改查和watch watcher: 监听s">
+<meta property="og:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-22-29-06.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-23-07-02.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-23-12-38.png">
-<meta property="og:updated_time" content="2018-08-19T15:16:49.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:53:22.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Cache Watcher ListWatch">
-<meta name="twitter:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享 功能拆解 store: 提供对数据的操作接口，比如增删改查和watch watcher: 监听s">
+<meta name="twitter:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
 <meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-22-29-06.png">
 
 
@@ -334,6 +334,7 @@
       
         <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-16-22-29-06.png" alt=""></p>
 <h4 id="主要功能"><a href="#主要功能" class="headerlink" title="主要功能"></a>主要功能</h4><p>K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享</p>
+<a id="more"></a>
 <h4 id="功能拆解"><a href="#功能拆解" class="headerlink" title="功能拆解"></a>功能拆解</h4><ul>
 <li>store: 提供对数据的操作接口，比如增删改查和watch</li>
 <li>watcher: 监听store里面数据的变化, 同时做一些处理</li>

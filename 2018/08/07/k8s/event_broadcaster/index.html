@@ -84,20 +84,20 @@
 
 
 
-<meta name="description" content="背景 在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理 其实只做一件很简单的事情 监听某个地方的数据变化 和 把变化传递给关心的handler 设计  eventStorage: 负责监听底层各种事件, 传递给Broadcaster Broadcaster: 自身维护一个watcher队">
+<meta name="description" content="背景 在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理 其实只做一件很简单的事情 监听某个地方的数据变化 和 把变化传递给关心的handler">
 <meta name="keywords" content="k8s">
 <meta property="og:type" content="article">
 <meta property="og:title" content="事件分发抽象">
 <meta property="og:url" content="http://www.sreguide.com/2018/08/07/k8s/event_broadcaster/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="背景 在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理 其实只做一件很简单的事情 监听某个地方的数据变化 和 把变化传递给关心的handler 设计  eventStorage: 负责监听底层各种事件, 传递给Broadcaster Broadcaster: 自身维护一个watcher队">
+<meta property="og:description" content="背景 在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理 其实只做一件很简单的事情 监听某个地方的数据变化 和 把变化传递给关心的handler">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-07-21-44-20.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-07-21-52-56.png">
-<meta property="og:updated_time" content="2018-08-07T14:19:52.000Z">
+<meta property="og:updated_time" content="2018-10-15T21:54:52.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="事件分发抽象">
-<meta name="twitter:description" content="背景 在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理 其实只做一件很简单的事情 监听某个地方的数据变化 和 把变化传递给关心的handler 设计  eventStorage: 负责监听底层各种事件, 传递给Broadcaster Broadcaster: 自身维护一个watcher队">
+<meta name="twitter:description" content="背景 在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理 其实只做一件很简单的事情 监听某个地方的数据变化 和 把变化传递给关心的handler">
 <meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-07-21-44-20.png">
 
 
@@ -334,6 +334,7 @@
         <h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-07-21-44-20.png" alt=""></p>
 <p>在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理</p>
 <p>其实只做一件很简单的事情 <em>监听某个地方的数据变化</em> 和 <em>把变化传递给关心的handler</em></p>
+<a id="more"></a>
 <h4 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-07-21-52-56.png" alt=""></p>
 <ul>
 <li>eventStorage: 负责监听底层各种事件, 传递给Broadcaster</li>
