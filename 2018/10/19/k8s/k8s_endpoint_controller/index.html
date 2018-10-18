@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="k8s,controller,Endpoints," />
+  <meta name="keywords" content="k8s,Endpoints,controller," />
 
 
 
@@ -84,13 +84,13 @@
 
 
 
-<meta name="description" content="Endpoints理解Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints Endpoints Controller数据结构123456789101112131415161718192021222324252">
-<meta name="keywords" content="k8s,controller,Endpoints">
+<meta name="description" content="Endpoints理解Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints">
+<meta name="keywords" content="k8s,Endpoints,controller">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Endpoints Controller 源码实现">
 <meta property="og:url" content="http://www.sreguide.com/2018/10/19/k8s/k8s_endpoint_controller/index.html">
 <meta property="og:site_name" content="8小时的技术博客">
-<meta property="og:description" content="Endpoints理解Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints Endpoints Controller数据结构123456789101112131415161718192021222324252">
+<meta property="og:description" content="Endpoints理解Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-16-15-22-30.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-16-15-26-34.png">
@@ -98,10 +98,10 @@
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-16-15-59-59.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-16-15-57-11.png">
 <meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-16-16-10-17.png">
-<meta property="og:updated_time" content="2018-10-18T22:12:28.000Z">
+<meta property="og:updated_time" content="2018-10-18T22:35:39.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Endpoints Controller 源码实现">
-<meta name="twitter:description" content="Endpoints理解Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints Endpoints Controller数据结构123456789101112131415161718192021222324252">
+<meta name="twitter:description" content="Endpoints理解Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints">
 <meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-16-15-22-30.png">
 
 
@@ -360,6 +360,7 @@
 
       
         <h3 id="Endpoints理解"><a href="#Endpoints理解" class="headerlink" title="Endpoints理解"></a>Endpoints理解</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-16-15-22-30.png" alt=""><br>Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints</p>
+<a id="more"></a>
 <h3 id="Endpoints-Controller"><a href="#Endpoints-Controller" class="headerlink" title="Endpoints Controller"></a>Endpoints Controller</h3><h4 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> EndpointController <span class="keyword">struct</span> &#123;</span><br><span class="line">	client clientset.Interface</span><br><span class="line"></span><br><span class="line">	<span class="comment">// serviceLister is able to list/get services and is populated by the shared informer passed to</span></span><br><span class="line">	<span class="comment">// NewEndpointController.</span></span><br><span class="line">	serviceLister corelisters.ServiceLister</span><br><span class="line">	<span class="comment">// servicesSynced returns true if the service shared informer has been synced at least once.</span></span><br><span class="line">	<span class="comment">// Added as a member to the struct to allow injection for testing.</span></span><br><span class="line">	servicesSynced cache.InformerSynced</span><br><span class="line"></span><br><span class="line">	<span class="comment">// podLister is able to list/get pods and is populated by the shared informer passed to</span></span><br><span class="line">	<span class="comment">// NewEndpointController.</span></span><br><span class="line">	podLister corelisters.PodLister</span><br><span class="line">	<span class="comment">// podsSynced returns true if the pod shared informer has been synced at least once.</span></span><br><span class="line">	<span class="comment">// Added as a member to the struct to allow injection for testing.</span></span><br><span class="line">	podsSynced cache.InformerSynced</span><br><span class="line"></span><br><span class="line">	<span class="comment">// endpointsLister is able to list/get endpoints and is populated by the shared informer passed to</span></span><br><span class="line">	<span class="comment">// NewEndpointController.</span></span><br><span class="line">	endpointsLister corelisters.EndpointsLister</span><br><span class="line">	<span class="comment">// endpointsSynced returns true if the endpoints shared informer has been synced at least once.</span></span><br><span class="line">	<span class="comment">// Added as a member to the struct to allow injection for testing.</span></span><br><span class="line">	endpointsSynced cache.InformerSynced</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Services that need to be updated. A channel is inappropriate here,</span></span><br><span class="line">	<span class="comment">// because it allows services with lots of pods to be serviced much</span></span><br><span class="line">	<span class="comment">// more often than services with few pods; it also would cause a</span></span><br><span class="line">	<span class="comment">// service that's inserted multiple times to be processed more than</span></span><br><span class="line">	<span class="comment">// necessary.</span></span><br><span class="line">	queue workqueue.RateLimitingInterface</span><br><span class="line"></span><br><span class="line">	<span class="comment">// workerLoopPeriod is the time between worker runs. The workers process the queue of service and pod changes.</span></span><br><span class="line">	workerLoopPeriod time.Duration</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>Endpoints Controller数据结构比较简单，核心通过watch service和pod, 然后通过podLister、serviceLister和endpointsLister查询对应pod、 service的映射关心, 进行数据的组合修改</p>
 <h4 id="数据流"><a href="#数据流" class="headerlink" title="数据流"></a>数据流</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-16-15-26-34.png" alt=""><br>核心数据流程如下</p>
@@ -422,9 +423,9 @@
           
             <a href="/tags/k8s/" rel="tag">#k8s</a>
           
-            <a href="/tags/controller/" rel="tag">#controller</a>
-          
             <a href="/tags/Endpoints/" rel="tag">#Endpoints</a>
+          
+            <a href="/tags/controller/" rel="tag">#controller</a>
           
         </div>
       

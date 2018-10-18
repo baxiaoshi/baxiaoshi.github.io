@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="k8s,Cron,controller," />
+  <meta name="keywords" content="k8s,controller,Cron," />
 
 
 
@@ -85,7 +85,7 @@
 
 
 <meta name="description" content="CronJobController主要负责周期性任务的调度, 就跟linux中的crontab程序类似, 当达到时间就根据策略调用apiserver进行任务的创建或者状态的修改 当前CronJobController的问题  CronJobController并没有使用informer来进行时间监听apiserver, 而是直接进行周期循环 单groutine进行调度">
-<meta name="keywords" content="k8s,Cron,controller">
+<meta name="keywords" content="k8s,controller,Cron">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cron Controller 源码实现">
 <meta property="og:url" content="http://www.sreguide.com/2018/10/16/k8s/cron_job_controller/index.html">
@@ -432,9 +432,9 @@
           
             <a href="/tags/k8s/" rel="tag">#k8s</a>
           
-            <a href="/tags/Cron/" rel="tag">#Cron</a>
-          
             <a href="/tags/controller/" rel="tag">#controller</a>
+          
+            <a href="/tags/Cron/" rel="tag">#Cron</a>
           
         </div>
       
