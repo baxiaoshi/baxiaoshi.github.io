@@ -270,6 +270,121 @@
             
               
                 
+                <a class="post-title-link" href="/2018/05/01/go/go_slice/" itemprop="url">
+                  Go里面的slice,切片,底层实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-05-01T18:49:37+08:00" content="2018-05-01 18:49">
+              2018-05-01 18:49
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h4 id="slice是什么"><a href="#slice是什么" class="headerlink" title="slice是什么"></a>slice是什么</h4><p>前面提到数组, 数组的访问效率高、对cpu亲和性好, 但是go里面并没有动态数组的概念(go里面的数组需要一个明确的长度,用于编译器在编译时候确定内存空间),所以就出来了slice, slice本质上是对一个大数组一段数据的引用</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/05/01/go/go_slice/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/04/26/go/go_array/" itemprop="url">
                   Go里面的数组
                 </a>
@@ -615,8 +730,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/04/22/django/user_permission_auth/" itemprop="url">
-                  Django里面的用户权限实现
+                <a class="post-title-link" href="/2018/04/22/cloudify_agent_manager_00/" itemprop="url">
+                  cloudify agent之前测试的任务日志格式化
                 </a>
               
             
@@ -643,8 +758,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/django/" itemprop="url" rel="index">
-                    <span itemprop="name">django</span>
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
                   </a>
                 </span>
 
@@ -677,9 +792,9 @@
 
       
         
-          <h4 id="用户模型的分析"><a href="#用户模型的分析" class="headerlink" title="用户模型的分析"></a>用户模型的分析</h4><p>当我们继承django里面的AbstractUser的时候,实际上会同时继承两个类AbstraceBaseUser和PermissionMixin类, 当我们调用的时候,通常会使用user.has_perm属性来验证用户是否有对应的权限</p>
+          <h2 id="任务执行日志的格式化"><a href="#任务执行日志的格式化" class="headerlink" title="任务执行日志的格式化"></a>任务执行日志的格式化</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/04/22/django/user_permission_auth/#more" rel="contents">
+            <a class="btn" href="/2018/04/22/cloudify_agent_manager_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1192,8 +1307,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/04/22/cloudify_agent_manager_00/" itemprop="url">
-                  cloudify agent之前测试的任务日志格式化
+                <a class="post-title-link" href="/2018/04/22/cloudify_run_workflow_00/" itemprop="url">
+                  cloudify前端下发任务的流程
                 </a>
               
             
@@ -1254,106 +1369,9 @@
 
       
         
-          <h2 id="任务执行日志的格式化"><a href="#任务执行日志的格式化" class="headerlink" title="任务执行日志的格式化"></a>任务执行日志的格式化</h2>
+          <h2 id="cloudif中的蓝图注册"><a href="#cloudif中的蓝图注册" class="headerlink" title="cloudif中的蓝图注册"></a>cloudif中的蓝图注册</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/04/22/cloudify_agent_manager_00/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/04/22/cloudify_00/" itemprop="url">
-                  cloudify基本了解
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-04-22T20:42:02+08:00" content="2018-04-22 20:42">
-              2018-04-22 20:42
-            </time>
-          </span>
-
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
-<p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/04/22/cloudify_00/#more" rel="contents">
+            <a class="btn" href="/2018/04/22/cloudify_run_workflow_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1428,7 +1446,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">37</span>
+              <span class="site-state-item-count">38</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1445,7 +1463,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">21</span>
+                <span class="site-state-item-count">22</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
