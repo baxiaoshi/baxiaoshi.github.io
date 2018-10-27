@@ -92,13 +92,13 @@
 <meta property="og:site_name" content="8小时的技术博客">
 <meta property="og:description" content="背景  通常在运维开发中, 为了避免后端存储的压力，都会增加一个缓存，缓存资源数据，避免每次都从后端获取 今天介绍另外一个好玩的东西watchCache watchCache是一个固定大小的用于监测缓存数据变化的数组    主要作用是缓存固定大小的最新的数据, 因为有些情况下，我们并不一定需要一个全量的数据， 比如在k8s开始watch一个资源对象, 那其实只需要吧watch的对应的版本最新的数据">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-12-14-43-16.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-12-15-18-10.png">
-<meta property="og:updated_time" content="2018-10-15T21:54:12.000Z">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-14-43-16.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-15-18-10.png">
+<meta property="og:updated_time" content="2018-10-27T06:43:14.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="k8s watchCache 缓存滑动窗口">
 <meta name="twitter:description" content="背景  通常在运维开发中, 为了避免后端存储的压力，都会增加一个缓存，缓存资源数据，避免每次都从后端获取 今天介绍另外一个好玩的东西watchCache watchCache是一个固定大小的用于监测缓存数据变化的数组    主要作用是缓存固定大小的最新的数据, 因为有些情况下，我们并不一定需要一个全量的数据， 比如在k8s开始watch一个资源对象, 那其实只需要吧watch的对应的版本最新的数据">
-<meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-12-14-43-16.png">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-14-43-16.png">
 
 
 
@@ -331,7 +331,7 @@
       
 
       
-        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-12-14-43-16.png" alt=""></p>
+        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-14-43-16.png" alt=""></p>
 <ul>
 <li>通常在运维开发中, 为了避免后端存储的压力，都会增加一个缓存，缓存资源数据，避免每次都从后端获取</li>
 <li>今天介绍另外一个好玩的东西watchCache</li>
@@ -364,7 +364,7 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> watchCache <span class="keyword">struct</span> &#123;</span><br><span class="line">	sync.RWMutex</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 等待获取刷新数据</span></span><br><span class="line">	cond *sync.Cond</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 容量</span></span><br><span class="line">	capacity <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取对象的key</span></span><br><span class="line">	keyFunc <span class="function"><span class="keyword">func</span><span class="params">(Object)</span> <span class="params">(<span class="keyword">string</span>, error)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	// 获取对象的属性, 第一个<span class="title">set</span>是所有的<span class="title">label</span>, 第二个是属性</span></span><br><span class="line"><span class="function">	<span class="title">getAttrsFunc</span> <span class="title">func</span><span class="params">(Object)</span> <span class="params">(Set, Set, <span class="keyword">bool</span>, error)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	//</span></span><br><span class="line"><span class="function">	<span class="title">cache</span>      []<span class="title">watchCacheElement</span></span></span><br><span class="line"><span class="function">	<span class="title">startIndex</span> <span class="title">int</span></span></span><br><span class="line"><span class="function">	<span class="title">endIndex</span>   <span class="title">int</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	// 存储数据</span></span><br><span class="line"><span class="function">	<span class="title">store</span> <span class="title">Store</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	<span class="title">resourceVersion</span> <span class="title">uint64</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	<span class="title">onEvent</span>   <span class="title">func</span><span class="params">(*watchCacheEvent)</span></span></span><br><span class="line"><span class="function">	<span class="title">onReplace</span> <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	<span class="title">versioner</span> <span class="title">Versioner</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	<span class="title">clock</span> <span class="title">Clock</span></span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
 </li>
 </ul>
-<h3 id="转换流程"><a href="#转换流程" class="headerlink" title="转换流程"></a>转换流程</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-12-15-18-10.png" alt=""></p>
+<h3 id="转换流程"><a href="#转换流程" class="headerlink" title="转换流程"></a>转换流程</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-15-18-10.png" alt=""></p>
 <ul>
 <li>调用对外暴漏的Get/Add/Update/Delete接口, 进行数据格式化: Event(事件数据)、updateFunc(后端存储的具体操作)、resourceVersion(当前数据的版本, 通过versioner实现)</li>
 <li>调用processEvent开始进行逻辑处理<ul>

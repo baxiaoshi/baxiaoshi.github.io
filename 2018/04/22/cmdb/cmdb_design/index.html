@@ -92,18 +92,18 @@
 <meta property="og:site_name" content="8小时的技术博客">
 <meta property="og:description" content="CMDB简介CMDB是什么Configuration Management Database(配置管理数据库)简称CMDBCMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性 CMDB的作用上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心 存储设备的各种信息: CMDB">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_bk_design.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_bk_buniess.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_app_table.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_cluster_table.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_host_table.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_easyops_show.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_business_tree.png">
-<meta property="og:updated_time" content="2018-10-15T21:55:37.000Z">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_design.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_buniess.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_app_table.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_cluster_table.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_host_table.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_easyops_show.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_business_tree.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:35.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="CMDB的设计">
 <meta name="twitter:description" content="CMDB简介CMDB是什么Configuration Management Database(配置管理数据库)简称CMDBCMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性 CMDB的作用上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心 存储设备的各种信息: CMDB">
-<meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/cmdb_bk_design.png">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_design.png">
 
 
 
@@ -345,20 +345,20 @@
 <p>也有许多产品级别的CMDB, 蓝鲸丶优云丶EasyOPS每一家都有每一家的特点, 其中蓝鲸是定义了一些CMDB的基础属性,以业务、模块、集群、主机四个模块来进行基础CMDB架构的描述, 而优云和EasyOPS都以资源模型的方式, 底层通过定义基础的数据模型,方便用户基础数据的填充,上层通过让用户自定义资源模型, 来实现扩展, 满足用户需求</p>
 <p>还有一些大公司提出了一些以Level、Tag的方式来定义服务树,实现海量机器的管理,暂时还没有看透里面的精髓</p>
 <h5 id="蓝鲸版"><a href="#蓝鲸版" class="headerlink" title="蓝鲸版"></a>蓝鲸版</h5><p>蓝鲸的CMDB只有业务层的资源描述, 没有交换机等资源相关的概述; 可能他们内部网络相关的会有另外的一套CMDB系统,去描述网络相关的关系</p>
-<h5 id="蓝鲸CMDB的理解"><a href="#蓝鲸CMDB的理解" class="headerlink" title="蓝鲸CMDB的理解"></a>蓝鲸CMDB的理解</h5><p><img src="http://olg58pct7.bkt.clouddn.com/cmdb_bk_design.png" alt=""></p>
+<h5 id="蓝鲸CMDB的理解"><a href="#蓝鲸CMDB的理解" class="headerlink" title="蓝鲸CMDB的理解"></a>蓝鲸CMDB的理解</h5><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_design.png" alt=""></p>
 <p>比如网站中通常会有搜索的功能, 我们可以把搜索称为一个业务, 同时搜索业务是由一些小的模块来组成, 小的模块,可能会有多个集群(单机房不同组或者多机房), 每个集群下面会有对应的主机, 这样就很简单的抽象出了四个层级：业务、模块、集群、主机, 相对很好理解一些，同时每一种类型的数据都提供了可扩展字段的功能, 可以对每一类对象, 添加一些额外的属性, 方便使用</p>
-<h6 id="业务表属性"><a href="#业务表属性" class="headerlink" title="业务表属性"></a>业务表属性</h6><p><img src="http://olg58pct7.bkt.clouddn.com/cmdb_bk_buniess.png" alt=""></p>
-<h6 id="应用表属性"><a href="#应用表属性" class="headerlink" title="应用表属性"></a>应用表属性</h6><p><img src="http://olg58pct7.bkt.clouddn.com/cmdb_app_table.png" alt=""></p>
-<h6 id="集群表属性"><a href="#集群表属性" class="headerlink" title="集群表属性"></a>集群表属性</h6><p><img src="http://olg58pct7.bkt.clouddn.com/cmdb_cluster_table.png" alt=""></p>
-<h6 id="主机表属性"><a href="#主机表属性" class="headerlink" title="主机表属性"></a>主机表属性</h6><p><img src="http://olg58pct7.bkt.clouddn.com/cmdb_host_table.png" alt=""></p>
-<h5 id="Easyops版"><a href="#Easyops版" class="headerlink" title="Easyops版"></a>Easyops版</h5><p><img src="http://olg58pct7.bkt.clouddn.com/cmdb_easyops_show.png" alt=""></p>
+<h6 id="业务表属性"><a href="#业务表属性" class="headerlink" title="业务表属性"></a>业务表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_buniess.png" alt=""></p>
+<h6 id="应用表属性"><a href="#应用表属性" class="headerlink" title="应用表属性"></a>应用表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_app_table.png" alt=""></p>
+<h6 id="集群表属性"><a href="#集群表属性" class="headerlink" title="集群表属性"></a>集群表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_cluster_table.png" alt=""></p>
+<h6 id="主机表属性"><a href="#主机表属性" class="headerlink" title="主机表属性"></a>主机表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_host_table.png" alt=""></p>
+<h5 id="Easyops版"><a href="#Easyops版" class="headerlink" title="Easyops版"></a>Easyops版</h5><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_easyops_show.png" alt=""></p>
 <p>Easyops是由一群一些互联网公司的DEVOPS专家组成的,主要做一些DEVOPS的产品,并提供一个社区版</p>
 <p>Easyops的CMDB是一个很有意思的CMDB, 我们都知道CMDB最大的难度就在在于表结构的定义, 因为大家都不知道自己的需求,所以如果按照普通的表结构设计, 固定为每类对象固定出一些字段, 就显得明显不是很合适, 所以Easyops的CMDB, 是直接存放在Mongodb中的, 因为Mongodb本身就是schema free的, 所以即使后面变更数据, 也很容易进行对应的修改 </p>
 <p>资源模型定义<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    _id: mongodb为每一个Document产生一个唯一的ID</span><br><span class="line">    name: test #资源模型的名称</span><br><span class="line">    attrList: [</span><br><span class="line">        &#123;</span><br><span class="line">            name: 属性的名称</span><br><span class="line">            type: 属性的类型(整数/日期/枚举/外键)</span><br><span class="line">            regex: </span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line">因为没有表结构的概念,所以Easyops将所有的资源模型都存储在一个表里面</span><br></pre></td></tr></table></figure></p>
 <p>资源实例的存储<br>因为我们已经有了一个”表结构”, 所以接下来肯定要找一个地方来存储我们的实体数据</p>
 <p>Easyops中是为每一个定义的资源模型都新建一张instance表, 比如 t_test_instance表, 来存放test资源模型的实体数据</p>
 <h6 id="Tag版"><a href="#Tag版" class="headerlink" title="Tag版"></a>Tag版</h6><p>在前面提到过基于Tag的方式构建我们的CMDB,Tag的方式在我理解就是通过不同Level的Tag的组合来定位到一组具体的主机资源，一台主机可能会有多个Tag, 方便我们构建不同维度的查询, 比如我们可以给一台机器打上不同的Tag, 比如Nginx/php/redis, 如果要查询该机器上提供哪些服务, 只需要获取该主机上的所有的Tag,就可以了解到该机器上的业务了<br>同时通过拼接字符串的形式,来方便使用和权限控制, 比如: cop.c_owt.t_team.e_app.d_service, 其中cop代表公司,c代表c部门, owt代表所有者,t_team则表示t团队,e_app表示e应用,d_service服务,然后通过不同level的tag去构建, 我们可以给d_service来授权给某一个一组用户, 也可以把t_team授权给某个组(感觉真绕)</p>
-<p>阉割的自己的设计<br><img src="http://olg58pct7.bkt.clouddn.com/cmdb_business_tree.png" alt=""><br>原则: 每一个model默认只有最核心的一些基础的属性, 其他的所有属性, 都通过对应的扩展字段去扩展<br>两层：<br>    主机: 最底层的主机资源<br>    业务: 上层所有跟业务相关的资源,都可以被称为一个业务</p>
+<p>阉割的自己的设计<br><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_business_tree.png" alt=""><br>原则: 每一个model默认只有最核心的一些基础的属性, 其他的所有属性, 都通过对应的扩展字段去扩展<br>两层：<br>    主机: 最底层的主机资源<br>    业务: 上层所有跟业务相关的资源,都可以被称为一个业务</p>
 <p>业务长什么样的呢<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">一个场景: 某公司.支付团队.支付业务.应用模块1.某机房</span><br><span class="line">某公司是一个business</span><br><span class="line">支付团队是一个business, 上层是某公司</span><br><span class="line">支付业务也是一个business, 上层是支付团队</span><br><span class="line"></span><br><span class="line">描述几个业务:</span><br><span class="line">    mou.pay.pay.app1.sh 某公司.支付团队.支付业务.应用模块1.沙河机房</span><br><span class="line">    mou.pay.pay.app1.sh.redis 沙河机房的所有redis</span><br><span class="line">    mou.pay.pay.app1.sh.nginx 沙河机房的所有nginx</span><br></pre></td></tr></table></figure></p>
 <h5 id="几种方式的对比"><a href="#几种方式的对比" class="headerlink" title="几种方式的对比"></a>几种方式的对比</h5><p>蓝鲸:<br>    优点：蓝鲸以业务角度出发, 抽象了4个层次的, 在满足业务需求的情况下,实现了CMDB的基本需求,以该模型触发,相对开发相对比较容易实现<br>    缺点: 蓝鲸以业务、应用、集群、主机四个层级实现的服务树各层级相对固定,如果要在该服务树上插入节点,则对整个系统改变较大<br>Easyops<br>    优点：灵活, 可以根据各自的运维需求来进行资源模型的定义,实现不同CMDB运营人员的需求<br>    缺点：灵活的资源模型, 导致系统权限相关系统的实现难度增加, 同时强调以流程流转为驱动的方式,来进行CMDB数据的维护,对整体自动化运维平台完整性要求比较高<br>Tag<br>    优点: 通过不同的tag的组合来方便不同CMDB运营人员来进行数据的查询,满足海量主机资产管理的需求(谁说的? 求解)<br>    缺点: 我还没经历那么大场景, 还不理解</p>
 <h5 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h5><p>两款商业产品级别的CMDB都强调了以资源模型为基础的CMDB建设,由此可见做产品就是要高大上,但这种Schema Free的思想方便我们去实现不同CMDB运营人员的定制化的CMDB需求</p>

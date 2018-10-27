@@ -92,17 +92,17 @@
 <meta property="og:site_name" content="8小时的技术博客">
 <meta property="og:description" content="图片来自官方 简介ARK系统是一个基于事件驱动的智能运维开发框架，主要解决下面两个问题  部分组件自动化，代价是控制策略简单，风险较大。典型如使用报警回调方式自动故障发现和自动故障处理执行。 固化完整运维操作的控制、处理流程，代价是可扩展性较差，业务变化需要大规模的调整流程。  ARK 提供了以下功能用于解决上面的问题  按照运维操作流程和操作模式抽象，而非提供原生的技术实现抽象 实际的技术抽象隐">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-09-12-12-10.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-08-17-45-14.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-08-18-45-57.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-09-11-26-00.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-09-11-52-07.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-09-12-09-13.png">
-<meta property="og:updated_time" content="2018-10-15T21:50:41.000Z">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-12-12-10.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-08-17-45-14.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-08-18-45-57.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-11-26-00.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-11-52-07.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-12-09-13.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:43.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="智能运维ARK框架">
 <meta name="twitter:description" content="图片来自官方 简介ARK系统是一个基于事件驱动的智能运维开发框架，主要解决下面两个问题  部分组件自动化，代价是控制策略简单，风险较大。典型如使用报警回调方式自动故障发现和自动故障处理执行。 固化完整运维操作的控制、处理流程，代价是可扩展性较差，业务变化需要大规模的调整流程。  ARK 提供了以下功能用于解决上面的问题  按照运维操作流程和操作模式抽象，而非提供原生的技术实现抽象 实际的技术抽象隐">
-<meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-09-12-12-10.png">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-12-12-10.png">
 
 
 
@@ -359,7 +359,7 @@
       
 
       
-        <p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-12-12-10.png" alt=""><br><strong>图片来自官方</strong></p>
+        <p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-12-12-10.png" alt=""><br><strong>图片来自官方</strong></p>
 <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>ARK系统是一个基于事件驱动的智能运维开发框架，主要解决下面两个问题</p>
 <ul>
 <li>部分组件自动化，代价是控制策略简单，风险较大。典型如使用报警回调方式自动故障发现和自动故障处理执行。</li>
@@ -373,7 +373,7 @@
 <li>基于zk和es实现框架的高可用</li>
 </ul>
 <a id="more"></a>
-<h3 id="ARK框架架构"><a href="#ARK框架架构" class="headerlink" title="ARK框架架构"></a>ARK框架架构</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-08-17-45-14.png" alt=""><br><strong>一个node就是一个ARK实例</strong></p>
+<h3 id="ARK框架架构"><a href="#ARK框架架构" class="headerlink" title="ARK框架架构"></a>ARK框架架构</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-08-17-45-14.png" alt=""><br><strong>一个node就是一个ARK实例</strong></p>
 <p>ARK框架由四部分组成：sensor(感知器)、Node(节点master/slave)、zookeeper、elasticsearch组成, 每部分功能如下</p>
 <ul>
 <li><code>sensor</code> 支持多种数据来源, 目前官方提供了三种MQ、Elasticsearch、File三种方式, sensor负责事件的产生,  Node节点不断的从各种sensor中获取事件, 然后转发到<code>消息泵</code></li>
@@ -381,14 +381,14 @@
 <li><code>zookeeper</code> 负责node节点的主从选举和node节点运行上下文数据的存储</li>
 <li><code>Elasticsearch</code> 负责整个框架运行日志和事件的存储</li>
 </ul>
-<h3 id="事件驱动机制"><a href="#事件驱动机制" class="headerlink" title="事件驱动机制"></a>事件驱动机制</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-08-18-45-57.png" alt=""><br>ARK本身是一个事件驱动的系统，核心是感知、决策、执行三部分相互之间通过消息机制进行通讯，流程驱动步骤如下</p>
+<h3 id="事件驱动机制"><a href="#事件驱动机制" class="headerlink" title="事件驱动机制"></a>事件驱动机制</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-08-18-45-57.png" alt=""><br>ARK本身是一个事件驱动的系统，核心是感知、决策、执行三部分相互之间通过消息机制进行通讯，流程驱动步骤如下</p>
 <ul>
 <li><code>感知器</code>根据数据源获取到对应的event, 放入到<code>消息泵</code>中</li>
 <li>当消息到来<code>消息泵</code>将事件分发给<code>决策器</code>、<code>感知器</code>、<code>执行器</code></li>
 <li><code>决策器</code>和<code>执行器</code>根据事件类型， 来决定当前事件是否关心</li>
 <li><code>感知器</code>则尝试从当前的数据源中获取数据, 继续往<strong>消息泵</strong>发送消息, 触发下一个事件驱动</li>
 </ul>
-<h3 id="消息泵"><a href="#消息泵" class="headerlink" title="消息泵"></a>消息泵</h3><p><code>消息泵</code>负责当前系统事件驱动和分发处理是整个数据驱动的核心，ARK系统目前是以一个list, 来存放各种消息, 消息泵内部逻辑如下<br><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-11-26-00.png" alt=""></p>
+<h3 id="消息泵"><a href="#消息泵" class="headerlink" title="消息泵"></a>消息泵</h3><p><code>消息泵</code>负责当前系统事件驱动和分发处理是整个数据驱动的核心，ARK系统目前是以一个list, 来存放各种消息, 消息泵内部逻辑如下<br><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-11-26-00.png" alt=""></p>
 <p>事件来源主要有下面两种</p>
 <ul>
 <li><code>监听器事件</code> 由监听器监听外部事件源获得</li>
@@ -424,10 +424,10 @@
 <li>面向状态运维，状态处理具有可复用性，并且流程动态生成，可以应对复杂业务变化，具有强大的扩展能力。</li>
 <li>长流程分步执行，可在运行关键点处进行checkpoint，更好地解决了单实例故障时的可用性问题。</li>
 </ol>
-<h3 id="Graph控制模型-非官方"><a href="#Graph控制模型-非官方" class="headerlink" title="Graph控制模型(非官方)"></a>Graph控制模型(非官方)</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-11-52-07.png" alt=""></p>
+<h3 id="Graph控制模型-非官方"><a href="#Graph控制模型-非官方" class="headerlink" title="Graph控制模型(非官方)"></a>Graph控制模型(非官方)</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-11-52-07.png" alt=""></p>
 <p><code>Graph</code> 控制模型是基于图算法, 图中由<code>顶点</code>和<code>边</code>两部分组成, 其中顶点就是我们的一个个任务节点, 边就是这个任务产生的结果, 和下一个任务的方向</p>
 <p>流程图模型和状态机模型最大的差异在于， 状态机的方向是确定的(可以有多个, 但是有向的<code>有向无环图</code>), 事件只会分发给对应的节点，而流程图模型, 则可以分发到所有节点，由每个节点自身决定是否执行</p>
-<h3 id="事件驱动流程"><a href="#事件驱动流程" class="headerlink" title="事件驱动流程"></a>事件驱动流程</h3><p>上面拆分了ARK部分的基础组件, 整理流程如下<br><img src="http://olg58pct7.bkt.clouddn.com/2018-10-09-12-09-13.png" alt=""></p>
+<h3 id="事件驱动流程"><a href="#事件驱动流程" class="headerlink" title="事件驱动流程"></a>事件驱动流程</h3><p>上面拆分了ARK部分的基础组件, 整理流程如下<br><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-12-09-13.png" alt=""></p>
 <h3 id="一些想法"><a href="#一些想法" class="headerlink" title="一些想法"></a>一些想法</h3><p>ARK框架自己感觉还是上层的一个系统，底层可能嗨需要依赖CMDB、自动化、发布等系统<br>ARK框架，目前开源的部分要真正使用可能还需要等待, 当前只是一个编程框架,需要我们去结合自己的一些具体场景，构建自己的事件驱动系统</p>
 <p>事件驱动的核心，应该同k8s类似， 给定一个资源和事件，产生一个预期的结果，最终达到整个资源最终的状态<br>运维系统里面的事件驱动，我自己理解至少需要能明确两个事情，一个是资源，一个是事件，基于事件和资源的组合就是我们自己的运维场景；</p>
 <p>目前对ARK嗨不是恨理解，在应用上自己嗨缺少一些具体应用场景的理解，希望未来百度能继续开源这个框架, 目前应该不支持python3， 有些语法py3下跑不起来，期待官方吧</p>

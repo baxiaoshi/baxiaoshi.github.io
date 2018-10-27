@@ -92,16 +92,16 @@
 <meta property="og:site_name" content="8小时的技术博客">
 <meta property="og:description" content="国庆回来看了百度的ARK和K8s的Job Controller, 核心都是一个基于事件驱动的实现一些运维场景的处理，然后就顺便看到了事件溯源 定义1Capture all changes to an application state as a sequence of events. 事件溯源并不是新的概念而是由martin fowler在2005年他的文章Event source(链接)提出,">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com//2018-10-13-17-03-37.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-35-32.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-42-49.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-54-33.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-10-14-08-11-28.png">
-<meta property="og:updated_time" content="2018-10-15T21:50:49.000Z">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog//2018-10-13-17-03-37.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-13-17-35-32.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-13-17-42-49.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-13-17-54-33.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-14-08-11-28.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:45.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="事件溯源在运维场景的应用">
 <meta name="twitter:description" content="国庆回来看了百度的ARK和K8s的Job Controller, 核心都是一个基于事件驱动的实现一些运维场景的处理，然后就顺便看到了事件溯源 定义1Capture all changes to an application state as a sequence of events. 事件溯源并不是新的概念而是由martin fowler在2005年他的文章Event source(链接)提出,">
-<meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com//2018-10-13-17-03-37.png">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog//2018-10-13-17-03-37.png">
 
 
 
@@ -362,7 +362,7 @@
 <h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Capture all changes to an application state as a sequence of events.</span><br></pre></td></tr></table></figure>
 <p>事件溯源并不是新的概念而是由martin fowler在2005年他的文章Event source(链接)提出, 核心是记录应用状态变更的所有事件, 然后通过事件驱动的方式, 实现应用的最终状态</p>
 <a id="more"></a>
-<h3 id="业务模式"><a href="#业务模式" class="headerlink" title="业务模式"></a>业务模式</h3><p><img src="http://olg58pct7.bkt.clouddn.com//2018-10-13-17-03-37.png" alt=""></p>
+<h3 id="业务模式"><a href="#业务模式" class="headerlink" title="业务模式"></a>业务模式</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog//2018-10-13-17-03-37.png" alt=""></p>
 <ul>
 <li>左侧是传统CRUD开发的模式, 我们在业务逻辑处理层,修改完数据, 并将业务状态存放到<code>业务数据库</code></li>
 <li>右侧基于<code>事件溯源</code>的业务开发场景, 业务逻辑处理完成后将修改的事件发到<code>事件数据库</code>然后对应的<code>事件处理器</code>, 接收事件处理, 又会产生新的事件, 或者修改业务数据库</li>
@@ -397,8 +397,8 @@
 </ul>
 </li>
 </ul>
-<h3 id="运维场景"><a href="#运维场景" class="headerlink" title="运维场景"></a>运维场景</h3><h3 id="理想背景"><a href="#理想背景" class="headerlink" title="理想背景"></a>理想背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-35-32.png" alt=""><br>当我们添加一个<code>主机</code>和<code>项目</code>等资源到运维平台中, 那我们的cmdb、发布、自动化、监控、日志、负载均衡等系统，可以自动进行操作，直至到最终上线, 后面再去结合一些上层系统，比如容量规划等系统，实现资源计算，自动进行扩容缩容等操作，实现整个系统的自动化<br><strong>假设每个子系统都能保证当前系统的都是幂等的</strong></p>
-<h4 id="普通做法"><a href="#普通做法" class="headerlink" title="普通做法"></a>普通做法</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-42-49.png" alt=""><br>通常情况下都是增加一个<code>工单</code>、<code>调度</code>或者<code>流程</code>系统, 由这一个系统去调度各个子系统, 这样做的优缺点</p>
+<h3 id="运维场景"><a href="#运维场景" class="headerlink" title="运维场景"></a>运维场景</h3><h3 id="理想背景"><a href="#理想背景" class="headerlink" title="理想背景"></a>理想背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-13-17-35-32.png" alt=""><br>当我们添加一个<code>主机</code>和<code>项目</code>等资源到运维平台中, 那我们的cmdb、发布、自动化、监控、日志、负载均衡等系统，可以自动进行操作，直至到最终上线, 后面再去结合一些上层系统，比如容量规划等系统，实现资源计算，自动进行扩容缩容等操作，实现整个系统的自动化<br><strong>假设每个子系统都能保证当前系统的都是幂等的</strong></p>
+<h4 id="普通做法"><a href="#普通做法" class="headerlink" title="普通做法"></a>普通做法</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-13-17-42-49.png" alt=""><br>通常情况下都是增加一个<code>工单</code>、<code>调度</code>或者<code>流程</code>系统, 由这一个系统去调度各个子系统, 这样做的优缺点</p>
 <ul>
 <li>优点<ul>
 <li>系统简单, 都由一个系统来调度, 所有操作都它去调度, 后面系统只需要提供接口</li>
@@ -411,8 +411,8 @@
 </ul>
 </li>
 </ul>
-<h4 id="事件溯源-1"><a href="#事件溯源-1" class="headerlink" title="事件溯源"></a>事件溯源</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-13-17-54-33.png" alt=""><br><code>事件溯源</code>设计则是产生一个事件，然后所有系统只需要订阅自己关心的事件处理就可以了, 后续如果需要增加别的系统，只需要去<strong>事件中心</strong>订阅自己关心的事件，就可以实现新业务逻辑的处理了</p>
-<h4 id="系统设计"><a href="#系统设计" class="headerlink" title="系统设计"></a>系统设计</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-10-14-08-11-28.png" alt=""><br>系统使用<code>mysql</code>和<code>rabbitmq</code>来进行事件的存储和事件的广播, 主要流程如下</p>
+<h4 id="事件溯源-1"><a href="#事件溯源-1" class="headerlink" title="事件溯源"></a>事件溯源</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-13-17-54-33.png" alt=""><br><code>事件溯源</code>设计则是产生一个事件，然后所有系统只需要订阅自己关心的事件处理就可以了, 后续如果需要增加别的系统，只需要去<strong>事件中心</strong>订阅自己关心的事件，就可以实现新业务逻辑的处理了</p>
+<h4 id="系统设计"><a href="#系统设计" class="headerlink" title="系统设计"></a>系统设计</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-14-08-11-28.png" alt=""><br>系统使用<code>mysql</code>和<code>rabbitmq</code>来进行事件的存储和事件的广播, 主要流程如下</p>
 <ul>
 <li>产生变更写入到事件数据库中</li>
 <li>消费者负责读取数据库中的事件来存入rabbitmq</li>

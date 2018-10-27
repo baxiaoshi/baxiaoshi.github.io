@@ -92,14 +92,14 @@
 <meta property="og:site_name" content="8小时的技术博客">
 <meta property="og:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-22-29-06.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-23-07-02.png">
-<meta property="og:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-23-12-38.png">
-<meta property="og:updated_time" content="2018-10-15T21:53:22.000Z">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-07-02.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-12-38.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:49.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Cache Watcher ListWatch">
 <meta name="twitter:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
-<meta name="twitter:image" content="http://olg58pct7.bkt.clouddn.com/2018-08-16-22-29-06.png">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png">
 
 
 
@@ -332,7 +332,7 @@
       
 
       
-        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-16-22-29-06.png" alt=""></p>
+        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png" alt=""></p>
 <h4 id="主要功能"><a href="#主要功能" class="headerlink" title="主要功能"></a>主要功能</h4><p>K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享</p>
 <a id="more"></a>
 <h4 id="功能拆解"><a href="#功能拆解" class="headerlink" title="功能拆解"></a>功能拆解</h4><ul>
@@ -340,13 +340,13 @@
 <li>watcher: 监听store里面数据的变化, 同时做一些处理</li>
 </ul>
 <p><em>注意, watcher和store是一个通用的数据操作抽象, 比如对etcd的操作有一套store和watcher, 上面的缓存也有一套store和watcher, rest那层还有一套store和watch</em></p>
-<h4 id="模式理解"><a href="#模式理解" class="headerlink" title="模式理解"></a>模式理解</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-16-23-07-02.png" alt=""></p>
+<h4 id="模式理解"><a href="#模式理解" class="headerlink" title="模式理解"></a>模式理解</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-07-02.png" alt=""></p>
 <ul>
 <li>store: 提供统一接口，屏蔽对底层 <em>数据存储</em> 的操作 </li>
 <li>watcher: watcher用于从store获取事件变化，以便进行一些自定义操作的处理</li>
 <li>client: client如果要进行新功能开发，只要起一个新的watcher管住自己关心的数据变化, 完成自定义逻辑处理就可以<br>如果再说大一点可能就是 <em>数据存储层</em> 、 <em>框架(store)</em> 、 <em>业务逻辑</em> 桑层的解耦了</li>
 </ul>
-<h4 id="详细的调用图"><a href="#详细的调用图" class="headerlink" title="详细的调用图"></a>详细的调用图</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-16-23-12-38.png" alt=""></p>
+<h4 id="详细的调用图"><a href="#详细的调用图" class="headerlink" title="详细的调用图"></a>详细的调用图</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-12-38.png" alt=""></p>
 <h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><h4 id="关键数据结构"><a href="#关键数据结构" class="headerlink" title="关键数据结构"></a>关键数据结构</h4><ul>
 <li><p>Cacher 负责与后端etcd store进行交互, 分发事件给所有的watcher</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Cacher <span class="keyword">struct</span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当前incoming队列中的长度性能指标</span></span><br><span class="line">	incomingHWM HighWateMark</span><br><span class="line">	<span class="comment">// incoming 事件管道, 回被分发给所有的watchers</span></span><br><span class="line">	incoming <span class="keyword">chan</span> watchCacheEvent</span><br><span class="line"></span><br><span class="line">	sync.RWMutex</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当前cache ready状态必须为ok才可以被访问</span></span><br><span class="line">	ready *ready</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 后端存储数据接口</span></span><br><span class="line">	storage Store</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 对象类型</span></span><br><span class="line">	objectType reflect.Type</span><br><span class="line"></span><br><span class="line">	watchCache watchCache</span><br><span class="line">	reflector  *Reflector</span><br><span class="line"></span><br><span class="line">	versioner Versioner</span><br><span class="line"></span><br><span class="line">	triggerFunc TriggerPublisherFunc</span><br><span class="line">	watcherIdx  <span class="keyword">int</span></span><br><span class="line">	watchers    indexedWatchers</span><br><span class="line"></span><br><span class="line">	dispatchTimeoutBudge *timeBudget</span><br><span class="line"></span><br><span class="line">	stopLock sync.RWMutex</span><br><span class="line">	stopped  <span class="keyword">bool</span></span><br><span class="line">	stopCh   <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	stopWg   sync.WaitGroup</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>

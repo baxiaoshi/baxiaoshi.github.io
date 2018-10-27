@@ -332,7 +332,7 @@
 
       
         
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-16-22-29-06.png" alt=""></p>
+          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png" alt=""></p>
 <h4 id="主要功能"><a href="#主要功能" class="headerlink" title="主要功能"></a>主要功能</h4><p>K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享</p>
           <div class="post-more-link text-center">
             <a class="btn" href="/2018/08/19/k8s/cahce_watch/#more" rel="contents">
@@ -448,7 +448,7 @@
 
       
         
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-12-14-43-16.png" alt=""></p>
+          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-14-43-16.png" alt=""></p>
 <ul>
 <li>通常在运维开发中, 为了避免后端存储的压力，都会增加一个缓存，缓存资源数据，避免每次都从后端获取</li>
 <li>今天介绍另外一个好玩的东西watchCache</li>
@@ -690,7 +690,7 @@
 
       
         
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-08-22-43-32.png" alt=""></p>
+          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-08-22-43-32.png" alt=""></p>
 <p>在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法</p>
 <ul>
 <li>清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存</li>
@@ -810,7 +810,7 @@
 
       
         
-          <h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p><img src="http://olg58pct7.bkt.clouddn.com/2018-08-07-21-44-20.png" alt=""></p>
+          <h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-07-21-44-20.png" alt=""></p>
 <p>在运维系统里面通常一个数据变化，可能会触发多个联动系统的一些操作，每个系统自身可能又会有不通的操作，那么我们就需要一个中间的模块，帮我们完成事件的监听和统一处理</p>
 <p>其实只做一件很简单的事情 <em>监听某个地方的数据变化</em> 和 <em>把变化传递给关心的handler</em></p>
           <div class="post-more-link text-center">
@@ -1042,7 +1042,7 @@
 
       
         
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://olg58pct7.bkt.clouddn.com/micro_service.png" alt=""></p>
+          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/micro_service.png" alt=""></p>
 <p>现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它!</p>
 <p>但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它</p>
           <div class="post-more-link text-center">
