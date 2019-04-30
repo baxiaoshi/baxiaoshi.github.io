@@ -89,7 +89,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cron Controller 源码实现">
 <meta property="og:url" content="http://www.sreguide.com/2018/10/16/k8s/cron_job_controller/index.html">
-<meta property="og:site_name" content="8小时的技术博客">
+<meta property="og:site_name" content="自以为是">
 <meta property="og:description" content="CronJobController主要负责周期性任务的调度, 就跟linux中的crontab程序类似, 当达到时间就根据策略调用apiserver进行任务的创建或者状态的修改 当前CronJobController的问题  CronJobController并没有使用informer来进行时间监听apiserver, 而是直接进行周期循环 单groutine进行调度">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-12-11-47-31.png">
@@ -125,7 +125,7 @@
   <link rel="canonical" href="http://www.sreguide.com/2018/10/16/k8s/cron_job_controller/"/>
 
 
-  <title> Cron Controller 源码实现 | 8小时的技术博客 </title>
+  <title> Cron Controller 源码实现 | 自以为是 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -166,7 +166,7 @@
   <div class="custom-logo-site-title">
     <a href="/"  class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <span class="site-title">8小时的技术博客</span>
+      <span class="site-title">自以为是</span>
       <span class="logo-line-after"><i></i></span>
     </a>
   </div>
@@ -514,14 +514,14 @@
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
-               alt="8 小时的技术博客" />
-          <p class="site-author-name" itemprop="name">8 小时的技术博客</p>
-          <p class="site-description motion-element" itemprop="description">梦想还有，还在路上</p>
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">首席非业余菜鸟运维开发工程师</p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-count">39</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -529,7 +529,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -538,7 +538,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -586,11 +586,11 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">8 小时的技术博客</span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
 </div>
 
 <div class="powered-by">
