@@ -270,6 +270,166 @@
             
               
                 
+                <a class="post-title-link" href="/2019/05/09/data_struct/circular_queue_rr/" itemprop="url">
+                  基于环状队列和迭代器实现分布式任务RR分配策略
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-09T18:39:47+08:00" content="2019-05-09 18:39">
+              2019-05-09 18:39
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据结构/" itemprop="url" rel="index">
+                    <span itemprop="name">数据结构</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据结构/环状队列/" itemprop="url" rel="index">
+                    <span itemprop="name">环状队列</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据结构/环状队列/迭代器/" itemprop="url" rel="index">
+                    <span itemprop="name">迭代器</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/数据结构/环状队列/迭代器/分布式任务/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式任务</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="分布式任务分配"><a href="#分布式任务分配" class="headerlink" title="分布式任务分配"></a>分布式任务分配</h2><p>在很多运维场景下，我们都会执行一些长时间的任务，比如装机、部署环境、打包镜像等长时间任务， 而通常我们的任务节点数量通常是有限的(排除基于k8s的hpa、或者knative等自动伸缩场景)。</p>
+<p>那么当我们有一个任务如何根据当前的worker和corrdinator和任务来进行合理的分配，分配其实也比较复杂，往复杂里面做，可以根据当前系统的负载、每个任务的执行资源消耗、当前集群的任务数量等， 这里我们就搞一个最简单的，基于任务和当前worker的RR算法</p>
+<h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-09-18-12-02.png" alt=""><br>在worker和任务队列之间，添加一层协调调度层Coordinator， 由它来根据当前集群任务的状态来进行任务的分配，同时感知当前集群worker和task的状态，协调整个集群任务的执行、终止等操作</p>
+<h1 id="单机实现"><a href="#单机实现" class="headerlink" title="单机实现"></a>单机实现</h1><h2 id="整体设计"><a href="#整体设计" class="headerlink" title="整体设计"></a>整体设计</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-09-18-24-13.png" alt=""><br>members: 表示当前集群中所有的worker<br>tasks: 就是当前的任务<br>Coordinator: 就是我们的协调者， 负责根据members和tasks进行任务的分配<br>result: 就是分配的结果</p>
+<h2 id="CircularIterator"><a href="#CircularIterator" class="headerlink" title="CircularIterator"></a>CircularIterator</h2><p>CircularIterator就是我们的环状对立迭代器, 拥有两个方法， 一个是add添加member, 一个Next返回基于rr的下一个member<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// CircularIterator 环状迭代器</span></span><br><span class="line"><span class="keyword">type</span> CircularIterator <span class="keyword">struct</span> &#123;</span><br><span class="line">	list []<span class="keyword">interface</span>&#123;&#125;    <span class="comment">// 保存所有的成员变量</span></span><br><span class="line">	next <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Next 返回下一个元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *CircularIterator)</span> <span class="title">Next</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	item := c.list[c.next]</span><br><span class="line">	c.next = (c.next + <span class="number">1</span>) % <span class="built_in">len</span>(c.list)</span><br><span class="line">	<span class="keyword">return</span> item</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Add 添加任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *CircularIterator)</span> <span class="title">Add</span><span class="params">(v <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> c.list &#123;</span><br><span class="line">		<span class="keyword">if</span> v == item &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.list = <span class="built_in">append</span>(c.list, v)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="Member-amp-Task"><a href="#Member-amp-Task" class="headerlink" title="Member&amp;Task"></a>Member&amp;Task</h2><p>Member就是负责执行任务的worker, 有一个AddTask方法和Execute方法负责任务的执行和添加任务<br>Task标识一个任务<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// Member 任务组成员</span></span><br><span class="line"><span class="keyword">type</span> Member <span class="keyword">struct</span> &#123;</span><br><span class="line">	id    <span class="keyword">int</span></span><br><span class="line">	tasks []*Task</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ID 返回当前memberID</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Member)</span> <span class="title">ID</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.id</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddTask 为member添加任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Member)</span> <span class="title">AddTask</span><span class="params">(t *Task)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> m.tasks &#123;</span><br><span class="line">		<span class="keyword">if</span> task == t &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	m.tasks = <span class="built_in">append</span>(m.tasks, t)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Execute 执行任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Member)</span> <span class="title">Execute</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> m.tasks &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"Member %d run task %s\n"</span>, m.ID(), task.Execute())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Task 任务</span></span><br><span class="line"><span class="keyword">type</span> Task <span class="keyword">struct</span> &#123;</span><br><span class="line">	name <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Execute 执行task返回结果</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(t *Task)</span> <span class="title">Execute</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">"Task "</span> + t.name + <span class="string">" run success"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="Coordinator"><a href="#Coordinator" class="headerlink" title="Coordinator"></a>Coordinator</h2><p>Coordinator是协调器，负责根据 Member和task进行集群任务的协调调度<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Task 任务</span></span><br><span class="line"><span class="keyword">type</span> Task <span class="keyword">struct</span> &#123;</span><br><span class="line">	name <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Execute 执行task返回结果</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(t *Task)</span> <span class="title">Execute</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">"Task "</span> + t.name + <span class="string">" run success"</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Coordinator 协调者</span></span><br><span class="line"><span class="keyword">type</span> Coordinator <span class="keyword">struct</span> &#123;</span><br><span class="line">	members []*Member</span><br><span class="line">	tasks   []*Task</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// TaskAssignments 为member分配任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">TaskAssignments</span><span class="params">()</span> <span class="title">map</span>[<span class="title">int</span>]*<span class="title">Member</span></span> &#123;</span><br><span class="line">	taskAssignments := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">int</span>]*Member)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 构建迭代器</span></span><br><span class="line">	memberIt := c.getMemberIterator()</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> c.tasks &#123;</span><br><span class="line">		member := memberIt.Next().(*Member)</span><br><span class="line"></span><br><span class="line">		_, err := taskAssignments[member.ID()]</span><br><span class="line">		<span class="keyword">if</span> err == <span class="literal">false</span> &#123;</span><br><span class="line">			taskAssignments[member.ID()] = member</span><br><span class="line">		&#125;</span><br><span class="line">		member.AddTask(task)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> taskAssignments</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">getMemberIterator</span><span class="params">()</span> *<span class="title">CircularIterator</span></span> &#123;</span><br><span class="line">	<span class="comment">// 通过当前成员, 构造成员队列</span></span><br><span class="line">	members := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, <span class="built_in">len</span>(c.members))</span><br><span class="line">	<span class="keyword">for</span> index, member := <span class="keyword">range</span> c.members &#123;</span><br><span class="line">		members[index] = member</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> NewCircularIterftor(members)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddMember 添加member组成员</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">AddMember</span><span class="params">(m *Member)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, member := <span class="keyword">range</span> c.members &#123;</span><br><span class="line">		<span class="keyword">if</span> member == m &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.members = <span class="built_in">append</span>(c.members, m)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddTask 添加任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">AddTask</span><span class="params">(t *Task)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> c.tasks &#123;</span><br><span class="line">		<span class="keyword">if</span> task == t &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.tasks = <span class="built_in">append</span>(c.tasks, t)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>我们首先创建一堆member和task, 然后调用coordinator进行任务分配，执行任务结果<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">coordinator := NewCoordinator()</span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">10</span>; i++ &#123;</span><br><span class="line">	m := &amp;Member&#123;id: i&#125;</span><br><span class="line">	coordinator.AddMember(m)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">30</span>; i++ &#123;</span><br><span class="line">	t := &amp;Task&#123;name: fmt.Sprintf(<span class="string">"task %d"</span>, i)&#125;</span><br><span class="line">	coordinator.AddTask(t)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">result := coordinator.TaskAssignments()</span><br><span class="line"><span class="keyword">for</span> _, member := <span class="keyword">range</span> result &#123;</span><br><span class="line">	member.Execute()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h2><p>可以看到每个worker均匀的得到任务分配<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">Member 6 run task Task task 6 run success</span><br><span class="line">Member 6 run task Task task 16 run success</span><br><span class="line">Member 6 run task Task task 26 run success</span><br><span class="line">Member 8 run task Task task 8 run success</span><br><span class="line">Member 8 run task Task task 18 run success</span><br><span class="line">Member 8 run task Task task 28 run success</span><br><span class="line">Member 0 run task Task task 0 run success</span><br><span class="line">Member 0 run task Task task 10 run success</span><br><span class="line">Member 0 run task Task task 20 run success</span><br><span class="line">Member 3 run task Task task 3 run success</span><br><span class="line">Member 3 run task Task task 13 run success</span><br><span class="line">Member 3 run task Task task 23 run success</span><br><span class="line">Member 4 run task Task task 4 run success</span><br><span class="line">Member 4 run task Task task 14 run success</span><br><span class="line">Member 4 run task Task task 24 run success</span><br><span class="line">Member 7 run task Task task 7 run success</span><br><span class="line">Member 7 run task Task task 17 run success</span><br><span class="line">Member 7 run task Task task 27 run success</span><br><span class="line">Member 9 run task Task task 9 run success</span><br><span class="line">Member 9 run task Task task 19 run success</span><br><span class="line">Member 9 run task Task task 29 run success</span><br><span class="line">Member 1 run task Task task 1 run success</span><br><span class="line">Member 1 run task Task task 11 run success</span><br><span class="line">Member 1 run task Task task 21 run success</span><br><span class="line">Member 2 run task Task task 2 run success</span><br><span class="line">Member 2 run task Task task 12 run success</span><br><span class="line">Member 2 run task Task task 22 run success</span><br><span class="line">Member 5 run task Task task 5 run success</span><br><span class="line">Member 5 run task Task task 15 run success</span><br><span class="line">Member 5 run task Task task 25 run success</span><br></pre></td></tr></table></figure></p>
+<h2 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// CircularIterator 环状迭代器</span></span><br><span class="line"><span class="keyword">type</span> CircularIterator <span class="keyword">struct</span> &#123;</span><br><span class="line">	list []<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	next <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Next 返回下一个元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *CircularIterator)</span> <span class="title">Next</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	item := c.list[c.next]</span><br><span class="line">	c.next = (c.next + <span class="number">1</span>) % <span class="built_in">len</span>(c.list)</span><br><span class="line">	<span class="keyword">return</span> item</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Add 添加任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *CircularIterator)</span> <span class="title">Add</span><span class="params">(v <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> c.list &#123;</span><br><span class="line">		<span class="keyword">if</span> v == item &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.list = <span class="built_in">append</span>(c.list, v)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Member 任务组成员</span></span><br><span class="line"><span class="keyword">type</span> Member <span class="keyword">struct</span> &#123;</span><br><span class="line">	id    <span class="keyword">int</span></span><br><span class="line">	tasks []*Task</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ID 返回当前memberID</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Member)</span> <span class="title">ID</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> m.id</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddTask 为member添加任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Member)</span> <span class="title">AddTask</span><span class="params">(t *Task)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> m.tasks &#123;</span><br><span class="line">		<span class="keyword">if</span> task == t &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	m.tasks = <span class="built_in">append</span>(m.tasks, t)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Execute 执行任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Member)</span> <span class="title">Execute</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> m.tasks &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"Member %d run task %s\n"</span>, m.ID(), task.Execute())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Task 任务</span></span><br><span class="line"><span class="keyword">type</span> Task <span class="keyword">struct</span> &#123;</span><br><span class="line">	name <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Execute 执行task返回结果</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(t *Task)</span> <span class="title">Execute</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">"Task "</span> + t.name + <span class="string">" run success"</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Coordinator 协调者</span></span><br><span class="line"><span class="keyword">type</span> Coordinator <span class="keyword">struct</span> &#123;</span><br><span class="line">	members []*Member</span><br><span class="line">	tasks   []*Task</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// TaskAssignments 为member分配任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">TaskAssignments</span><span class="params">()</span> <span class="title">map</span>[<span class="title">int</span>]*<span class="title">Member</span></span> &#123;</span><br><span class="line">	taskAssignments := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">int</span>]*Member)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 构建迭代器</span></span><br><span class="line">	memberIt := c.getMemberIterator()</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> c.tasks &#123;</span><br><span class="line">		member := memberIt.Next().(*Member)</span><br><span class="line"></span><br><span class="line">		_, err := taskAssignments[member.ID()]</span><br><span class="line">		<span class="keyword">if</span> err == <span class="literal">false</span> &#123;</span><br><span class="line">			taskAssignments[member.ID()] = member</span><br><span class="line">		&#125;</span><br><span class="line">		member.AddTask(task)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> taskAssignments</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">getMemberIterator</span><span class="params">()</span> *<span class="title">CircularIterator</span></span> &#123;</span><br><span class="line">	<span class="comment">// 通过当前成员, 构造成员队列</span></span><br><span class="line">	members := <span class="built_in">make</span>([]<span class="keyword">interface</span>&#123;&#125;, <span class="built_in">len</span>(c.members))</span><br><span class="line">	<span class="keyword">for</span> index, member := <span class="keyword">range</span> c.members &#123;</span><br><span class="line">		members[index] = member</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> NewCircularIterftor(members)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddMember 添加member组成员</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">AddMember</span><span class="params">(m *Member)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, member := <span class="keyword">range</span> c.members &#123;</span><br><span class="line">		<span class="keyword">if</span> member == m &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.members = <span class="built_in">append</span>(c.members, m)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddTask 添加任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">AddTask</span><span class="params">(t *Task)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, task := <span class="keyword">range</span> c.tasks &#123;</span><br><span class="line">		<span class="keyword">if</span> task == t &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.tasks = <span class="built_in">append</span>(c.tasks, t)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewCircularIterftor 返回迭代器</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewCircularIterftor</span><span class="params">(list []<span class="keyword">interface</span>&#123;&#125;)</span> *<span class="title">CircularIterator</span></span> &#123;</span><br><span class="line">	iterator := CircularIterator&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> list &#123;</span><br><span class="line">		iterator.Add(item)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;iterator</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewCoordinator 返回协调器</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewCoordinator</span><span class="params">()</span> *<span class="title">Coordinator</span></span> &#123;</span><br><span class="line">	c := Coordinator&#123;&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;c</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	coordinator := NewCoordinator()</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">10</span>; i++ &#123;</span><br><span class="line">		m := &amp;Member&#123;id: i&#125;</span><br><span class="line">		coordinator.AddMember(m)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">30</span>; i++ &#123;</span><br><span class="line">		t := &amp;Task&#123;name: fmt.Sprintf(<span class="string">"task %d"</span>, i)&#125;</span><br><span class="line">		coordinator.AddTask(t)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	result := coordinator.TaskAssignments()</span><br><span class="line">	<span class="keyword">for</span> _, member := <span class="keyword">range</span> result &#123;</span><br><span class="line">		member.Execute()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>任务协调是一个非常复杂的事情， 内部的任务平台，虽然实现了基于任务的组合和app化，但是任务调度分配着一块，仍然没有去做，只是简单的根据树形任务去简单的做一些分支任务的执行，未来有时间再做吧，要继续研究下一个模块了</p>
+<p>这个调度思想来源于kafka connect的DistributedHerder里面的WorkerCoordinator，感兴趣的可以看看，未完待续</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/04/30/go/go_channel/" itemprop="url">
                   Go里面Channel的实现
                 </a>
@@ -1627,150 +1787,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/09/17/k8s/admission_design/" itemprop="url">
-                  Kubernetes 准入控制模块实现
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-09-17T21:20:57+08:00" content="2018-09-17 21:20">
-              2018-09-17 21:20
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/准入控制/" itemprop="url" rel="index">
-                    <span itemprop="name">准入控制</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="What"><a href="#What" class="headerlink" title="What"></a>What</h3><p>准入控制位于认证和授权模块之后，用于在数据存储之前的最后的数据验证和添加默认参数模块, 分为mutating(修改数据)和validating(验证数据)两种, k8s中的审计以chainAdmissionHandler将系统允许的所有admission plugin串联在一起使用, 其中只要有一个拒绝, 则请求结束</p>
-<h3 id="Why"><a href="#Why" class="headerlink" title="Why"></a>Why</h3><p> k8s中很多高级特性都依赖于审计模块的实现</p>
-<ul>
-<li>官方默认admission实现的准入控制设置如下</li>
-<li><a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/</a></li>
-</ul>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/09/17/k8s/admission_design/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1816,7 +1832,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">39</span>
+              <span class="site-state-item-count">40</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1824,7 +1840,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-count">22</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1833,7 +1849,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">25</span>
+                <span class="site-state-item-count">28</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
