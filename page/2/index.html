@@ -84,16 +84,16 @@
 
 
 
-<meta name="description" content="首席非业余菜鸟运维开发工程师">
+<meta name="description" content="非业余菜鸟运维开发工程师">
 <meta property="og:type" content="website">
 <meta property="og:title" content="自以为是">
 <meta property="og:url" content="http://www.sreguide.com/page/2/index.html">
 <meta property="og:site_name" content="自以为是">
-<meta property="og:description" content="首席非业余菜鸟运维开发工程师">
+<meta property="og:description" content="非业余菜鸟运维开发工程师">
 <meta property="og:locale" content="zh-Hans">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="自以为是">
-<meta name="twitter:description" content="首席非业余菜鸟运维开发工程师">
+<meta name="twitter:description" content="非业余菜鸟运维开发工程师">
 
 
 
@@ -248,6 +248,136 @@
           <div id="content" class="content">
             
   <section id="posts" class="posts-expand">
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/09/28/k8s/k8s_basic_infomer/" itemprop="url">
+                  Kubernetes informer 图解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-09-28T10:00:50+08:00" content="2018-09-28 10:00">
+              2018-09-28 10:00
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发</p>
+<p> <em>客户端</em>   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作</p>
+<p>为了减轻对apiserver的压力, <em>客户端</em>实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变化</p>
+<p>并且接受其他组件的ResourceEventHandler, 再事件发生时,  调用对应事件类型的处理函数, 来进行业务逻辑的处理</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/09/28/k8s/k8s_basic_infomer/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
     
       
 
@@ -1347,126 +1477,11 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/05/16/go/go_restful_01/" itemprop="url">
-                  go-restful框架学习
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-05-16T23:29:12+08:00" content="2018-05-16 23:29">
-              2018-05-16 23:29
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/" itemprop="url" rel="index">
-                    <span itemprop="name">go语言</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="go-restful初步了解"><a href="#go-restful初步了解" class="headerlink" title="go-restful初步了解"></a>go-restful初步了解</h3><h4 id="go-restful介绍"><a href="#go-restful介绍" class="headerlink" title="go-restful介绍"></a>go-restful介绍</h4><p>go-restful是一个基于go里面net/http构建的一个rest风格的包，这个库并没有做过多的封装， 再kubernets和蓝鲸的cmdb里面都有使用</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/05/16/go/go_restful_01/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1502,12 +1517,12 @@
                src="/images/avatar.gif"
                alt="布衣" />
           <p class="site-author-name" itemprop="name">布衣</p>
-          <p class="site-description motion-element" itemprop="description">首席非业余菜鸟运维开发工程师</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-count">41</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1515,7 +1530,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1524,7 +1539,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">28</span>
+                <span class="site-state-item-count">31</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

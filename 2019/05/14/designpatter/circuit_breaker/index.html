@@ -1,0 +1,712 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="微服务,断路器,go源码," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="断路器背景微服务连锁故障场景在分布式环境中，各个微服务相互调用，当某些情况下，比如后端中间件服务故障、第三方服务中断导致某个服务无限期不可用，短时间无法恢复，则可能会导致连锁故障，最终影响压垮整个业务集群 断路器与重试断路器模式不同于重试模式，重试模式是使应用程序可以重试操作以期望它会成功，而断路器模式是防止应用程序执行一个可能失败的操作，减少执行可能失败操作的CPU、内存、线程等资源的浪费，从而">
+<meta name="keywords" content="微服务,断路器,go源码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="微服务的断路器实现图解">
+<meta property="og:url" content="http://www.sreguide.com/2019/05/14/designpatter/circuit_breaker/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="断路器背景微服务连锁故障场景在分布式环境中，各个微服务相互调用，当某些情况下，比如后端中间件服务故障、第三方服务中断导致某个服务无限期不可用，短时间无法恢复，则可能会导致连锁故障，最终影响压垮整个业务集群 断路器与重试断路器模式不同于重试模式，重试模式是使应用程序可以重试操作以期望它会成功，而断路器模式是防止应用程序执行一个可能失败的操作，减少执行可能失败操作的CPU、内存、线程等资源的浪费，从而">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-10-51-12.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-11-05-27.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-13-24-55.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-13-57-39.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-15-16-43.png">
+<meta property="og:updated_time" content="2019-05-14T13:55:03.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="微服务的断路器实现图解">
+<meta name="twitter:description" content="断路器背景微服务连锁故障场景在分布式环境中，各个微服务相互调用，当某些情况下，比如后端中间件服务故障、第三方服务中断导致某个服务无限期不可用，短时间无法恢复，则可能会导致连锁故障，最终影响压垮整个业务集群 断路器与重试断路器模式不同于重试模式，重试模式是使应用程序可以重试操作以期望它会成功，而断路器模式是防止应用程序执行一个可能失败的操作，减少执行可能失败操作的CPU、内存、线程等资源的浪费，从而">
+<meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-10-51-12.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2019/05/14/designpatter/circuit_breaker/"/>
+
+
+  <title> 微服务的断路器实现图解 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                微服务的断路器实现图解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-14T21:52:02+08:00" content="2019-05-14 21:52">
+              2019-05-14 21:52
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/" itemprop="url" rel="index">
+                    <span itemprop="name">微服务</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/断路器/" itemprop="url" rel="index">
+                    <span itemprop="name">断路器</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/断路器/go源码/" itemprop="url" rel="index">
+                    <span itemprop="name">go源码</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="断路器背景"><a href="#断路器背景" class="headerlink" title="断路器背景"></a>断路器背景</h1><h2 id="微服务连锁故障场景"><a href="#微服务连锁故障场景" class="headerlink" title="微服务连锁故障场景"></a>微服务连锁故障场景</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-10-51-12.png" alt=""><br>在分布式环境中，各个微服务相互调用，当某些情况下，比如后端中间件服务故障、第三方服务中断导致某个服务无限期不可用，短时间无法恢复，则可能会导致连锁故障，最终影响压垮整个业务集群</p>
+<h2 id="断路器与重试"><a href="#断路器与重试" class="headerlink" title="断路器与重试"></a>断路器与重试</h2><p>断路器模式不同于重试模式，重试模式是使应用程序可以重试操作以期望它会成功，而断路器模式是防止应用程序执行一个可能失败的操作，减少执行可能失败操作的CPU、内存、线程等资源的浪费，从而保证服务的整体可用</p>
+<a id="more"></a>
+<h1 id="断路器设计解析"><a href="#断路器设计解析" class="headerlink" title="断路器设计解析"></a>断路器设计解析</h1><h2 id="基于代理模式的断路器"><a href="#基于代理模式的断路器" class="headerlink" title="基于代理模式的断路器"></a>基于代理模式的断路器</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-11-05-27.png" alt=""><br>断路器相当于一个请求操作执行的代理，托管请求操作的执行</p>
+<p>实现原理流程：</p>
+<ol>
+<li>拦截服务执行的请求，通过当前状态决定是否直接返回，如果否则执行后续操作</li>
+<li>尝试执行操作，并获取返回结果</li>
+<li>根据返回结果和当前统计信息，决定当前断路器的状态，修改状态</li>
+<li>返回执行结果</li>
+</ol>
+<h2 id="断路器状态机"><a href="#断路器状态机" class="headerlink" title="断路器状态机"></a>断路器状态机</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-13-24-55.png" alt=""><br>断路器状态机实现上有三种状态：Closed(断路器关闭)、Open(开放)、HalfOpen(半开放)</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">状态</th>
+<th style="text-align:left">说明</th>
+<th style="text-align:left">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Closed</td>
+<td style="text-align:left">关闭</td>
+<td style="text-align:left">断路器关闭正常执行操作</td>
+</tr>
+<tr>
+<td style="text-align:left">Open</td>
+<td style="text-align:left">打开</td>
+<td style="text-align:left">断路器开放,所有请求直接返回错误，不执行任何请求</td>
+</tr>
+<tr>
+<td style="text-align:left">HalfOpen</td>
+<td style="text-align:left">半开放</td>
+<td style="text-align:left">允许有限数量的请求通过,如果执行成功，恢复到关闭状态，如果仍然失败，则恢复到开放，然后重新启动超时定时器</td>
+</tr>
+</tbody>
+</table>
+<p>#断路器实现</p>
+<h2 id="实现原理图解"><a href="#实现原理图解" class="headerlink" title="实现原理图解"></a>实现原理图解</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-13-57-39.png" alt=""><br>断路器实现实现主要分为三部分：状态统计、状态转移、请求执行</p>
+<p>状态统计：统计已经执行的请求的成功失败的数量，以确定是否需要进行状态转移<br>状态转移：根据当前统计信息和当前状态来进行目标状态的确定及转移操作<br>请求执行：代理前端任务的执行，如果当前状态不需要进行尝试执行，就直接返回错误，避免资源浪费</p>
+<p>Golang里面已经有开源的实现，<a href="https://github.com/sony/gobreaker/blob/" target="_blank" rel="noopener">https://github.com/sony/gobreaker/blob/</a>, 接下来救市剖析它的实现</p>
+<h2 id="状态统计-计数器Counts"><a href="#状态统计-计数器Counts" class="headerlink" title="状态统计-计数器Counts"></a>状态统计-计数器Counts</h2><p>Counts就是一个计数器，记录当前请求成功和失败的数量<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Counts <span class="keyword">struct</span> &#123;</span><br><span class="line">	Requests             <span class="keyword">uint32</span>    <span class="comment">// 请求数</span></span><br><span class="line">	TotalSuccesses       <span class="keyword">uint32</span>    <span class="comment">// 成功</span></span><br><span class="line">	TotalFailures        <span class="keyword">uint32</span>    <span class="comment">// 失败</span></span><br><span class="line">	ConsecutiveSuccesses <span class="keyword">uint32</span>    <span class="comment">// 连续成功</span></span><br><span class="line">	ConsecutiveFailures  <span class="keyword">uint32</span> <span class="comment">// 连续失败</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>计数器完成对应请求状态的次数，为后续状态转移提供数据, Counts提供了onRequest、onSuccess、onFailure、clear几个辅助接口用于实现对应请求状态的操作，感兴趣可以看下</p>
+<h2 id="状态机-CircuitBreaker"><a href="#状态机-CircuitBreaker" class="headerlink" title="状态机- CircuitBreaker"></a>状态机- CircuitBreaker</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> CircuitBreaker <span class="keyword">struct</span> &#123;</span><br><span class="line">	name          <span class="keyword">string</span></span><br><span class="line">        <span class="comment">// maxRequests限制half-open状态下最大的请求数，避免海量请求将在恢复过程中的服务再次失败</span></span><br><span class="line">	maxRequests   <span class="keyword">uint32</span></span><br><span class="line">     <span class="comment">// interval用于在closed状态下，断路器多久清除一次Counts信息，如果设置为0则在closed状态下不会清除Counts</span></span><br><span class="line">	interval      time.Duration</span><br><span class="line">        <span class="comment">// timeout进入open状态下，多长时间切换到half-open状态，默认60s</span></span><br><span class="line">	timeout       time.Duration</span><br><span class="line">        <span class="comment">// readyToTrip熔断条件，当执行失败后，会根据readyToTrip决定是否进入Open状态</span></span><br><span class="line">	readyToTrip   <span class="function"><span class="keyword">func</span><span class="params">(counts Counts)</span> <span class="title">bool</span></span></span><br><span class="line"><span class="function">        // <span class="title">onStateChange</span>断路器状态变更回调函数</span></span><br><span class="line"><span class="function">	<span class="title">onStateChange</span> <span class="title">func</span><span class="params">(name <span class="keyword">string</span>, from State, to State)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">	<span class="title">mutex</span>      <span class="title">sync</span>.<span class="title">Mutex</span></span></span><br><span class="line"><span class="function">        //. <span class="title">state</span> 断路器状态</span></span><br><span class="line"><span class="function">	<span class="title">state</span>      <span class="title">State</span></span></span><br><span class="line"><span class="function">        // <span class="title">generation</span> 是一个递增值，相当于当前断路器状态切换的次数， 为了避免状态切换后，未完成请求对新状态的统计的影响，如果发现一个请求的<span class="title">generation</span>同当前的<span class="title">generation</span>不同，则不会进行统计计数</span></span><br><span class="line"><span class="function">	<span class="title">generation</span> <span class="title">uint64</span></span></span><br><span class="line"><span class="function">        //  <span class="title">Counts</span> 统计</span></span><br><span class="line"><span class="function">	<span class="title">counts</span>     <span class="title">Counts</span></span></span><br><span class="line"><span class="function">        // <span class="title">expiry</span> 超时过期用于<span class="title">open</span>状态到<span class="title">half</span>-<span class="title">open</span>状态的切换，当超时后，会从<span class="title">open</span>状态切换到<span class="title">half</span>-<span class="title">open</span>状态</span></span><br><span class="line"><span class="function">	<span class="title">expiry</span>     <span class="title">time</span>.<span class="title">Time</span></span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+<h2 id="核心流程"><a href="#核心流程" class="headerlink" title="核心流程"></a>核心流程</h2><h3 id="CircuitBreaker-Execute"><a href="#CircuitBreaker-Execute" class="headerlink" title="CircuitBreaker.Execute"></a>CircuitBreaker.Execute</h3><p>请求执行，对外开放的请求执行接口<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cb *CircuitBreaker)</span> <span class="title">Execute</span><span class="params">(req <span class="keyword">func</span>()</span> <span class="params">(<span class="keyword">interface</span>&#123;&#125;, error)</span>) <span class="params">(<span class="keyword">interface</span>&#123;&#125;, error)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 执行请求钩子，会根据当前状态，来返回当前的generation和err(如果位于open和half-open则不为nil), 通过err来进行判断是否直接返回</span></span><br><span class="line">	generation, err := cb.beforeRequest()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 捕获panic，避免应用函数错误造成断路器panic</span></span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		e := <span class="built_in">recover</span>()</span><br><span class="line">		<span class="keyword">if</span> e != <span class="literal">nil</span> &#123;</span><br><span class="line">			cb.afterRequest(generation, <span class="literal">false</span>)</span><br><span class="line">			<span class="built_in">panic</span>(e)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 执行请求</span></span><br><span class="line">	result, err := req()</span><br><span class="line">        <span class="comment">// 根据结果来进行对应状态的统计, 同时传递generation</span></span><br><span class="line">	cb.afterRequest(generation, err == <span class="literal">nil</span>)</span><br><span class="line">	<span class="keyword">return</span> result, err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="CircuitBreaker-beforeRequest"><a href="#CircuitBreaker-beforeRequest" class="headerlink" title="CircuitBreaker.beforeRequest"></a>CircuitBreaker.beforeRequest</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cb *CircuitBreaker)</span> <span class="title">beforeRequest</span><span class="params">()</span> <span class="params">(<span class="keyword">uint64</span>, error)</span></span> &#123;</span><br><span class="line">	cb.mutex.Lock()</span><br><span class="line">	<span class="keyword">defer</span> cb.mutex.Unlock()</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取当前的状态</span></span><br><span class="line">	now := time.Now()</span><br><span class="line">	state, generation := cb.currentState(now)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// open和half-open状态则直接返回</span></span><br><span class="line">	<span class="keyword">if</span> state == StateOpen &#123;</span><br><span class="line">		<span class="keyword">return</span> generation, ErrOpenState</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> state == StateHalfOpen &amp;&amp; cb.counts.Requests &gt;= cb.maxRequests &#123;</span><br><span class="line">            <span class="comment">// 避免海量请求对处于恢复服务的影响，这里有一个限流的操作，避免请求数超过最大请求数</span></span><br><span class="line">		<span class="keyword">return</span> generation, ErrTooManyRequests</span><br><span class="line">	&#125;</span><br><span class="line">        <span class="comment">// 统计状态</span></span><br><span class="line">	cb.counts.onRequest()</span><br><span class="line">	<span class="keyword">return</span> generation, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="CircuitBreaker-afterRequest"><a href="#CircuitBreaker-afterRequest" class="headerlink" title="CircuitBreaker.afterRequest"></a>CircuitBreaker.afterRequest</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cb *CircuitBreaker)</span> <span class="title">afterRequest</span><span class="params">(before <span class="keyword">uint64</span>, success <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	cb.mutex.Lock()</span><br><span class="line">	<span class="keyword">defer</span> cb.mutex.Unlock()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重新获取状态</span></span><br><span class="line">	now := time.Now()</span><br><span class="line">	state, generation := cb.currentState(now)</span><br><span class="line">        <span class="comment">// 如果前后状态不一致，则不计数</span></span><br><span class="line">	<span class="keyword">if</span> generation != before &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 根据状态计数</span></span><br><span class="line">	<span class="keyword">if</span> success &#123;</span><br><span class="line">		cb.onSuccess(state, now)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		cb.onFailure(state, now)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="CircuitBreaker-currentState"><a href="#CircuitBreaker-currentState" class="headerlink" title="CircuitBreaker.currentState"></a>CircuitBreaker.currentState</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cb *CircuitBreaker)</span> <span class="title">currentState</span><span class="params">(now time.Time)</span> <span class="params">(State, <span class="keyword">uint64</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> cb.state &#123;</span><br><span class="line">	<span class="keyword">case</span> StateClosed:</span><br><span class="line">                <span class="comment">// 如果当前当前是closed状态，并且有设置expiry,则递增Generation到新一轮统计计数</span></span><br><span class="line">		<span class="keyword">if</span> !cb.expiry.IsZero() &amp;&amp; cb.expiry.Before(now) &#123;</span><br><span class="line">			cb.toNewGeneration(now)</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> StateOpen:</span><br><span class="line">                <span class="comment">// 如果是Open状态，并且超时，则尝试到半打开状态</span></span><br><span class="line">		<span class="keyword">if</span> cb.expiry.Before(now) &#123;</span><br><span class="line">			cb.setState(StateHalfOpen, now)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> cb.state, cb.generation</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="CircuitBreaker-toNewgeneration"><a href="#CircuitBreaker-toNewgeneration" class="headerlink" title="CircuitBreaker.toNewgeneration"></a>CircuitBreaker.toNewgeneration</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cb *CircuitBreaker)</span> <span class="title">toNewGeneration</span><span class="params">(now time.Time)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 递增generation, 清除状态</span></span><br><span class="line">	cb.generation++</span><br><span class="line">	cb.counts.clear()</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 设置超时时间</span></span><br><span class="line">	<span class="keyword">var</span> zero time.Time</span><br><span class="line">	<span class="keyword">switch</span> cb.state &#123;</span><br><span class="line">	<span class="keyword">case</span> StateClosed:</span><br><span class="line">		<span class="keyword">if</span> cb.interval == <span class="number">0</span> &#123;</span><br><span class="line">			cb.expiry = zero</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			cb.expiry = now.Add(cb.interval)</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> StateOpen:</span><br><span class="line">		cb.expiry = now.Add(cb.timeout)</span><br><span class="line">	<span class="keyword">default</span>: <span class="comment">// StateHalfOpen</span></span><br><span class="line">		cb.expiry = zero</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><h2 id="断路器黄金链路"><a href="#断路器黄金链路" class="headerlink" title="断路器黄金链路"></a>断路器黄金链路</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-15-16-43.png" alt=""></p>
+<ul>
+<li>beforeRequest ：完成当前请求是否可以执行请求，状态超时切换，同时返回当前的genenration</li>
+<li>req： 执行请求</li>
+<li>afterRequest:  完成请求状态统计，决定状态切换</li>
+</ul>
+<h2 id="断路器的优缺点"><a href="#断路器的优缺点" class="headerlink" title="断路器的优缺点"></a>断路器的优缺点</h2><p>断路器比较适合针对远程服务或者第三方服务的调用，如果该操作极有可能会失败，则断路器可以尽可能的减小失败对应用的影响，避免资源浪费</p>
+<p>但缺点也显而易见，断路器本身相当于一层代理，在应用程序执行进行统计和控制，本身就有一定的资源消耗，同时内部基于synx.Mutex锁来实现，高并发下肯定会有锁争用问题，可能需要根据业务来使用多个断路器，来分散这种锁争用，同时应该避免在断路器req函数内，去执行重试和过长时间的超时等待，因为断路器核心是快速失败</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/微服务/" rel="tag">#微服务</a>
+          
+            <a href="/tags/断路器/" rel="tag">#断路器</a>
+          
+            <a href="/tags/go源码/" rel="tag">#go源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/09/data_struct/circular_queue_rr/" rel="next" title="基于环状队列和迭代器实现分布式任务RR分配策略">
+                <i class="fa fa-chevron-left"></i> 基于环状队列和迭代器实现分布式任务RR分配策略
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">41</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">25</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#断路器背景"><span class="nav-number">1.</span> <span class="nav-text">断路器背景</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#微服务连锁故障场景"><span class="nav-number">1.1.</span> <span class="nav-text">微服务连锁故障场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#断路器与重试"><span class="nav-number">1.2.</span> <span class="nav-text">断路器与重试</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#断路器设计解析"><span class="nav-number">2.</span> <span class="nav-text">断路器设计解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基于代理模式的断路器"><span class="nav-number">2.1.</span> <span class="nav-text">基于代理模式的断路器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#断路器状态机"><span class="nav-number">2.2.</span> <span class="nav-text">断路器状态机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现原理图解"><span class="nav-number">2.3.</span> <span class="nav-text">实现原理图解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#状态统计-计数器Counts"><span class="nav-number">2.4.</span> <span class="nav-text">状态统计-计数器Counts</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#状态机-CircuitBreaker"><span class="nav-number">2.5.</span> <span class="nav-text">状态机- CircuitBreaker</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#核心流程"><span class="nav-number">2.6.</span> <span class="nav-text">核心流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CircuitBreaker-Execute"><span class="nav-number">2.6.1.</span> <span class="nav-text">CircuitBreaker.Execute</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CircuitBreaker-beforeRequest"><span class="nav-number">2.6.2.</span> <span class="nav-text">CircuitBreaker.beforeRequest</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CircuitBreaker-afterRequest"><span class="nav-number">2.6.3.</span> <span class="nav-text">CircuitBreaker.afterRequest</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CircuitBreaker-currentState"><span class="nav-number">2.6.4.</span> <span class="nav-text">CircuitBreaker.currentState</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CircuitBreaker-toNewgeneration"><span class="nav-number">2.6.5.</span> <span class="nav-text">CircuitBreaker.toNewgeneration</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#断路器黄金链路"><span class="nav-number">3.1.</span> <span class="nav-text">断路器黄金链路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#断路器的优缺点"><span class="nav-number">3.2.</span> <span class="nav-text">断路器的优缺点</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

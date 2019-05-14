@@ -84,13 +84,13 @@
 
 
 
-<meta name="description" content="管道介绍Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步 channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理 编程模式Channel提供了两种模式：同步与异步 同步同步模式：channel只相当于一个中介，并不会缓冲数据，而是由生产者和消费者，直接进行数据交换，所以当任何一">
+<meta name="description" content="管道介绍Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步 channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理">
 <meta name="keywords" content="go语言,图解,channel,golang">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Go里面Channel的实现">
 <meta property="og:url" content="http://www.sreguide.com/2019/04/30/go/go_channel/index.html">
 <meta property="og:site_name" content="自以为是">
-<meta property="og:description" content="管道介绍Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步 channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理 编程模式Channel提供了两种模式：同步与异步 同步同步模式：channel只相当于一个中介，并不会缓冲数据，而是由生产者和消费者，直接进行数据交换，所以当任何一">
+<meta property="og:description" content="管道介绍Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步 channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-20.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-28.png">
@@ -100,10 +100,10 @@
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-30-10-57-42.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-30-11-37-45.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-30-13-44-06.png">
-<meta property="og:updated_time" content="2019-04-30T06:23:06.000Z">
+<meta property="og:updated_time" content="2019-05-14T13:55:56.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go里面Channel的实现">
-<meta name="twitter:description" content="管道介绍Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步 channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理 编程模式Channel提供了两种模式：同步与异步 同步同步模式：channel只相当于一个中介，并不会缓冲数据，而是由生产者和消费者，直接进行数据交换，所以当任何一">
+<meta name="twitter:description" content="管道介绍Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步 channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理">
 <meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-20.png">
 
 
@@ -375,6 +375,7 @@
       
         <h1 id="管道介绍"><a href="#管道介绍" class="headerlink" title="管道介绍"></a>管道介绍</h1><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-20.png" alt=""><br>Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步</p>
 <p>channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理</p>
+<a id="more"></a>
 <h1 id="编程模式"><a href="#编程模式" class="headerlink" title="编程模式"></a>编程模式</h1><p>Channel提供了两种模式：同步与异步</p>
 <h2 id="同步"><a href="#同步" class="headerlink" title="同步"></a>同步</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-28.png" alt=""><br>同步模式：channel只相当于一个中介，并不会缓冲数据，而是由生产者和消费者，直接进行数据交换，所以当任何一方没有到齐的时候，另一方只能进行等待着对方</p>
 <h2 id="异步"><a href="#异步" class="headerlink" title="异步"></a>异步</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-11-04-53.png" alt=""><br>异步模式：</p>
@@ -540,12 +541,12 @@
                src="/images/avatar.gif"
                alt="布衣" />
           <p class="site-author-name" itemprop="name">布衣</p>
-          <p class="site-description motion-element" itemprop="description">首席非业余菜鸟运维开发工程师</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-count">41</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -553,7 +554,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -562,7 +563,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">28</span>
+                <span class="site-state-item-count">31</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

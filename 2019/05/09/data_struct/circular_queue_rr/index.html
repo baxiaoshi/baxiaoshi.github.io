@@ -94,7 +94,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-09-18-12-02.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-09-18-24-13.png">
-<meta property="og:updated_time" content="2019-05-09T10:44:48.000Z">
+<meta property="og:updated_time" content="2019-05-14T13:55:32.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于环状队列和迭代器实现分布式任务RR分配策略">
 <meta name="twitter:description" content="背景分布式任务分配在很多运维场景下，我们都会执行一些长时间的任务，比如装机、部署环境、打包镜像等长时间任务， 而通常我们的任务节点数量通常是有限的(排除基于k8s的hpa、或者knative等自动伸缩场景)。 那么当我们有一个任务如何根据当前的worker和corrdinator和任务来进行合理的分配，分配其实也比较复杂，往复杂里面做，可以根据当前系统的负载、每个任务的执行资源消耗、当前集群的任务">
@@ -369,6 +369,7 @@
       
         <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="分布式任务分配"><a href="#分布式任务分配" class="headerlink" title="分布式任务分配"></a>分布式任务分配</h2><p>在很多运维场景下，我们都会执行一些长时间的任务，比如装机、部署环境、打包镜像等长时间任务， 而通常我们的任务节点数量通常是有限的(排除基于k8s的hpa、或者knative等自动伸缩场景)。</p>
 <p>那么当我们有一个任务如何根据当前的worker和corrdinator和任务来进行合理的分配，分配其实也比较复杂，往复杂里面做，可以根据当前系统的负载、每个任务的执行资源消耗、当前集群的任务数量等， 这里我们就搞一个最简单的，基于任务和当前worker的RR算法</p>
+<a id="more"></a>
 <h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-09-18-12-02.png" alt=""><br>在worker和任务队列之间，添加一层协调调度层Coordinator， 由它来根据当前集群任务的状态来进行任务的分配，同时感知当前集群worker和task的状态，协调整个集群任务的执行、终止等操作</p>
 <h1 id="单机实现"><a href="#单机实现" class="headerlink" title="单机实现"></a>单机实现</h1><h2 id="整体设计"><a href="#整体设计" class="headerlink" title="整体设计"></a>整体设计</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-09-18-24-13.png" alt=""><br>members: 表示当前集群中所有的worker<br>tasks: 就是当前的任务<br>Coordinator: 就是我们的协调者， 负责根据members和tasks进行任务的分配<br>result: 就是分配的结果</p>
 <h2 id="CircularIterator"><a href="#CircularIterator" class="headerlink" title="CircularIterator"></a>CircularIterator</h2><p>CircularIterator就是我们的环状对立迭代器, 拥有两个方法， 一个是add添加member, 一个Next返回基于rr的下一个member<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// CircularIterator 环状迭代器</span></span><br><span class="line"><span class="keyword">type</span> CircularIterator <span class="keyword">struct</span> &#123;</span><br><span class="line">	list []<span class="keyword">interface</span>&#123;&#125;    <span class="comment">// 保存所有的成员变量</span></span><br><span class="line">	next <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Next 返回下一个元素</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *CircularIterator)</span> <span class="title">Next</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	item := c.list[c.next]</span><br><span class="line">	c.next = (c.next + <span class="number">1</span>) % <span class="built_in">len</span>(c.list)</span><br><span class="line">	<span class="keyword">return</span> item</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Add 添加任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *CircularIterator)</span> <span class="title">Add</span><span class="params">(v <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> c.list &#123;</span><br><span class="line">		<span class="keyword">if</span> v == item &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.list = <span class="built_in">append</span>(c.list, v)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
@@ -423,6 +424,10 @@
           </div>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/05/14/designpatter/circuit_breaker/" rel="prev" title="微服务的断路器实现图解">
+                微服务的断路器实现图解 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -485,12 +490,12 @@
                src="/images/avatar.gif"
                alt="布衣" />
           <p class="site-author-name" itemprop="name">布衣</p>
-          <p class="site-description motion-element" itemprop="description">首席非业余菜鸟运维开发工程师</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-count">41</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -498,7 +503,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -507,7 +512,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">28</span>
+                <span class="site-state-item-count">31</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
