@@ -276,6 +276,147 @@
             
               
                 
+                <a class="post-title-link" href="/2018/10/14/devops/devop_event_sourcing/" itemprop="url">
+                  事件溯源在运维场景的应用
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-14T08:23:59+08:00" content="2018-10-14 08:23">
+              2018-10-14 08:23
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/事件驱动/" itemprop="url" rel="index">
+                    <span itemprop="name">事件驱动</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/事件驱动/事件溯源/" itemprop="url" rel="index">
+                    <span itemprop="name">事件溯源</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/事件驱动/事件溯源/运维平台/" itemprop="url" rel="index">
+                    <span itemprop="name">运维平台</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>国庆回来看了百度的ARK和K8s的Job Controller, 核心都是一个基于<code>事件驱动</code>的实现一些运维场景的处理，然后就顺便看到了<code>事件溯源</code></p>
+<h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Capture all changes to an application state as a sequence of events.</span><br></pre></td></tr></table></figure>
+<p>事件溯源并不是新的概念而是由martin fowler在2005年他的文章Event source(链接)提出, 核心是记录应用状态变更的所有事件, 然后通过事件驱动的方式, 实现应用的最终状态</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/10/14/devops/devop_event_sourcing/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/10/11/k8s/k8s_job_controller/" itemprop="url">
                   Job Controller 源码实现
                 </a>
@@ -1438,126 +1579,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/08/08/k8s/lru_cache/" itemprop="url">
-                  LRU缓存
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-08T22:56:23+08:00" content="2018-08-08 22:56">
-              2018-08-08 22:56
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-08-22-43-32.png" alt=""></p>
-<p>在运维场景下, 当我们对某一类资源进行回收的时候，其实回收的时候，会出发很多耗时的操作，但在这个过程中，如果我们有时候仍然需要获取一下该资源最新的状态, 那通畅会有这么几种做法</p>
-<ul>
-<li>清理工作和异步操作在完成的时候，去更改数据源，同时清除缓存</li>
-<li>数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下<br><em>今天说的主要是第二种, 每次都强制更新当前最新状态</em></li>
-</ul>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/08/08/k8s/lru_cache/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1603,7 +1624,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-count">45</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1611,7 +1632,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-count">38</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1620,7 +1641,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-count">43</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

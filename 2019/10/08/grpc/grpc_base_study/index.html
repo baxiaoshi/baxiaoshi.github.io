@@ -1,0 +1,754 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="grpc," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="导图 1. 什么是gRPC1.1 gRPC的含义gRPC是由google创建的，是名为Stubby的内部GRPC技术演变过来的，其中RPC代表着Remote Procedure Call, 而g则在每个版本都会有不同的定义，包括了: good green gao gold godric等 https://github.com/grpc/grpc/blob/master/doc/g_stands_f">
+<meta name="keywords" content="grpc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="grpc基础学习">
+<meta property="og:url" content="http://www.sreguide.com/2019/10/08/grpc/grpc_base_study/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="导图 1. 什么是gRPC1.1 gRPC的含义gRPC是由google创建的，是名为Stubby的内部GRPC技术演变过来的，其中RPC代表着Remote Procedure Call, 而g则在每个版本都会有不同的定义，包括了: good green gao gold godric等 https://github.com/grpc/grpc/blob/master/doc/g_stands_f">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2019/png/97498/1552645742033-5be99e96-b52b-4902-9859-12df0b061ba5.png">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2019/png/97498/1552546575931-392e1c8d-b365-41bf-b5d4-3fe3b41e096f.png">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2019/png/97498/1552548667282-a1bf3250-a64f-4606-8cc6-3e70c96d480c.png">
+<meta property="og:updated_time" content="2019-10-08T03:27:01.889Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="grpc基础学习">
+<meta name="twitter:description" content="导图 1. 什么是gRPC1.1 gRPC的含义gRPC是由google创建的，是名为Stubby的内部GRPC技术演变过来的，其中RPC代表着Remote Procedure Call, 而g则在每个版本都会有不同的定义，包括了: good green gao gold godric等 https://github.com/grpc/grpc/blob/master/doc/g_stands_f">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2019/png/97498/1552645742033-5be99e96-b52b-4902-9859-12df0b061ba5.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2019/10/08/grpc/grpc_base_study/"/>
+
+
+  <title> grpc基础学习 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                grpc基础学习
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-10-08T11:25:38+08:00" content="2019-10-08 11:25">
+              2019-10-08 11:25
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/grpc/" itemprop="url" rel="index">
+                    <span itemprop="name">grpc</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="导图"><a href="#导图" class="headerlink" title="导图"></a>导图</h1><p><img src="https://cdn.nlark.com/yuque/0/2019/png/97498/1552645742033-5be99e96-b52b-4902-9859-12df0b061ba5.png" alt=""></p>
+<h1 id="1-什么是gRPC"><a href="#1-什么是gRPC" class="headerlink" title="1. 什么是gRPC"></a>1. 什么是gRPC</h1><h2 id="1-1-gRPC的含义"><a href="#1-1-gRPC的含义" class="headerlink" title="1.1 gRPC的含义"></a>1.1 gRPC的含义</h2><p>gRPC是由google创建的，是名为Stubby的内部GRPC技术演变过来的，其中RPC代表着Remote Procedure Call, 而g则在每个版本都会有不同的定义，包括了: good green gao gold godric等</p>
+<p><a href="https://github.com/grpc/grpc/blob/master/doc/g_stands_for.md" target="_blank" rel="noopener">https://github.com/grpc/grpc/blob/master/doc/g_stands_for.md</a></p>
+<h2 id="1-2-gRPC的分层设计"><a href="#1-2-gRPC的分层设计" class="headerlink" title="1.2 gRPC的分层设计"></a>1.2 gRPC的分层设计</h2><p>gRPC采用分层架构设计：</p>
+<h3 id="1-2-1-HTTP-2-0"><a href="#1-2-1-HTTP-2-0" class="headerlink" title="1.2.1 HTTP 2.0"></a>1.2.1 HTTP 2.0</h3><p>gRPC最底层使用了HTTP2.0作为传输协议, http2提供了HTTP的基础语言，同时提高了效率和安全性，1）支付连接复用，并行请求处理 2）双向通信</p>
+<h3 id="1-2-2-channel"><a href="#1-2-2-channel" class="headerlink" title="1.2.2 channel"></a>1.2.2 channel</h3><p>channel是对传输的一层抽象，通道定义调用约定和实现RPC底层传输的映射；</p>
+<p>在该层gRPC调用由客户端提供的服务名称和方法名称，可选的元数据(键值对)，以及零个或者多个请求消息组成；在请求结束后，服务端返回可选的响应头元数据、零个或者多个响应消息，完成调用</p>
+<p>在该层，不需要字段接口类型、消息类型或数据类型；消息就是一个零个或者多个的字节序列，一次调用可以包含任意数量的请求和响应消息</p>
+<h3 id="1-2-3-stub"><a href="#1-2-3-stub" class="headerlink" title="1.2.3 stub"></a>1.2.3 stub</h3><p>Stub是定义接口约束和数据类型的地方；方法是否是接收单个请求还是消息流？每条响应数消息中包含那些数据如何编码，都由Stub提供， Stub将IDL定义的接口和通道结合在一起；Stub代码是由IDL生成的， channel提供这些生成的Stub使用的ABI</p>
+<h2 id="1-3-protobufs"><a href="#1-3-protobufs" class="headerlink" title="1.3 protobufs"></a>1.3 protobufs</h2><p>Protocol Buffer是一种协议缓冲区技术，用于描述服务、方法和消息的IDL</p>
+<p>通过编译器将IDL为各种语言生成代码；实际上Protobufs仅仅作用域Stub这一层，这使任何IDL都可以与grpc一起使用, 比如messagepack</p>
+<h2 id="1-4-Streaming"><a href="#1-4-Streaming" class="headerlink" title="1.4  Streaming"></a>1.4  Streaming</h2><p>Streaming允许传输任意大小的请求或响应，大多数RPC系统要求RPC系统要求RPC的参数映射到内存中的数据结构，然后将其序列化成字节通过网络传输。当需要交换大量数据时，这会导致客户端和服务端进程都会产生巨大的内存压力。这就意味着通常要对请求和响应大小进行限制，防止资源耗尽。</p>
+<p>流式传输允许请求或响应任意长度的消息序列来缓解这种情况，请求或者响应的数据量可能很大，但通过流的方式，客户端和服务端进程不需要将整个流存储在内存中，只需要对数据子集进行操作</p>
+<p>gRPC支持全双工双向流操作，客户端可以使用流来上传任意数量的请求数据，并且服务端也通过流来返回任意数量的响应数据，所有的操作都在一个RPC中， gRPC的Streaming主要是通过HTTP/2来实现</p>
+<h2 id="1-5-gRPC的场景"><a href="#1-5-gRPC的场景" class="headerlink" title="1.5 gRPC的场景"></a>1.5 gRPC的场景</h2><p>微服务、客户端-服务器端应用、集成API、基于浏览器的web应用程序</p>
+<p>gRPC相比rest和json的优势</p>
+<ol>
+<li>性能／效率</li>
+</ol>
+<ul>
+<li><p>JSON非常适合人类阅读，但对计算机可读性太差，需要大量的字符串解析， HTTP1.1严重限制单个请求如何用于多个请求，所有请求必须按照接收响应的顺序返回，后来的响应必须等待先前的响应；</p>
+</li>
+<li><p>HTTP/2和协议缓冲区协议没有这些问题，由于标头压缩，消息比json会小很多，支持单个连接复用多个请求，协议缓冲区协议设计紧凑，可提供计算机解析；</p>
+</li>
+<li><p>gRPC可以减少资源使用，与rest和json相比，可以缩短响应时间，也意味着在移动设备上允许客户端可以减少网络并演唱电池寿命</p>
+</li>
+</ul>
+<ol start="2">
+<li>生产性编程模型</li>
+</ol>
+<p>使用gRPC的编程模型易于理解并可提高开发人员的工作效率，IDL中定义接口和规范消息格式，自动生成多种语言模版代码， 开发人员不需要关注语言差异</p>
+<ol start="3">
+<li>Streaming</li>
+</ol>
+<p>gRPC 支持全双工的Streaming通信方式，描述绝对大数RPC，通常要支持这种Streaming，需要RPC框架基于TCP的自定义协议，但这在基于互联网的上通常行不通的，在负载均衡和代理软件上通常不能高效的对我们的私有协议, 写一套私有的私有还是非常复杂的</p>
+<ol start="4">
+<li>安全性</li>
+</ol>
+<p>gRPC使用HTTP2, 默认是以纯文本连接的方式进行传输，但可以使用TLS(传输级安全性，SSL)， HHTP2比HTTP1.1更严格，只允许TLS1.2或者更高，并禁用压缩和重新协商</p>
+<h1 id="2-缓冲区协议"><a href="#2-缓冲区协议" class="headerlink" title="2. 缓冲区协议"></a>2. 缓冲区协议</h1><h2 id="2-1-gRPC优化的OSI三个层次"><a href="#2-1-gRPC优化的OSI三个层次" class="headerlink" title="2.1 gRPC优化的OSI三个层次"></a>2.1 gRPC优化的OSI三个层次</h2><ul>
+<li>应用层(HTTP2)</li>
+<li>表示层(Protobuf)</li>
+<li>会话层(RPC)</li>
+</ul>
+<h2 id="2-2-Protobufs及数据类型"><a href="#2-2-Protobufs及数据类型" class="headerlink" title="2.2 Protobufs及数据类型"></a>2.2 Protobufs及数据类型</h2><p>协议缓冲区是序列化数据的标准过程，其目标是最小化给定结构数据表示。协议缓冲区是Google于2001年创建，直到2008年才公开，该方法提供了一种语法用于描述强大类型变量，以及IDL（接口描述语言），以便自动生成多种语言的源代码。 </p>
+<p>编程语言可以轻松的将字节流解析为给定对象，首先创建一个.proto文件，并在其中定义我们需要的消息／对象及其特定字段，以及使用这些消息的服务，然后使用protoc来进行编译，为每个特定的消息生成对应语言的实现</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    string title = 1;</span><br><span class="line">    string director = 2;</span><br><span class="line">    string producer = 3;</span><br><span class="line">    optional string release_date = 4;</span><br><span class="line">    repeated string characters = 5;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-1-基础类型"><a href="#2-2-1-基础类型" class="headerlink" title="2.2.1 基础类型"></a>2.2.1 基础类型</h3><p><img src="https://cdn.nlark.com/yuque/0/2019/png/97498/1552546575931-392e1c8d-b365-41bf-b5d4-3fe3b41e096f.png" alt="image.png"><br>所有类型都使用可变大小进行编码，具体取决于值的大小，固定类型具有固定大小(4或者8字节)</p>
+<h3 id="2-2-2-嵌套类型"><a href="#2-2-2-嵌套类型" class="headerlink" title="2.2.2 嵌套类型"></a>2.2.2 嵌套类型</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    message Character &#123;</span><br><span class="line">        string name = 1;</span><br><span class="line">        int64 birth = 2;</span><br><span class="line">    &#125;</span><br><span class="line">    string title = 1;</span><br><span class="line">    string director = 2;</span><br><span class="line">    string producer = 3;</span><br><span class="line">    optional string release_date = 4;</span><br><span class="line">    repeated Character characters = 5;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>支持导入</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">message OtherFilm &#123;</span><br><span class="line">    repeated Film.Character characters = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-3-映射类型"><a href="#2-2-3-映射类型" class="headerlink" title="2.2.3 映射类型"></a>2.2.3 映射类型</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    message Character &#123;</span><br><span class="line">        string name = 1;</span><br><span class="line">        int64 birth = 2;</span><br><span class="line">    &#125;</span><br><span class="line">    map&lt;string, Character&gt; roles =  1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-4-Oneof类型"><a href="#2-2-4-Oneof类型" class="headerlink" title="2.2.4 Oneof类型"></a>2.2.4 Oneof类型</h3><p>消息中有多个可选字段时，Oneof在空间优化方面就变得很方面; Oneof的实现为所有字段共享相同的内存空间，因此不需要为具有空字段的其他标记保留空间</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    message Character &#123;</span><br><span class="line">        oneof has &#123;</span><br><span class="line">            string laser_gun_model = 1;</span><br><span class="line">            int32 laser_sword_power = 2;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-5-枚举类型"><a href="#2-2-5-枚举类型" class="headerlink" title="2.2.5 枚举类型"></a>2.2.5 枚举类型</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    enum ProducerCompanies &#123;</span><br><span class="line">        UNKNOWN = 0;</span><br><span class="line">        WARNER_BROS = 1;</span><br><span class="line">        PARAMOUNT = 2;</span><br><span class="line">        NETFLIX = 3;</span><br><span class="line">    &#125;</span><br><span class="line">    ProducerCompanies Producer = 1 [default = UNKNOWN];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>枚举类型可以帮助我们在序列化消息中节省大量字节，特别是通过网络发送字符串重复时，例如状态吗、错误消息等，序列化值仅仅包含字段的标记而不是整个值</p>
+<p>注意Unknown当 Producer代码中设置不存在列表时，当不存在，就会自动设置为0，避免将来出现不一致</p>
+<h3 id="2-2-6-服务"><a href="#2-2-6-服务" class="headerlink" title="2.2.6 服务"></a>2.2.6 服务</h3><p>gRPC服务在文件中定义RPC .proo, RPC转为开发人员设计，能够在源码中执行过程，而无需关系其执行，可以集中精力编写程序，无需担心序列化、通信和安全性</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">service Starwars &#123;</span><br><span class="line"></span><br><span class="line">    rpc GetFilm(GetFilmRequest) returns (GetFilmResponse);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据IDL，协议缓冲编译器根据所选的语言生成服务接口代码和Stubs(客户端和服务端)</p>
+<h3 id="2-2-7-Import"><a href="#2-2-7-Import" class="headerlink" title="2.2.7 Import"></a>2.2.7 Import</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Character &#123;</span><br><span class="line"></span><br><span class="line">    oneof has &#123;</span><br><span class="line">        string laser_gun_model = 1;</span><br><span class="line">        int32 laser_sword_power = 2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    repeated Character characters = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">import &quot;character.proto&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    repeated Character characters = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>级连导入</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">syntax = <span class="string">"proto2"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> public <span class="string">"character.proto"</span>;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-8-重复字段优先"><a href="#2-2-8-重复字段优先" class="headerlink" title="2.2.8 重复字段优先"></a>2.2.8 重复字段优先</h3><h3 id="2-2-9-多态性"><a href="#2-2-9-多态性" class="headerlink" title="2.2.9 多态性"></a>2.2.9 多态性</h3><ul>
+<li>Proto 2使用Extensions</li>
+<li>Proto 3弃用Extensions而支持Any语句</li>
+</ul>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    extensions 50 to 99;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message TerrorFilm &#123;</span><br><span class="line"></span><br><span class="line">    extend Film &#123;</span><br><span class="line"></span><br><span class="line">        required TerrorFilm film = 50;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bool has_zombies = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message ScienceFictionFilm &#123;</span><br><span class="line"></span><br><span class="line">    extend Film &#123;</span><br><span class="line"></span><br><span class="line">        required ScienceFictionFilm film = 51;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bool has_jedis = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>任何类型是Proto3的新方法，可以使用任何类型而无需在protobuf文件中定义它</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto3&quot;;</span><br><span class="line"></span><br><span class="line">import &quot;google/protobuf/any.proto&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    google.protobuf.Any film_type = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-10-包"><a href="#2-2-10-包" class="headerlink" title="2.2.10 包"></a>2.2.10 包</h3><p>可以在.proto文件中定义宝，以便从其他文件中导入，语言不同，产生不同的后果</p>
+<ul>
+<li>C++ .proto宝为命名空间</li>
+<li>Java .proto 包为.java包</li>
+<li>Python忽略它，唯一重要的是文件夹结构</li>
+</ul>
+<h3 id="2-2-11-版本"><a href="#2-2-11-版本" class="headerlink" title="2.2.11 版本"></a>2.2.11 版本</h3><h2 id="2-3-生成不同语言的方法"><a href="#2-3-生成不同语言的方法" class="headerlink" title="2.3 生成不同语言的方法"></a>2.3 生成不同语言的方法</h2><p>c++</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--cpp_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
+<p>c </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--csharp_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
+<p>java</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--java_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
+<p>python</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--python_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
+<p>go</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">go get golang.org/x/sys/unix</span><br><span class="line">go get -u github.com/golang/protobuf/protoc-gen-go</span><br><span class="line"></span><br><span class="line">protoc -I=$SRC_DIR --go_out=$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
+<h2 id="2-4-可选项"><a href="#2-4-可选项" class="headerlink" title="2.4 可选项"></a>2.4 可选项</h2><h3 id="2-4-1-包和命名空间"><a href="#2-4-1-包和命名空间" class="headerlink" title="2.4.1 包和命名空间"></a>2.4.1 包和命名空间</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Generated java classes will belong to com.starwars package</span></span><br><span class="line"><span class="keyword">option</span> java_package = <span class="string">"com.starwars"</span>; </span><br><span class="line"></span><br><span class="line"><span class="comment">// Almost always necessary and very handy to avoid conflicts when importing packages</span></span><br><span class="line"><span class="keyword">option</span> go_package = <span class="string">"github.com/backstopmedia/gRPC-book-example/com/starwars"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">option</span> csharp_namespace = <span class="string">"Com.Starwars"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">option</span> php_namespace = <span class="string">"com.starwars"</span></span><br></pre></td></tr></table></figure>
+<h3 id="2-4-2-类命名"><a href="#2-4-2-类命名" class="headerlink" title="2.4.2 类命名"></a>2.4.2 类命名</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">option</span> java_outer_classname = <span class="string">"StarWars"</span>;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// You should use upper-cased prefixes (3-5 characters) as Apple recommends</span></span><br><span class="line">   <span class="keyword">option</span> objc_class_prefix = <span class="string">"SWS"</span>;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">option</span> php_class_prefix = <span class="string">"SWS"</span>;</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-2-多个文件"><a href="#2-4-2-多个文件" class="headerlink" title="2.4.2 多个文件"></a>2.4.2 多个文件</h3><p>java代码生成器将.java每个根级别创建不同的文件</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">option</span> java_multiple_files = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-3-编译器选项"><a href="#2-4-3-编译器选项" class="headerlink" title="2.4.3 编译器选项"></a>2.4.3 编译器选项</h3><p>仅适用于c++和java代码生成器<br><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">option</span> optimize_for = SPEED;</span><br></pre></td></tr></table></figure></p>
+<p>SPEED: 默认高度优化的生成代码<br>CODE_SIZE: 通过共享类和使用反射来优化生成代码的最终大小，表现更差，执行速度比较慢<br>LITE_RUNTIME: 生成器使用libprotobuf-lite而不是libprotobuf, 生成代码更小，执行速度更快，但可能会丢失某些功能</p>
+<h3 id="2-4-4-自定义选项"><a href="#2-4-4-自定义选项" class="headerlink" title="2.4.4 自定义选项"></a>2.4.4 自定义选项</h3><h2 id="2-5-编码了解"><a href="#2-5-编码了解" class="headerlink" title="2.5 编码了解"></a>2.5 编码了解</h2><p>我们将使用与我们要编码的数据类型不同的策略，每个字段都是二进制编码的，我们需要按照.proto文件中指定的顺序来连接每个字段，除了字段编码之外，还有另外一个策略用于界定下一个字段的开始文件</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2019/png/97498/1552548667282-a1bf3250-a64f-4606-8cc6-3e70c96d480c.png" alt="image.png"></p>
+<h3 id="2-5-1-Varint"><a href="#2-5-1-Varint" class="headerlink" title="2.5.1 Varint"></a>2.5.1 Varint</h3><p>Varint是一种策略，可以根据值的大小，将整数压缩到较小的空间，而不是发送相同固定数量的字节</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">message Test &#123;</span><br><span class="line">  int32 a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># JSON representation &#123; &quot;a&quot;: 227 &#125;</span><br></pre></td></tr></table></figure>
+<p>数字227表示二进制为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127 =&gt; 11100011</span><br></pre></td></tr></table></figure>
+<p>将整个二进制分成7位组，这种情况下一个字节会被分成两部分<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1110 0011 =&gt; 000 0001  1100011</span><br></pre></td></tr></table></figure></p>
+<p>我们需要发送的每个字节都有一个标识，用于确定是否是消息的结尾，消息的最后一个字节此位置为0</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">000 0001  110 0011 =&gt; &apos;0&apos;000 0001  &apos;1&apos;1100011</span><br></pre></td></tr></table></figure>
+<p>最后反转所有 字节</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0000 0001  1110 0011 =&gt; 1110 0011  00000001</span><br></pre></td></tr></table></figure>
+<p> 我们只使用了两个字节，就编码了227， 而int32默认使用4个字节，一个值被编码需要添加两个重要的信息</p>
+<ul>
+<li>tag Number(1 )</li>
+<li>Encoding Strategy (0)</li>
+</ul>
+<h3 id="2-5-2-有符号Varint"><a href="#2-5-2-有符号Varint" class="headerlink" title="2.5.2 有符号Varint"></a>2.5.2 有符号Varint</h3><p>如果对负数进行编码，左位始终位1，而不是0，对于一个int32会一直使用4个字节, sint32 或sint64在多数情况会是负数，这种策略使用ZigZag编码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># For sint32:</span><br><span class="line">(ñ &lt;&lt; 1) ^ (n &gt;&gt; 31)</span><br><span class="line"></span><br><span class="line"># For sint64:</span><br><span class="line">(n &lt;&lt; 1 )^ (n &gt;&gt; 63)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">if (n == 0) &#123;</span><br><span class="line">  return 0;</span><br><span class="line">&#125; else if (n &gt; 0) &#123;</span><br><span class="line">  return 2 * n;</span><br><span class="line">&#125; else if (n &lt; 0) &#123;</span><br><span class="line">  return 2 * Math.abs(n) - 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-3-非Vaint值-类型1和5"><a href="#2-5-3-非Vaint值-类型1和5" class="headerlink" title="2.5.3 非Vaint值(类型1和5)"></a>2.5.3 非Vaint值(类型1和5)</h3><p>使用非Varint值对线类型进行编码的策略将与之前相同，并且该值将以little-endian字节顺序存储。</p>
+<h3 id="2-5-4-长度分割-类型2"><a href="#2-5-4-长度分割-类型2" class="headerlink" title="2.5.4 长度分割(类型2)"></a>2.5.4 长度分割(类型2)</h3><p>编码线类型的策略将与之前相同，后跟字符串的长度，字符串的值将是ASCII编码的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">message Test &#123;</span><br><span class="line">  string a = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Wire type: 0A</span><br><span class="line"># Length:    04</span><br><span class="line">0A 04 74 65 73 74</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-5-嵌入式消息"><a href="#2-5-5-嵌入式消息" class="headerlink" title="2.5.5 嵌入式消息"></a>2.5.5 嵌入式消息</h3><p>嵌入的消息将被编码为长度分隔的类型：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">message Test &#123;</span><br><span class="line">  int32 a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Test1 &#123;</span><br><span class="line">  Test b = 2;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># JSON representation &#123; &quot;b&quot;: &#123; &quot;a&quot;: 227 &#125; &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Wire type: 1A</span><br><span class="line"># Length:    03</span><br><span class="line">1A 03 08E3 01</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/grpc/" rel="tag">#grpc</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/23/microservices/register_center_registery_hashcode/" rel="next" title="微服务注册中心注册表与hashcode实现golang版">
+                <i class="fa fa-chevron-left"></i> 微服务注册中心注册表与hashcode实现golang版
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">45</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">38</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">43</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#导图"><span class="nav-number">1.</span> <span class="nav-text">导图</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#1-什么是gRPC"><span class="nav-number">2.</span> <span class="nav-text">1. 什么是gRPC</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-gRPC的含义"><span class="nav-number">2.1.</span> <span class="nav-text">1.1 gRPC的含义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-gRPC的分层设计"><span class="nav-number">2.2.</span> <span class="nav-text">1.2 gRPC的分层设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-1-HTTP-2-0"><span class="nav-number">2.2.1.</span> <span class="nav-text">1.2.1 HTTP 2.0</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-2-channel"><span class="nav-number">2.2.2.</span> <span class="nav-text">1.2.2 channel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-3-stub"><span class="nav-number">2.2.3.</span> <span class="nav-text">1.2.3 stub</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-3-protobufs"><span class="nav-number">2.3.</span> <span class="nav-text">1.3 protobufs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-4-Streaming"><span class="nav-number">2.4.</span> <span class="nav-text">1.4  Streaming</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-5-gRPC的场景"><span class="nav-number">2.5.</span> <span class="nav-text">1.5 gRPC的场景</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#2-缓冲区协议"><span class="nav-number">3.</span> <span class="nav-text">2. 缓冲区协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-gRPC优化的OSI三个层次"><span class="nav-number">3.1.</span> <span class="nav-text">2.1 gRPC优化的OSI三个层次</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-Protobufs及数据类型"><span class="nav-number">3.2.</span> <span class="nav-text">2.2 Protobufs及数据类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-1-基础类型"><span class="nav-number">3.2.1.</span> <span class="nav-text">2.2.1 基础类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-2-嵌套类型"><span class="nav-number">3.2.2.</span> <span class="nav-text">2.2.2 嵌套类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-3-映射类型"><span class="nav-number">3.2.3.</span> <span class="nav-text">2.2.3 映射类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-4-Oneof类型"><span class="nav-number">3.2.4.</span> <span class="nav-text">2.2.4 Oneof类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-5-枚举类型"><span class="nav-number">3.2.5.</span> <span class="nav-text">2.2.5 枚举类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-6-服务"><span class="nav-number">3.2.6.</span> <span class="nav-text">2.2.6 服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-7-Import"><span class="nav-number">3.2.7.</span> <span class="nav-text">2.2.7 Import</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-8-重复字段优先"><span class="nav-number">3.2.8.</span> <span class="nav-text">2.2.8 重复字段优先</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-9-多态性"><span class="nav-number">3.2.9.</span> <span class="nav-text">2.2.9 多态性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-10-包"><span class="nav-number">3.2.10.</span> <span class="nav-text">2.2.10 包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-11-版本"><span class="nav-number">3.2.11.</span> <span class="nav-text">2.2.11 版本</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-生成不同语言的方法"><span class="nav-number">3.3.</span> <span class="nav-text">2.3 生成不同语言的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-4-可选项"><span class="nav-number">3.4.</span> <span class="nav-text">2.4 可选项</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-1-包和命名空间"><span class="nav-number">3.4.1.</span> <span class="nav-text">2.4.1 包和命名空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-2-类命名"><span class="nav-number">3.4.2.</span> <span class="nav-text">2.4.2 类命名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-2-多个文件"><span class="nav-number">3.4.3.</span> <span class="nav-text">2.4.2 多个文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-3-编译器选项"><span class="nav-number">3.4.4.</span> <span class="nav-text">2.4.3 编译器选项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-4-自定义选项"><span class="nav-number">3.4.5.</span> <span class="nav-text">2.4.4 自定义选项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-5-编码了解"><span class="nav-number">3.5.</span> <span class="nav-text">2.5 编码了解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-1-Varint"><span class="nav-number">3.5.1.</span> <span class="nav-text">2.5.1 Varint</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-2-有符号Varint"><span class="nav-number">3.5.2.</span> <span class="nav-text">2.5.2 有符号Varint</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-3-非Vaint值-类型1和5"><span class="nav-number">3.5.3.</span> <span class="nav-text">2.5.3 非Vaint值(类型1和5)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-4-长度分割-类型2"><span class="nav-number">3.5.4.</span> <span class="nav-text">2.5.4 长度分割(类型2)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-5-嵌入式消息"><span class="nav-number">3.5.5.</span> <span class="nav-text">2.5.5 嵌入式消息</span></a></li></ol></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
