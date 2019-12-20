@@ -1,0 +1,671 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="cmdb," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="CMDB简介CMDB是什么Configuration Management Database(配置管理数据库)简称CMDBCMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性 CMDB的作用上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心 存储设备的各种信息: CMDB">
+<meta name="keywords" content="cmdb">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CMDB的设计">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/27/cmdb/cmdb_design/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="CMDB简介CMDB是什么Configuration Management Database(配置管理数据库)简称CMDBCMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性 CMDB的作用上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心 存储设备的各种信息: CMDB">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_design.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_buniess.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_app_table.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_cluster_table.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_host_table.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_easyops_show.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_business_tree.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:35.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CMDB的设计">
+<meta name="twitter:description" content="CMDB简介CMDB是什么Configuration Management Database(配置管理数据库)简称CMDBCMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性 CMDB的作用上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心 存储设备的各种信息: CMDB">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_design.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/27/cmdb/cmdb_design/"/>
+
+
+  <title> CMDB的设计 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                CMDB的设计
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:42:35+08:00" content="2018-10-27 14:42">
+              2018-10-27 14:42
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/cmdb/" itemprop="url" rel="index">
+                    <span itemprop="name">cmdb</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="CMDB简介"><a href="#CMDB简介" class="headerlink" title="CMDB简介"></a>CMDB简介</h4><h5 id="CMDB是什么"><a href="#CMDB是什么" class="headerlink" title="CMDB是什么"></a>CMDB是什么</h5><p>Configuration Management Database(配置管理数据库)简称CMDB<br>CMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性</p>
+<h5 id="CMDB的作用"><a href="#CMDB的作用" class="headerlink" title="CMDB的作用"></a>CMDB的作用</h5><p>上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心</p>
+<p>存储设备的各种信息: CMDB要能存储各种的信息,包括底层的主机信息和上层业务信息<br>流程的流转,发挥配置信息的价值: CMDB里面的数据要提供一定的消费接口,供其它系统消费<br>流程,准确性: 跟其他系统打通,提供准确的数据消费,同时也获取最新的数据</p>
+<a id="more"></a>
+<h5 id="自己的理解"><a href="#自己的理解" class="headerlink" title="自己的理解"></a>自己的理解</h5><p>CMDB是自动化运维基础数据的提供者,上层其他系统都依赖于CMDB中的数据; CMDB要有与其他系统集成的功能,以便获取最新的数据变更,同时也要提供订阅功能,方便其他系统及时获取到最新的数据变更消息; CMDB任重而道远, 需要根据实际的使用者来反复迭代, 它是一个入口,而不是一个终点</p>
+<h4 id="CMDB的设计"><a href="#CMDB的设计" class="headerlink" title="CMDB的设计"></a>CMDB的设计</h4><p>一千家公司可能会有1000个CMDB, 之前也跟做CMDB的网友聊过, 他们的CMDB做了一年重构了两次, 现在才在公司内部用起来,可见一个好的有价值的CMDB是多么难得</p>
+<p>也有许多产品级别的CMDB, 蓝鲸丶优云丶EasyOPS每一家都有每一家的特点, 其中蓝鲸是定义了一些CMDB的基础属性,以业务、模块、集群、主机四个模块来进行基础CMDB架构的描述, 而优云和EasyOPS都以资源模型的方式, 底层通过定义基础的数据模型,方便用户基础数据的填充,上层通过让用户自定义资源模型, 来实现扩展, 满足用户需求</p>
+<p>还有一些大公司提出了一些以Level、Tag的方式来定义服务树,实现海量机器的管理,暂时还没有看透里面的精髓</p>
+<h5 id="蓝鲸版"><a href="#蓝鲸版" class="headerlink" title="蓝鲸版"></a>蓝鲸版</h5><p>蓝鲸的CMDB只有业务层的资源描述, 没有交换机等资源相关的概述; 可能他们内部网络相关的会有另外的一套CMDB系统,去描述网络相关的关系</p>
+<h5 id="蓝鲸CMDB的理解"><a href="#蓝鲸CMDB的理解" class="headerlink" title="蓝鲸CMDB的理解"></a>蓝鲸CMDB的理解</h5><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_design.png" alt></p>
+<p>比如网站中通常会有搜索的功能, 我们可以把搜索称为一个业务, 同时搜索业务是由一些小的模块来组成, 小的模块,可能会有多个集群(单机房不同组或者多机房), 每个集群下面会有对应的主机, 这样就很简单的抽象出了四个层级：业务、模块、集群、主机, 相对很好理解一些，同时每一种类型的数据都提供了可扩展字段的功能, 可以对每一类对象, 添加一些额外的属性, 方便使用</p>
+<h6 id="业务表属性"><a href="#业务表属性" class="headerlink" title="业务表属性"></a>业务表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_bk_buniess.png" alt></p>
+<h6 id="应用表属性"><a href="#应用表属性" class="headerlink" title="应用表属性"></a>应用表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_app_table.png" alt></p>
+<h6 id="集群表属性"><a href="#集群表属性" class="headerlink" title="集群表属性"></a>集群表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_cluster_table.png" alt></p>
+<h6 id="主机表属性"><a href="#主机表属性" class="headerlink" title="主机表属性"></a>主机表属性</h6><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_host_table.png" alt></p>
+<h5 id="Easyops版"><a href="#Easyops版" class="headerlink" title="Easyops版"></a>Easyops版</h5><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_easyops_show.png" alt></p>
+<p>Easyops是由一群一些互联网公司的DEVOPS专家组成的,主要做一些DEVOPS的产品,并提供一个社区版</p>
+<p>Easyops的CMDB是一个很有意思的CMDB, 我们都知道CMDB最大的难度就在在于表结构的定义, 因为大家都不知道自己的需求,所以如果按照普通的表结构设计, 固定为每类对象固定出一些字段, 就显得明显不是很合适, 所以Easyops的CMDB, 是直接存放在Mongodb中的, 因为Mongodb本身就是schema free的, 所以即使后面变更数据, 也很容易进行对应的修改 </p>
+<p>资源模型定义<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    _id: mongodb为每一个Document产生一个唯一的ID</span><br><span class="line">    name: test #资源模型的名称</span><br><span class="line">    attrList: [</span><br><span class="line">        &#123;</span><br><span class="line">            name: 属性的名称</span><br><span class="line">            type: 属性的类型(整数/日期/枚举/外键)</span><br><span class="line">            regex: </span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line">因为没有表结构的概念,所以Easyops将所有的资源模型都存储在一个表里面</span><br></pre></td></tr></table></figure></p>
+<p>资源实例的存储<br>因为我们已经有了一个”表结构”, 所以接下来肯定要找一个地方来存储我们的实体数据</p>
+<p>Easyops中是为每一个定义的资源模型都新建一张instance表, 比如 t_test_instance表, 来存放test资源模型的实体数据</p>
+<h6 id="Tag版"><a href="#Tag版" class="headerlink" title="Tag版"></a>Tag版</h6><p>在前面提到过基于Tag的方式构建我们的CMDB,Tag的方式在我理解就是通过不同Level的Tag的组合来定位到一组具体的主机资源，一台主机可能会有多个Tag, 方便我们构建不同维度的查询, 比如我们可以给一台机器打上不同的Tag, 比如Nginx/php/redis, 如果要查询该机器上提供哪些服务, 只需要获取该主机上的所有的Tag,就可以了解到该机器上的业务了<br>同时通过拼接字符串的形式,来方便使用和权限控制, 比如: cop.c_owt.t_team.e_app.d_service, 其中cop代表公司,c代表c部门, owt代表所有者,t_team则表示t团队,e_app表示e应用,d_service服务,然后通过不同level的tag去构建, 我们可以给d_service来授权给某一个一组用户, 也可以把t_team授权给某个组(感觉真绕)</p>
+<p>阉割的自己的设计<br><img src="http://baxiaoshi.cdn.bcebos.com/blog/cmdb_business_tree.png" alt><br>原则: 每一个model默认只有最核心的一些基础的属性, 其他的所有属性, 都通过对应的扩展字段去扩展<br>两层：<br>    主机: 最底层的主机资源<br>    业务: 上层所有跟业务相关的资源,都可以被称为一个业务</p>
+<p>业务长什么样的呢<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">一个场景: 某公司.支付团队.支付业务.应用模块1.某机房</span><br><span class="line">某公司是一个business</span><br><span class="line">支付团队是一个business, 上层是某公司</span><br><span class="line">支付业务也是一个business, 上层是支付团队</span><br><span class="line"></span><br><span class="line">描述几个业务:</span><br><span class="line">    mou.pay.pay.app1.sh 某公司.支付团队.支付业务.应用模块1.沙河机房</span><br><span class="line">    mou.pay.pay.app1.sh.redis 沙河机房的所有redis</span><br><span class="line">    mou.pay.pay.app1.sh.nginx 沙河机房的所有nginx</span><br></pre></td></tr></table></figure></p>
+<h5 id="几种方式的对比"><a href="#几种方式的对比" class="headerlink" title="几种方式的对比"></a>几种方式的对比</h5><p>蓝鲸:<br>    优点：蓝鲸以业务角度出发, 抽象了4个层次的, 在满足业务需求的情况下,实现了CMDB的基本需求,以该模型触发,相对开发相对比较容易实现<br>    缺点: 蓝鲸以业务、应用、集群、主机四个层级实现的服务树各层级相对固定,如果要在该服务树上插入节点,则对整个系统改变较大<br>Easyops<br>    优点：灵活, 可以根据各自的运维需求来进行资源模型的定义,实现不同CMDB运营人员的需求<br>    缺点：灵活的资源模型, 导致系统权限相关系统的实现难度增加, 同时强调以流程流转为驱动的方式,来进行CMDB数据的维护,对整体自动化运维平台完整性要求比较高<br>Tag<br>    优点: 通过不同的tag的组合来方便不同CMDB运营人员来进行数据的查询,满足海量主机资产管理的需求(谁说的? 求解)<br>    缺点: 我还没经历那么大场景, 还不理解</p>
+<h5 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h5><p>两款商业产品级别的CMDB都强调了以资源模型为基础的CMDB建设,由此可见做产品就是要高大上,但这种Schema Free的思想方便我们去实现不同CMDB运营人员的定制化的CMDB需求</p>
+<p>而蓝鲸则是以简单的业务逻辑分层, 通过业务/模块/集群/主机四层来实现以业务为中心的CMDB建设</p>
+<h5 id="我所认知的CMDB之路"><a href="#我所认知的CMDB之路" class="headerlink" title="我所认知的CMDB之路"></a>我所认知的CMDB之路</h5><p>前期的CMDB,肯定大多数都会以蓝鲸为模板,来快速实现CMDB需求,然后进行其他自动化系统的开发, 比如发布系统/任务系统,形成基础的运维自动化平台,然后CMDB会进行第二阶段的迭代或者重构,因为大家有了最基础的CMDB体验, 肯定会有一些自己的具体的需求,而CMDB是属于所有人的,一个好的CMDB肯定是大家不断运营,共同建设出来的, 路漫漫何其远兮</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/cmdb/" rel="tag">#cmdb</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/27/cmdb/bk_cmdb_source_01/" rel="next" title="看蓝鲸学CMDB设计 API 网关与 API SERVER">
+                <i class="fa fa-chevron-left"></i> 看蓝鲸学CMDB设计 API 网关与 API SERVER
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/27/data_struct/ring_queue/" rel="prev" title="环状队列的实现与应用">
+                环状队列的实现与应用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#CMDB简介"><span class="nav-number">1.</span> <span class="nav-text">CMDB简介</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#CMDB是什么"><span class="nav-number">1.1.</span> <span class="nav-text">CMDB是什么</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#CMDB的作用"><span class="nav-number">1.2.</span> <span class="nav-text">CMDB的作用</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#自己的理解"><span class="nav-number">1.3.</span> <span class="nav-text">自己的理解</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CMDB的设计"><span class="nav-number">2.</span> <span class="nav-text">CMDB的设计</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#蓝鲸版"><span class="nav-number">2.1.</span> <span class="nav-text">蓝鲸版</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#蓝鲸CMDB的理解"><span class="nav-number">2.2.</span> <span class="nav-text">蓝鲸CMDB的理解</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#业务表属性"><span class="nav-number">2.2.1.</span> <span class="nav-text">业务表属性</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#应用表属性"><span class="nav-number">2.2.2.</span> <span class="nav-text">应用表属性</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#集群表属性"><span class="nav-number">2.2.3.</span> <span class="nav-text">集群表属性</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#主机表属性"><span class="nav-number">2.2.4.</span> <span class="nav-text">主机表属性</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Easyops版"><span class="nav-number">2.3.</span> <span class="nav-text">Easyops版</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Tag版"><span class="nav-number">2.3.1.</span> <span class="nav-text">Tag版</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#几种方式的对比"><span class="nav-number">2.4.</span> <span class="nav-text">几种方式的对比</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#思考"><span class="nav-number">2.5.</span> <span class="nav-text">思考</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#我所认知的CMDB之路"><span class="nav-number">2.6.</span> <span class="nav-text">我所认知的CMDB之路</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

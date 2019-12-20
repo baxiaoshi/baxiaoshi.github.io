@@ -276,8 +276,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/14/devops/devop_event_sourcing/" itemprop="url">
-                  事件溯源在运维场景的应用
+                <a class="post-title-link" href="/2018/10/27/cloudify_workflow_code_01/" itemprop="url">
+                  cloudify 任务执行的基本逻辑
                 </a>
               
             
@@ -290,8 +290,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-14T08:23:59+08:00" content="2018-10-14 08:23">
-              2018-10-14 08:23
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:34+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
@@ -304,32 +304,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/事件驱动/" itemprop="url" rel="index">
-                    <span itemprop="name">事件驱动</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/事件驱动/事件溯源/" itemprop="url" rel="index">
-                    <span itemprop="name">事件溯源</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/事件驱动/事件溯源/运维平台/" itemprop="url" rel="index">
-                    <span itemprop="name">运维平台</span>
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
                   </a>
                 </span>
 
@@ -362,11 +338,9 @@
 
       
         
-          <p>国庆回来看了百度的ARK和K8s的Job Controller, 核心都是一个基于<code>事件驱动</code>的实现一些运维场景的处理，然后就顺便看到了<code>事件溯源</code></p>
-<h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Capture all changes to an application state as a sequence of events.</span><br></pre></td></tr></table></figure>
-<p>事件溯源并不是新的概念而是由martin fowler在2005年他的文章Event source(链接)提出, 核心是记录应用状态变更的所有事件, 然后通过事件驱动的方式, 实现应用的最终状态</p>
+          <h3 id="任务类型的分类"><a href="#任务类型的分类" class="headerlink" title="任务类型的分类"></a>任务类型的分类</h3>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/14/devops/devop_event_sourcing/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_workflow_code_01/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -417,8 +391,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/11/k8s/k8s_job_controller/" itemprop="url">
-                  Job Controller 源码实现
+                <a class="post-title-link" href="/2018/10/27/cloudify_workflow_agent_00/" itemprop="url">
+                  cloudify agent解析workflow对应的Task
                 </a>
               
             
@@ -431,54 +405,11 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-11T17:34:12+08:00" content="2018-10-11 17:34">
-              2018-10-11 17:34
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:32+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/controller/" itemprop="url" rel="index">
-                    <span itemprop="name">controller</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
           
 
           
@@ -503,15 +434,9 @@
 
       
         
-          <p>关注job controller需要关心哪些方面的事情</p>
-<ul>
-<li>controller内部的数据结构(what  whyhow detail)</li>
-<li>controller内部的业务逻辑实现</li>
-<li>几种不同job模式的内部实现</li>
-<li>controller使用的算法</li>
-</ul>
+          <h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/11/k8s/k8s_job_controller/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_workflow_agent_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -562,8 +487,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/09/devops/devops_baidu_ark/" itemprop="url">
-                  智能运维ARK框架
+                <a class="post-title-link" href="/2018/10/27/cloudify_run_workflow_00/" itemprop="url">
+                  cloudify前端下发任务的流程
                 </a>
               
             
@@ -576,8 +501,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-09T12:14:56+08:00" content="2018-10-09 12:14">
-              2018-10-09 12:14
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:30+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
@@ -590,32 +515,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/ark/" itemprop="url" rel="index">
-                    <span itemprop="name">ark</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/ark/百度/" itemprop="url" rel="index">
-                    <span itemprop="name">百度</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/ark/百度/智能运维/" itemprop="url" rel="index">
-                    <span itemprop="name">智能运维</span>
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
                   </a>
                 </span>
 
@@ -648,21 +549,9 @@
 
       
         
-          <p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-12-12-10.png" alt=""><br><strong>图片来自官方</strong></p>
-<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>ARK系统是一个基于事件驱动的智能运维开发框架，主要解决下面两个问题</p>
-<ul>
-<li>部分组件自动化，代价是控制策略简单，风险较大。典型如使用报警回调方式自动故障发现和自动故障处理执行。</li>
-<li>固化完整运维操作的控制、处理流程，代价是可扩展性较差，业务变化需要大规模的调整流程。</li>
-</ul>
-<p>ARK 提供了以下功能用于解决上面的问题</p>
-<ul>
-<li>按照运维操作流程和操作模式抽象，而非提供原生的技术实现抽象</li>
-<li>实际的技术抽象隐藏在用户视野之外，避免将功能组件用于非预期的场合</li>
-<li>基于监听、决策、执行三个组件和graph图模型算法, 实现基于事件驱动的智能运维开发框架</li>
-<li>基于zk和es实现框架的高可用</li>
-</ul>
+          <h2 id="cloudif中的蓝图注册"><a href="#cloudif中的蓝图注册" class="headerlink" title="cloudif中的蓝图注册"></a>cloudif中的蓝图注册</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/09/devops/devops_baidu_ark/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_run_workflow_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -713,8 +602,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/09/29/k8s/k8s_shared_informer/" itemprop="url">
-                  Kubernetes sharedInformer 图解
+                <a class="post-title-link" href="/2018/10/27/cloudify_run_flow_00/" itemprop="url">
+                  cloudify执行逻辑(2016/10/20更新)
                 </a>
               
             
@@ -727,8 +616,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-09-29T11:57:37+08:00" content="2018-09-29 11:57">
-              2018-09-29 11:57
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:27+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
@@ -741,20 +630,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
                   </a>
                 </span>
 
@@ -787,10 +664,10 @@
 
       
         
-          <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod)</p>
-<p>shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer, 如果其他的controller关注对应的资源, 就只注册一个对应的处理函数, 当事件发生的时候, 由shared informer统一进行事件的分发处理(有点类似观察者模式, 但是里面的消息传递大量使用了go里面channel)</p>
+          <p>下面以一个blueprint上传后，点击开始执行描述cloudify的整体执行流程</p>
+<h2 id="前端下发任务"><a href="#前端下发任务" class="headerlink" title="前端下发任务"></a>前端下发任务</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/09/29/k8s/k8s_shared_informer/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_run_flow_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -841,8 +718,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/09/28/k8s/k8s_basic_infomer/" itemprop="url">
-                  Kubernetes informer 图解
+                <a class="post-title-link" href="/2018/10/27/cloudify_agent_run_steps_00/" itemprop="url">
+                  cloudify agent 执行流程
                 </a>
               
             
@@ -855,8 +732,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-09-28T10:00:50+08:00" content="2018-09-28 10:00">
-              2018-09-28 10:00
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:26+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
@@ -869,20 +746,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
                   </a>
                 </span>
 
@@ -915,12 +780,9 @@
 
       
         
-          <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>k8s是一个事件驱动的系统，核心通过apiserver进行event broadcast进行事件分发</p>
-<p> <em>客户端</em>   controller通过list watch监听数据变化, 触发对应资源类型的改变, 作出对应的操作</p>
-<p>为了减轻对apiserver的压力, <em>客户端</em>实现了一个缓存机制informer, informer负责从apiserver端同步数据, 更新本地缓存数据, 同时watch数据的变化</p>
-<p>并且接受其他组件的ResourceEventHandler, 再事件发生时,  调用对应事件类型的处理函数, 来进行业务逻辑的处理</p>
+          <h2 id="cloudify里面agent的执行流程"><a href="#cloudify里面agent的执行流程" class="headerlink" title="cloudify里面agent的执行流程"></a>cloudify里面agent的执行流程</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/09/28/k8s/k8s_basic_infomer/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_agent_run_steps_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -971,8 +833,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/09/17/k8s/admission_design/" itemprop="url">
-                  Kubernetes 准入控制模块实现
+                <a class="post-title-link" href="/2018/10/27/cloudify_agent_manager_00/" itemprop="url">
+                  cloudify agent之前测试的任务日志格式化
                 </a>
               
             
@@ -985,8 +847,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-09-17T21:20:57+08:00" content="2018-09-17 21:20">
-              2018-09-17 21:20
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:24+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
@@ -999,32 +861,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/准入控制/" itemprop="url" rel="index">
-                    <span itemprop="name">准入控制</span>
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
                   </a>
                 </span>
 
@@ -1057,14 +895,9 @@
 
       
         
-          <h3 id="What"><a href="#What" class="headerlink" title="What"></a>What</h3><p>准入控制位于认证和授权模块之后，用于在数据存储之前的最后的数据验证和添加默认参数模块, 分为mutating(修改数据)和validating(验证数据)两种, k8s中的审计以chainAdmissionHandler将系统允许的所有admission plugin串联在一起使用, 其中只要有一个拒绝, 则请求结束</p>
-<h3 id="Why"><a href="#Why" class="headerlink" title="Why"></a>Why</h3><p> k8s中很多高级特性都依赖于审计模块的实现</p>
-<ul>
-<li>官方默认admission实现的准入控制设置如下</li>
-<li><a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/</a></li>
-</ul>
+          <h2 id="任务执行日志的格式化"><a href="#任务执行日志的格式化" class="headerlink" title="任务执行日志的格式化"></a>任务执行日志的格式化</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/09/17/k8s/admission_design/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_agent_manager_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1115,8 +948,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/09/05/k8s/k8s_request_filters/" itemprop="url">
-                  K8s中的request与filters
+                <a class="post-title-link" href="/2018/10/27/cloudify_agent_host_00/" itemprop="url">
+                  cloudify agent执行日志
                 </a>
               
             
@@ -1129,8 +962,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-09-05T15:37:40+08:00" content="2018-09-05 15:37">
-              2018-09-05 15:37
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:22+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
@@ -1143,20 +976,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
                   </a>
                 </span>
 
@@ -1189,9 +1010,9 @@
 
       
         
-          <h3 id="Request与RequestInfoFactory"><a href="#Request与RequestInfoFactory" class="headerlink" title="Request与RequestInfoFactory"></a>Request与RequestInfoFactory</h3><p>k8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中</p>
+          <p>###　cloudify的执行日志</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/09/05/k8s/k8s_request_filters/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_agent_host_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1242,8 +1063,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/08/19/k8s/cahce_watch/" itemprop="url">
-                  Cache Watcher ListWatch
+                <a class="post-title-link" href="/2018/10/27/cloudify_00/" itemprop="url">
+                  cloudify基本了解
                 </a>
               
             
@@ -1256,30 +1077,11 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-19T23:10:58+08:00" content="2018-08-19 23:10">
-              2018-08-19 23:10
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:20+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
           
 
           
@@ -1304,10 +1106,10 @@
 
       
         
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png" alt=""></p>
-<h4 id="主要功能"><a href="#主要功能" class="headerlink" title="主要功能"></a>主要功能</h4><p>K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享</p>
+          <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
+<p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/08/19/k8s/cahce_watch/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/cloudify_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1358,7 +1160,122 @@
             
               
                 
-                <a class="post-title-link" href="/2018/08/12/k8s/watch_cache/" itemprop="url">
+                <a class="post-title-link" href="/2018/10/27/1. cloudify_system_event_bus_01/" itemprop="url">
+                  cloudify的任务执行流程
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:18+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h2 id="任务执行的流程"><a href="#任务执行的流程" class="headerlink" title="任务执行的流程"></a>任务执行的流程</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">前端web ui</span><br><span class="line">    通过前端或者命令行上传blueprint</span><br><span class="line">    通过上传的blueprint,并提供blueprint需要的参数，生成一个workflow(前端显示的是deployment)</span><br><span class="line">通过任务引擎 rest service</span><br><span class="line">    当前端提执行workflow后, rest service把任务下发到rabbitmq</span><br><span class="line">workflow excuter(deployment workflow agent)</span><br><span class="line">    将workflow解析成一个个task，然后提交到task队列</span><br><span class="line">Task broker(deployment agent)</span><br><span class="line">    读取任务并执行(如果是第一次执行，则会使到目标机器上安装对应的agent)</span><br><span class="line">Celery agent</span><br><span class="line">    读取对应的任务执行，并返回对应的metrics/event/logs</span><br><span class="line">logstash</span><br><span class="line">    将agent发送到rabbitmq里面的event/logs读取出来，发送到elasticsearch</span><br><span class="line">riemann</span><br><span class="line">    是一个分布式的监控系统，接收应用上报来的event,cloudify中将应用的数据收集到influxdb里</span><br></pre></td></tr></table></figure>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/10/27/1. cloudify_system_event_bus_01/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/10/27/k8s/watch_cache/" itemprop="url">
                   k8s watchCache 缓存滑动窗口
                 </a>
               
@@ -1372,8 +1289,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-12T15:26:02+08:00" content="2018-08-12 15:26">
-              2018-08-12 15:26
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:14+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
             </time>
           </span>
 
@@ -1420,7 +1337,7 @@
 
       
         
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-14-43-16.png" alt=""></p>
+          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-14-43-16.png" alt></p>
 <ul>
 <li>通常在运维开发中, 为了避免后端存储的压力，都会增加一个缓存，缓存资源数据，避免每次都从后端获取</li>
 <li>今天介绍另外一个好玩的东西watchCache</li>
@@ -1430,126 +1347,7 @@
 <p> 主要作用是缓存固定大小的最新的数据, 因为有些情况下，我们并不一定需要一个全量的数据， 比如在k8s开始watch一个资源对象, 那其实只需要吧watch的对应的版本最新的数据，给你最近一批被修改的数据就可以了，并不需要全部的数据</p>
 </blockquote>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/08/12/k8s/watch_cache/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/08/09/k8s/wait_poll/" itemprop="url">
-                  定时、周期调度、等待时间的工具函数实现
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-08-09T23:15:52+08:00" content="2018-08-09 23:15">
-              2018-08-09 23:15
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-07-21-44-20.png" alt=""></p>
-<ul>
-<li>在平台开发过程中，当有些执行完某些操作后，可能还需要等待直到某个条件满足的时候</li>
-<li>比如在CMDB删除了一个项目，CMDB需要一直等待其他系统资源回收完，才能在自身彻底释放对应的资源， 那就需要一直在哪里等待<br><em>今天主要是一个关于定时轮训、等待的工具方法实现</em></li>
-</ul>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/08/09/k8s/wait_poll/#more" rel="contents">
+            <a class="btn" href="/2018/10/27/k8s/watch_cache/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1624,7 +1422,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">45</span>
+              <span class="site-state-item-count">44</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1632,7 +1430,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">38</span>
+                <span class="site-state-item-count">37</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1641,7 +1439,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">43</span>
+                <span class="site-state-item-count">42</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -1,0 +1,640 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="go语言," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="闭包闭包由匿名函数和其引用的上下文环境变量两部分组成, 其中变量信息会逃逸到堆(go里面并没有使用系统自带的堆栈空间,我们可以假定main函数栈针之外的空间都是所谓的堆)中, 会造成对应环境变量生命周期的延长">
+<meta name="keywords" content="go语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go里面闭包的实现">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/16/go/go_closure/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="闭包闭包由匿名函数和其引用的上下文环境变量两部分组成, 其中变量信息会逃逸到堆(go里面并没有使用系统自带的堆栈空间,我们可以假定main函数栈针之外的空间都是所谓的堆)中, 会造成对应环境变量生命周期的延长">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-10-15T21:56:50.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Go里面闭包的实现">
+<meta name="twitter:description" content="闭包闭包由匿名函数和其引用的上下文环境变量两部分组成, 其中变量信息会逃逸到堆(go里面并没有使用系统自带的堆栈空间,我们可以假定main函数栈针之外的空间都是所谓的堆)中, 会造成对应环境变量生命周期的延长">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/16/go/go_closure/"/>
+
+
+  <title> Go里面闭包的实现 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Go里面闭包的实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-16T05:56:50+08:00" content="2018-10-16 05:56">
+              2018-10-16 05:56
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>闭包由匿名函数和其引用的上下文环境变量两部分组成, 其中变量信息会逃逸到堆(go里面并没有使用系统自带的堆栈空间,我们可以假定main函数栈针之外的空间都是所谓的堆)中, 会造成对应环境变量生命周期的延长</p>
+<a id="more"></a>
+<h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">test</span><span class="params">(x, y <span class="keyword">int</span>)</span> <span class="title">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                x += y</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">        f := test(<span class="number">0x100</span>, <span class="number">0x200</span>)</span><br><span class="line">        f()</span><br><span class="line">        fmt.Println(<span class="string">"close"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go build -gcflags &quot;-N -l&quot; -o test closed_function.go</span><br></pre></td></tr></table></figure>
+<h3 id="gdb调试"><a href="#gdb调试" class="headerlink" title="gdb调试"></a>gdb调试</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line">(gdb) l</span><br><span class="line">2</span><br><span class="line">3       import &quot;fmt&quot;</span><br><span class="line">4</span><br><span class="line">5       func test(x, y int) func() &#123;</span><br><span class="line">6               return func() &#123;</span><br><span class="line">7                       x += y</span><br><span class="line">8               &#125;</span><br><span class="line">9       &#125;</span><br><span class="line">10</span><br><span class="line">11      func main() &#123;</span><br><span class="line">(gdb) l</span><br><span class="line">12              f := test(0x100, 0x200)</span><br><span class="line">13              f()</span><br><span class="line">14              fmt.Println(&quot;close&quot;)</span><br><span class="line">15      &#125;</span><br><span class="line">(gdb) b 13</span><br><span class="line">Breakpoint 1 at 0x483291: file /home/devops/study/src/function/closed_function.go, line 13.</span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/devops/study/src/function/test </span><br><span class="line"></span><br><span class="line">Breakpoint 1, main.main () at /home/devops/study/src/function/closed_function.go:13</span><br><span class="line">13              f()</span><br><span class="line">(gdb) info locals       </span><br><span class="line">f = &#123;void ()&#125; 0xc420045f40      #闭包返回的对象</span><br><span class="line">(gdb) x/xg 0xc420045f40</span><br><span class="line">0xc420045f40:   0x000000c42000a060      # 查看其内容, 我们可以看到其实它返回的是一个指针对象</span><br><span class="line">(gdb) x/3xg 0x000000c42000a060</span><br><span class="line">0xc42000a060:   0x0000000000483320      0x000000c420014098      # 我们可以查看到这个复合对象信息</span><br><span class="line">0xc42000a070:   0x0000000000000200</span><br><span class="line">(gdb) info symbol 0x0000000000483320    # 首先通过8个字节存放了匿名函数的地址</span><br><span class="line">main.test.func1 in section .text of /home/devops/study/src/function/test</span><br><span class="line">(gdb) x/1xg 0x000000c420014098          # 上面的函数我们用到了x变量, 所以导致了x变量的生命周期的延长,其分配地址已经不在main函数的栈帧下面了</span><br><span class="line">0xc420014098:   0x0000000000000100</span><br><span class="line">(gdb) set disassembly-flavor intel</span><br><span class="line">(gdb) disassemble       # 查看汇编代码</span><br><span class="line">Dump of assembler code for function main.main:</span><br><span class="line">   0x0000000000483250 &lt;+0&gt;:     mov    rcx,QWORD PTR fs:0xfffffffffffffff8</span><br><span class="line">   0x0000000000483259 &lt;+9&gt;:     cmp    rsp,QWORD PTR [rcx+0x10]</span><br><span class="line">   0x000000000048325d &lt;+13&gt;:    jbe    0x483307 &lt;main.main+183&gt;</span><br><span class="line">   0x0000000000483263 &lt;+19&gt;:    sub    rsp,0x70</span><br><span class="line">   0x0000000000483267 &lt;+23&gt;:    mov    QWORD PTR [rsp+0x68],rbp</span><br><span class="line">   0x000000000048326c &lt;+28&gt;:    lea    rbp,[rsp+0x68]</span><br><span class="line">   0x0000000000483271 &lt;+33&gt;:    mov    QWORD PTR [rsp],0x100</span><br><span class="line">   0x0000000000483279 &lt;+41&gt;:    mov    QWORD PTR [rsp+0x8],0x200</span><br><span class="line">   0x0000000000483282 &lt;+50&gt;:    call   0x483180 &lt;main.test&gt;</span><br><span class="line">   0x0000000000483287 &lt;+55&gt;:    mov    rdx,QWORD PTR [rsp+0x10]</span><br><span class="line">   0x000000000048328c &lt;+60&gt;:    mov    QWORD PTR [rsp+0x30],rdx</span><br><span class="line">=&gt; 0x0000000000483291 &lt;+65&gt;:    mov    rax,QWORD PTR [rdx]      # 闭包和匿名函数的, 我们发现个问题普通的函数参数传递都会进行参数传递, 接着看</span><br><span class="line">   0x0000000000483294 &lt;+68&gt;:    call   rax</span><br><span class="line">   0x0000000000483296 &lt;+70&gt;:    xorps  xmm0,xmm0</span><br><span class="line">   0x0000000000483299 &lt;+73&gt;:    movups XMMWORD PTR [rsp+0x40],xmm0</span><br><span class="line">   0x000000000048329e &lt;+78&gt;:    lea    rax,[rsp+0x40]</span><br><span class="line">   0x00000000004832a3 &lt;+83&gt;:    mov    QWORD PTR [rsp+0x38],rax</span><br><span class="line">   0x00000000004832a8 &lt;+88&gt;:    test   BYTE PTR [rax],al</span><br><span class="line">   0x00000000004832aa &lt;+90&gt;:    lea    rax,[rip+0x1092f]        # 0x493be0</span><br><span class="line">   0x00000000004832b1 &lt;+97&gt;:    mov    QWORD PTR [rsp+0x40],rax</span><br><span class="line">   0x00000000004832b6 &lt;+102&gt;:   lea    rax,[rip+0x41723]        # 0x4c49e0 &lt;main.statictmp_0&gt;</span><br><span class="line">   0x00000000004832bd &lt;+109&gt;:   mov    QWORD PTR [rsp+0x48],rax</span><br><span class="line">   0x00000000004832c2 &lt;+114&gt;:   mov    rax,QWORD PTR [rsp+0x38]</span><br><span class="line">   0x00000000004832c7 &lt;+119&gt;:   test   BYTE PTR [rax],al</span><br><span class="line">   0x00000000004832c9 &lt;+121&gt;:   jmp    0x4832cb &lt;main.main+123&gt;</span><br><span class="line">   0x00000000004832cb &lt;+123&gt;:   mov    QWORD PTR [rsp+0x50],rax</span><br><span class="line">   0x00000000004832d0 &lt;+128&gt;:   mov    QWORD PTR [rsp+0x58],0x1</span><br><span class="line">   0x00000000004832d9 &lt;+137&gt;:   mov    QWORD PTR [rsp+0x60],0x1</span><br><span class="line">   0x00000000004832e2 &lt;+146&gt;:   mov    QWORD PTR [rsp],rax</span><br><span class="line">   0x00000000004832e6 &lt;+150&gt;:   mov    QWORD PTR [rsp+0x8],0x1</span><br><span class="line">   0x00000000004832ef &lt;+159&gt;:   mov    QWORD PTR [rsp+0x10],0x1</span><br><span class="line">   0x00000000004832f8 &lt;+168&gt;:   call   0x47cfc0 &lt;fmt.Println&gt;</span><br><span class="line">   0x00000000004832fd &lt;+173&gt;:   mov    rbp,QWORD PTR [rsp+0x68]</span><br><span class="line">   0x0000000000483302 &lt;+178&gt;:   add    rsp,0x70</span><br><span class="line">   0x0000000000483306 &lt;+182&gt;:   ret    </span><br><span class="line">   0x0000000000483307 &lt;+183&gt;:   call   0x44d170 &lt;runtime.morestack_noctxt&gt;</span><br><span class="line">   0x000000000048330c &lt;+188&gt;:   jmp    0x483250 &lt;main.main&gt;</span><br><span class="line">End of assembler dump.</span><br><span class="line">(gdb) p/x $rbp</span><br><span class="line">$2 = 0xc420045f78       # 我们可以看到main函数的栈范围是从45f78开始的, 儿我们之前返回的变量x的内存地址则是在14098, 即会存在于整个生命周期内</span><br><span class="line">(gdb) p/x $rsp</span><br><span class="line">$3 = 0xc420045f10</span><br><span class="line">(gdb) b main.test.func1 # 我们跟踪下匿名函数的执行</span><br><span class="line">Breakpoint 4 at 0x483320: file /home/devops/study/src/function/closed_function.go, line 6.</span><br><span class="line">(gdb) disassemble </span><br><span class="line">Dump of assembler code for function main.test.func1:</span><br><span class="line">=&gt; 0x0000000000483320 &lt;+0&gt;:     sub    rsp,0x20</span><br><span class="line">   0x0000000000483324 &lt;+4&gt;:     mov    QWORD PTR [rsp+0x18],rbp</span><br><span class="line">   0x0000000000483329 &lt;+9&gt;:     lea    rbp,[rsp+0x18]</span><br><span class="line">   0x000000000048332e &lt;+14&gt;:    mov    rax,QWORD PTR [rdx+0x8]</span><br><span class="line">   0x0000000000483332 &lt;+18&gt;:    mov    QWORD PTR [rsp+0x10],rax</span><br><span class="line">   0x0000000000483337 &lt;+23&gt;:    mov    rax,QWORD PTR [rdx+0x10]</span><br><span class="line">   0x000000000048333b &lt;+27&gt;:    mov    QWORD PTR [rsp],rax      # 我们可以看到闭包函数在进行参数传递的时候, 其实是因为之前吧闭包返回的复合对象的数据都放入到rbx中, 在闭包函数执行的时候直接从rbx寄存器中获取对应的参数</span><br><span class="line">   0x000000000048333f &lt;+31&gt;:    mov    rax,QWORD PTR [rsp+0x10]</span><br><span class="line">   0x0000000000483344 &lt;+36&gt;:    mov    rax,QWORD PTR [rax]</span><br><span class="line">   0x0000000000483347 &lt;+39&gt;:    mov    QWORD PTR [rsp+0x8],rax</span><br><span class="line">   0x000000000048334c &lt;+44&gt;:    mov    rcx,QWORD PTR [rsp]</span><br><span class="line">   0x0000000000483350 &lt;+48&gt;:    add    rax,rcx</span><br><span class="line">   0x0000000000483353 &lt;+51&gt;:    mov    rcx,QWORD PTR [rsp+0x10]</span><br><span class="line">   0x0000000000483358 &lt;+56&gt;:    mov    QWORD PTR [rcx],rax</span><br><span class="line">   0x000000000048335b &lt;+59&gt;:    mov    rbp,QWORD PTR [rsp+0x18]</span><br><span class="line">   0x0000000000483360 &lt;+64&gt;:    add    rsp,0x20</span><br><span class="line">   0x0000000000483364 &lt;+68&gt;:    ret    </span><br><span class="line">End of assembler dump.</span><br><span class="line">(gdb) x/3xg $rdx</span><br><span class="line">0xc42000a060:   0x0000000000483320      0x000000c420014098</span><br><span class="line">0xc42000a070:   0x0000000000000200</span><br><span class="line">(gdb) x/1xg 0x000000c420014098</span><br><span class="line">0xc420014098:   0x0000000000000100</span><br></pre></td></tr></table></figure>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">go里面的闭包是通过返回一个复合结构来实现的</span><br><span class="line">该复合结构中保存了需要的变量的对象的指针</span><br><span class="line">闭包函数数据分配不在main函数栈的范围内(go没有使用系统的堆栈)</span><br><span class="line">闭包返回的数据,如果后续有对其进行变量操作(上面的x后续有x+=y操作，go里面为其分配了内存地址, 而y后续则并没有分配内存,而是退化成值拷贝)</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/go语言/" rel="tag">#go语言</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/16/go/go_string/" rel="next" title="Go里面的字符串">
+                <i class="fa fa-chevron-left"></i> Go里面的字符串
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/16/go/go_array/" rel="prev" title="Go里面的数组">
+                Go里面的数组 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#闭包"><span class="nav-number">1.</span> <span class="nav-text">闭包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#测试代码"><span class="nav-number">2.</span> <span class="nav-text">测试代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#编译"><span class="nav-number">3.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gdb调试"><span class="nav-number">4.</span> <span class="nav-text">gdb调试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

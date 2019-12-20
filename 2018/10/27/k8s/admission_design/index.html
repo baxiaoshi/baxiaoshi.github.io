@@ -1,0 +1,686 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="k8s,k8s那些天,准入控制," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="What准入控制位于认证和授权模块之后，用于在数据存储之前的最后的数据验证和添加默认参数模块, 分为mutating(修改数据)和validating(验证数据)两种, k8s中的审计以chainAdmissionHandler将系统允许的所有admission plugin串联在一起使用, 其中只要有一个拒绝, 则请求结束 Why k8s中很多高级特性都依赖于审计模块的实现  官方默认admis">
+<meta name="keywords" content="k8s,k8s那些天,准入控制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes 准入控制模块实现">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/27/k8s/admission_design/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="What准入控制位于认证和授权模块之后，用于在数据存储之前的最后的数据验证和添加默认参数模块, 分为mutating(修改数据)和validating(验证数据)两种, k8s中的审计以chainAdmissionHandler将系统允许的所有admission plugin串联在一起使用, 其中只要有一个拒绝, 则请求结束 Why k8s中很多高级特性都依赖于审计模块的实现  官方默认admis">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-17-16-51-55.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:47.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kubernetes 准入控制模块实现">
+<meta name="twitter:description" content="What准入控制位于认证和授权模块之后，用于在数据存储之前的最后的数据验证和添加默认参数模块, 分为mutating(修改数据)和validating(验证数据)两种, k8s中的审计以chainAdmissionHandler将系统允许的所有admission plugin串联在一起使用, 其中只要有一个拒绝, 则请求结束 Why k8s中很多高级特性都依赖于审计模块的实现  官方默认admis">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-17-16-51-55.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/27/k8s/admission_design/"/>
+
+
+  <title> Kubernetes 准入控制模块实现 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Kubernetes 准入控制模块实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:42:47+08:00" content="2018-10-27 14:42">
+              2018-10-27 14:42
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/准入控制/" itemprop="url" rel="index">
+                    <span itemprop="name">准入控制</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="What"><a href="#What" class="headerlink" title="What"></a>What</h3><p>准入控制位于认证和授权模块之后，用于在数据存储之前的最后的数据验证和添加默认参数模块, 分为mutating(修改数据)和validating(验证数据)两种, k8s中的审计以chainAdmissionHandler将系统允许的所有admission plugin串联在一起使用, 其中只要有一个拒绝, 则请求结束</p>
+<h3 id="Why"><a href="#Why" class="headerlink" title="Why"></a>Why</h3><p> k8s中很多高级特性都依赖于审计模块的实现</p>
+<ul>
+<li>官方默认admission实现的准入控制设置如下</li>
+<li><a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/</a></li>
+</ul>
+<a id="more"></a>
+<h3 id="如何实现"><a href="#如何实现" class="headerlink" title="如何实现"></a>如何实现</h3><h4 id="Handler"><a href="#Handler" class="headerlink" title="Handler"></a>Handler</h4><p>每个准入插件只关心指定的操作类型， 在准入控制中将对资源的所有操作抽象成了Handler, Handler包含了具体的操作, 外部的依赖条件(必须等待外部条件初始化完成之后, 该准入插件才允许被使用, 否则会一致等待) <strong>并不是所有准入插件都需要继承该函数</strong><br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Handler <span class="keyword">struct</span> &#123;</span><br><span class="line">	operations sets.String</span><br><span class="line">	readyFunc  ReadyFunc</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 当前准入控制插件关心的事件</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(h *Handler)</span> <span class="title">Handles</span><span class="params">(operation Operation)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> h.operations.Has(<span class="keyword">string</span>(operation))</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 等待初始化函数完成</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(h *Handler)</span> <span class="title">WaitForReady</span><span class="params">()</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="comment">// there is no ready func configured, so we return immediately</span></span><br><span class="line">	<span class="keyword">if</span> h.readyFunc == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	timeout := time.After(timeToWaitForReady)</span><br><span class="line">	<span class="keyword">for</span> !h.readyFunc() &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-time.After(<span class="number">100</span> * time.Millisecond):</span><br><span class="line">		<span class="keyword">case</span> &lt;-timeout:</span><br><span class="line">			<span class="keyword">return</span> h.readyFunc()</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="namespace的Lifecycle插件"><a href="#namespace的Lifecycle插件" class="headerlink" title="namespace的Lifecycle插件"></a>namespace的Lifecycle插件</h4><p>主要用于当namespace删除后, 不能在该namespace进行创建操作</p>
+<h5 id="插件结构体"><a href="#插件结构体" class="headerlink" title="插件结构体"></a>插件结构体</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Lifecycle <span class="keyword">struct</span> &#123;</span><br><span class="line">	*admission.Handler</span><br><span class="line">	client             kubernetes.Interface</span><br><span class="line">	immortalNamespaces sets.String</span><br><span class="line">	namespaceLister    corelisters.NamespaceLister</span><br><span class="line">	<span class="comment">// forceLiveLookupCache holds a list of entries for namespaces that we have a strong reason to believe are stale in our local cache.</span></span><br><span class="line">	<span class="comment">// if a namespace is in this cache, then we will ignore our local state and always fetch latest from api server.</span></span><br><span class="line">	forceLiveLookupCache *utilcache.LRUExpireCache</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ValidationInitialization用于验证当前Plugin的一些初始化条件是否满足</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *Lifecycle)</span> <span class="title">ValidateInitialization</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> l.namespaceLister == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"missing namespaceLister"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> l.client == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"missing client"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="注册"><a href="#注册" class="headerlink" title="注册"></a>注册</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 每个插件都需要实现自身注册到Plugins的逻辑</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Register</span><span class="params">(plugins *admission.Plugins)</span></span> &#123;</span><br><span class="line">	plugins.Register(PluginName, <span class="function"><span class="keyword">func</span><span class="params">(config io.Reader)</span> <span class="params">(admission.Interface, error)</span></span> &#123;</span><br><span class="line">		<span class="keyword">return</span> NewLifecycle(sets.NewString(metav1.NamespaceDefault, metav1.NamespaceSystem, metav1.NamespacePublic))</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="设置ReadyFunc"><a href="#设置ReadyFunc" class="headerlink" title="设置ReadyFunc"></a>设置ReadyFunc</h5><p>当前namespace lifecyle需要依赖k8s厘米namespaceLister, 用于获取namespace的状态<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *Lifecycle)</span> <span class="title">SetExternalKubeInformerFactory</span><span class="params">(f informers.SharedInformerFactory)</span></span> &#123;</span><br><span class="line">	namespaceInformer := f.Core().V1().Namespaces()</span><br><span class="line">	l.namespaceLister = namespaceInformer.Lister()</span><br><span class="line">	l.SetReadyFunc(namespaceInformer.Informer().HasSynced)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h5 id="准入控制的实现"><a href="#准入控制的实现" class="headerlink" title="准入控制的实现"></a>准入控制的实现</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *Lifecycle)</span> <span class="title">Admit</span><span class="params">(a admission.Attributes)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">// 系统默认的namespace不允许进行删除操作</span></span><br><span class="line">	<span class="keyword">if</span> a.GetOperation() == admission.Delete &amp;&amp; a.GetKind().GroupKind() == v1.SchemeGroupVersion.WithKind(<span class="string">"Namespace"</span>).GroupKind() &amp;&amp; l.immortalNamespaces.Has(a.GetName()) &#123;</span><br><span class="line">		<span class="keyword">return</span> errors.NewForbidden(a.GetResource().GroupResource(), a.GetName(), fmt.Errorf(<span class="string">"this namespace may not be deleted"</span>))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果没有获取到namespace则跳过当前准入插件</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(a.GetNamespace()) == <span class="number">0</span> &amp;&amp; a.GetKind().GroupKind() != v1.SchemeGroupVersion.WithKind(<span class="string">"Namespace"</span>).GroupKind() &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> a.GetKind().GroupKind() == v1.SchemeGroupVersion.WithKind(<span class="string">"Namespace"</span>).GroupKind() &#123;</span><br><span class="line">		<span class="comment">// 如果是删除namespace则会先加入到自身的forceLiveLookupCache中,后面会根据当前状态进行判断, 强制从apiserver中获取namespace</span></span><br><span class="line">		<span class="keyword">if</span> a.GetOperation() == admission.Delete &#123;</span><br><span class="line">			l.forceLiveLookupCache.Add(a.GetName(), <span class="literal">true</span>, forceLiveLookupTTL)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// allow all operations to namespaces</span></span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果允许所有的删除操作</span></span><br><span class="line">	<span class="keyword">if</span> a.GetOperation() == admission.Delete &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// always allow access review checks.  Returning status about the namespace would be leaking information</span></span><br><span class="line">	<span class="keyword">if</span> isAccessReview(a) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 等待初始化完成, 从apiserver同步lister</span></span><br><span class="line">	<span class="keyword">if</span> !l.WaitForReady() &#123;</span><br><span class="line">		<span class="keyword">return</span> admission.NewForbidden(a, fmt.Errorf(<span class="string">"not yet ready to handle request"</span>))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> (</span><br><span class="line">		exists <span class="keyword">bool</span></span><br><span class="line">		err    error</span><br><span class="line">	)</span><br><span class="line"></span><br><span class="line">	<span class="comment">//  从namespaceLister中获取到当前的namespace</span></span><br><span class="line">	namespace, err := l.namespaceLister.Get(a.GetNamespace())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> !errors.IsNotFound(err) &#123;</span><br><span class="line">			<span class="keyword">return</span> errors.NewInternalError(err)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		exists = <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果当前操作是create,则重新获取一下namespace</span></span><br><span class="line">	<span class="keyword">if</span> !exists &amp;&amp; a.GetOperation() == admission.Create &#123;</span><br><span class="line">            <span class="comment">// 在创建之前, 等待50毫秒,然后重新获取namespace, 当创建namespace的时候, 可以让我们立刻就获取到最新的namespace</span></span><br><span class="line">		time.Sleep(missingNamespaceWait)</span><br><span class="line">		namespace, err = l.namespaceLister.Get(a.GetNamespace())</span><br><span class="line">		<span class="keyword">switch</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> errors.IsNotFound(err):</span><br><span class="line">			<span class="comment">// no-op</span></span><br><span class="line">		<span class="keyword">case</span> err != <span class="literal">nil</span>:</span><br><span class="line">			<span class="keyword">return</span> errors.NewInternalError(err)</span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			exists = <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> exists &#123;</span><br><span class="line">			glog.V(<span class="number">4</span>).Infof(<span class="string">"found %s in cache after waiting"</span>, a.GetNamespace())</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 检查当前namespace是否在本地的删除队列中, 如果被删除了就重新从apiserver中获取namespace</span></span><br><span class="line">	forceLiveLookup := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">if</span> _, ok := l.forceLiveLookupCache.Get(a.GetNamespace()); ok &#123;</span><br><span class="line">		forceLiveLookup = exists &amp;&amp; namespace.Status.Phase == v1.NamespaceActive</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 强制从kubernetes中获取当前namespace</span></span><br><span class="line">	<span class="keyword">if</span> !exists || forceLiveLookup &#123;</span><br><span class="line">		<span class="comment">// as a last resort, make a call directly to storage</span></span><br><span class="line">		namespace, err = l.client.CoreV1().Namespaces().Get(a.GetNamespace(), metav1.GetOptions&#123;&#125;)</span><br><span class="line">		<span class="keyword">switch</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> errors.IsNotFound(err):</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		<span class="keyword">case</span> err != <span class="literal">nil</span>:</span><br><span class="line">			<span class="keyword">return</span> errors.NewInternalError(err)</span><br><span class="line">		&#125;</span><br><span class="line">		glog.V(<span class="number">4</span>).Infof(<span class="string">"found %s via storage lookup"</span>, a.GetNamespace())</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> a.GetOperation() == admission.Create &#123;</span><br><span class="line">		<span class="comment">// 判断当前namespace的状态如果是在删除中的, 就返回失败</span></span><br><span class="line">		<span class="keyword">if</span> namespace.Status.Phase != v1.NamespaceTerminating &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// <span class="doctag">TODO:</span> This should probably not be a 403</span></span><br><span class="line">		<span class="keyword">return</span> admission.NewForbidden(a, fmt.Errorf(<span class="string">"unable to create new content in namespace %s because it is being terminated"</span>, a.GetNamespace()))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Plugins"><a href="#Plugins" class="headerlink" title="Plugins"></a>Plugins</h4><p>Plugins负责将所有的准入插件的初始化、验证、返回准入调用链</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Plugins <span class="keyword">struct</span> &#123;</span><br><span class="line">	lock     sync.Mutex</span><br><span class="line">	registry <span class="keyword">map</span>[<span class="keyword">string</span>]Factory</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 所有插件都通过该接口注册自身到Plugins中</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ps *Plugins)</span> <span class="title">Register</span><span class="params">(name <span class="keyword">string</span>, plugin Factory)</span></span> &#123;</span><br><span class="line">	ps.lock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> ps.lock.Unlock()</span><br><span class="line">	<span class="keyword">if</span> ps.registry != <span class="literal">nil</span> &#123;</span><br><span class="line">		_, found := ps.registry[name]</span><br><span class="line">		<span class="keyword">if</span> found &#123;</span><br><span class="line">			glog.Fatalf(<span class="string">"Admission plugin %q was registered twice"</span>, name)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		ps.registry = <span class="keyword">map</span>[<span class="keyword">string</span>]Factory&#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	glog.V(<span class="number">1</span>).Infof(<span class="string">"Registered admission plugin %q"</span>, name)</span><br><span class="line">	ps.registry[name] = plugin</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 根据传入的参数, 动态的获取插件</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ps *Plugins)</span> <span class="title">NewFromPlugins</span><span class="params">(pluginNames []<span class="keyword">string</span>, configProvider ConfigProvider, pluginInitializer PluginInitializer, decorator Decorator)</span> <span class="params">(Interface, error)</span></span> &#123;</span><br><span class="line">	handlers := []Interface&#123;&#125;</span><br><span class="line">        <span class="comment">// 省略通过插件名称获取plugin ,组装调用链</span></span><br><span class="line">	<span class="keyword">return</span> chainAdmissionHandler(handlers), <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="chainAdmissionHandler"><a href="#chainAdmissionHandler" class="headerlink" title="chainAdmissionHandler"></a>chainAdmissionHandler</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> chainAdmissionHandler []Interface</span><br><span class="line"></span><br><span class="line"><span class="comment">// Admit方法会根据调用请求逐个调用审计插件, 如果遇到错误就终止</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(admissionHandler chainAdmissionHandler)</span> <span class="title">Admit</span><span class="params">(a Attributes)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, handler := <span class="keyword">range</span> admissionHandler &#123;</span><br><span class="line">		<span class="keyword">if</span> !handler.Handles(a.GetOperation()) &#123;</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> mutator, ok := handler.(MutationInterface); ok &#123;</span><br><span class="line">			err := mutator.Admit(a)</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// admit验证每个插件是否可用</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(admissionHandler chainAdmissionHandler)</span> <span class="title">Validate</span><span class="params">(a Attributes)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, handler := <span class="keyword">range</span> admissionHandler &#123;</span><br><span class="line">		<span class="keyword">if</span> !handler.Handles(a.GetOperation()) &#123;</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> validator, ok := handler.(ValidationInterface); ok &#123;</span><br><span class="line">			err := validator.Validate(a)</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 检查插件列表里面的所有插件如果都是false, 就不回进行后续插件的调用</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(admissionHandler chainAdmissionHandler)</span> <span class="title">Handles</span><span class="params">(operation Operation)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, handler := <span class="keyword">range</span> admissionHandler &#123;</span><br><span class="line">		<span class="keyword">if</span> handler.Handles(operation) &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-17-16-51-55.png" alt></p>
+<ul>
+<li>结合上面的分析, 最终我们得到了审计模块的最终实现如上(<strong>不包含webhook插件</strong>)</li>
+<li>准入控制使用插件的方式, 来实现不通插件功能的自由开关，同时类似函数式编程的方式来实现了所有准入控制调用链的实现</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag">#k8s</a>
+          
+            <a href="/tags/k8s那些天/" rel="tag">#k8s那些天</a>
+          
+            <a href="/tags/准入控制/" rel="tag">#准入控制</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/27/devops/devop_event_sourcing/" rel="next" title="事件溯源在运维场景的应用">
+                <i class="fa fa-chevron-left"></i> 事件溯源在运维场景的应用
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/27/k8s/cahce_watch/" rel="prev" title="Cache Watcher ListWatch">
+                Cache Watcher ListWatch <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#What"><span class="nav-number">1.</span> <span class="nav-text">What</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Why"><span class="nav-number">2.</span> <span class="nav-text">Why</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何实现"><span class="nav-number">3.</span> <span class="nav-text">如何实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Handler"><span class="nav-number">3.1.</span> <span class="nav-text">Handler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#namespace的Lifecycle插件"><span class="nav-number">3.2.</span> <span class="nav-text">namespace的Lifecycle插件</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#插件结构体"><span class="nav-number">3.2.1.</span> <span class="nav-text">插件结构体</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#注册"><span class="nav-number">3.2.2.</span> <span class="nav-text">注册</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#设置ReadyFunc"><span class="nav-number">3.2.3.</span> <span class="nav-text">设置ReadyFunc</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#准入控制的实现"><span class="nav-number">3.2.4.</span> <span class="nav-text">准入控制的实现</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Plugins"><span class="nav-number">3.3.</span> <span class="nav-text">Plugins</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#chainAdmissionHandler"><span class="nav-number">3.4.</span> <span class="nav-text">chainAdmissionHandler</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

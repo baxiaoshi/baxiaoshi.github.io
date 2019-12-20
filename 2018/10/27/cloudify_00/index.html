@@ -1,0 +1,625 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="cloudify基本介绍cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理 cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cloudify基本了解">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/27/cloudify_00/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="cloudify基本介绍cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理 cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.sreguide.com/img/cloudify_jiagou.png">
+<meta property="og:updated_time" content="2018-10-27T06:43:20.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="cloudify基本了解">
+<meta name="twitter:description" content="cloudify基本介绍cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理 cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:">
+<meta name="twitter:image" content="http://www.sreguide.com/img/cloudify_jiagou.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/27/cloudify_00/"/>
+
+
+  <title> cloudify基本了解 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                cloudify基本了解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:20+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
+<p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
+<a id="more"></a>
+<p><img src="/img/cloudify_jiagou.png" alt="img"></p>
+<p>结合自身的环境,cloudify有这么几个不合适的地方<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cloudfiy就像一个资源池，我们只需要关心：需要多少资源、依赖关系等, 然后编写好蓝图，就可以完成应用的创建、发布等工作</span><br><span class="line">资源的调度、监控、日志收集、调度降级等工作都可以做，但通常公司的环境不同相关依赖或者业务调用关系，直接切换平台，明显不合理</span><br><span class="line">涉及组件太多，系统维护可能比较复杂</span><br></pre></td></tr></table></figure></p>
+<p>需要学习的地方<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">应用生命周期管理</span><br><span class="line">插件化开发</span><br><span class="line">每一部分的实现</span><br></pre></td></tr></table></figure></p>
+<p>一个应用的栗子<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line">tosca_definitions_version: cloudify_dsl_1_2</span><br><span class="line">imports:    <span class="comment">#这个playbook依赖的文件</span></span><br><span class="line">  - ansible.yaml</span><br><span class="line">  - <span class="string">'http://www.getcloudify.org/spec/cloudify/3.3/types.yaml'</span></span><br><span class="line">  - <span class="string">'http://getcloudify.org.s3.amazonaws.com/spec/puppet-plugin/1.3/plugin.yaml'</span></span><br><span class="line">  - <span class="string">'http://www.getcloudify.org/spec/openstack-plugin/1.3/plugin.yaml'</span></span><br><span class="line">  - <span class="string">'http://getcloudify.org.s3.amazonaws.com/spec/host-pool-plugin/1.3/plugin.yaml'</span></span><br><span class="line">  - <span class="string">'http://getcloudify.org.s3.amazonaws.com/spec/fabric-plugin/1.3/plugin.yaml'</span></span><br><span class="line">  - <span class="string">'http://getcloudify.org.s3.amazonaws.com/spec/docker-plugin/1.3/plugin.yaml'</span></span><br><span class="line">  - <span class="string">'http://www.getcloudify.org/spec/diamond-plugin/1.3/plugin.yaml'</span></span><br><span class="line">  - ansible.yaml</span><br><span class="line">  - <span class="string">'http://getcloudify.org.s3.amazonaws.com/spec/chef-plugin/1.3/plugin.yaml'</span></span><br><span class="line">  - <span class="string">'http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.3/plugin.yaml'</span></span><br><span class="line">plugins: &#123;&#125;</span><br><span class="line">node_types: &#123;&#125;</span><br><span class="line">node_templates:</span><br><span class="line">  app1: <span class="comment">#我们的应用名称</span></span><br><span class="line">    <span class="built_in">type</span>: cloudify.nodes.WebServer  <span class="comment">#我们的应用是一个创建在一个节点上的webserver</span></span><br><span class="line">    interfaces:</span><br><span class="line">      cloudify.interfaces.lifecycle:    <span class="comment">#组件的生命周期</span></span><br><span class="line">        configure:     <span class="comment">#组件环境创建</span></span><br><span class="line">          implementation: fabric.fabric_plugin.tasks.run_task       <span class="comment">#通过那个任务执行</span></span><br><span class="line">          inputs:   <span class="comment">#这里面是我们输入的参数</span></span><br><span class="line">            new_input_1: |-</span><br><span class="line">              &#123;</span><br><span class="line">                  <span class="string">"package"</span>: <span class="string">"install_nginx"</span></span><br><span class="line">                  <span class="string">"params"</span>: &#123;</span><br><span class="line">                      <span class="string">"path"</span>: <span class="string">"/application"</span></span><br><span class="line">                  &#125;</span><br><span class="line">              &#125;</span><br><span class="line">        start:      <span class="comment">#启动</span></span><br><span class="line">          implementation: fabric.fabric_plugin.tasks.run_task</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1:</span><br><span class="line">              package: app_a</span><br><span class="line">              script: start_app_a</span><br><span class="line">        stop:       <span class="comment">#停止</span></span><br><span class="line">          implementation: fabric.fabric_plugin.tasks.run_task</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1:</span><br><span class="line">              package: app_a</span><br><span class="line">              script: stop_app.sh</span><br><span class="line">        create:     <span class="comment">#创建</span></span><br><span class="line">          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.configure</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1:</span><br><span class="line">              playbook: create_app.yml</span><br><span class="line">        delete:     <span class="comment">#删除</span></span><br><span class="line">          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.configure</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1:</span><br><span class="line">              playbook: delete_app.yml</span><br><span class="line">      cloudify.interfaces.monitoring:</span><br><span class="line">        start:      <span class="comment">#监控</span></span><br><span class="line">          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.configure</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1:</span><br><span class="line">              package: aaa</span><br><span class="line">        stop:       <span class="comment">#停止</span></span><br><span class="line">          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.configure</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1: |-</span><br><span class="line">              &#123;</span><br><span class="line">                  <span class="string">"blueprint"</span>: <span class="string">"stop_monitor_app.yaml"</span></span><br><span class="line">                  <span class="string">"params"</span>: <span class="string">"<span class="variable">$&#123;host&#125;</span>"</span></span><br><span class="line">              &#125;</span><br><span class="line">      cloudify.interfaces.validation:   <span class="comment">#验证服务的接口</span></span><br><span class="line">        creation:   <span class="comment">#验证服务</span></span><br><span class="line">          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.configure</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1:</span><br><span class="line">              playbook: validate_playbook.yml</span><br><span class="line">        deletion:</span><br><span class="line">          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.configure</span><br><span class="line">          inputs:</span><br><span class="line">            new_input_1:</span><br><span class="line">              playbook: delete.yml</span><br><span class="line">    instances:  <span class="comment"># 实例数量</span></span><br><span class="line">      deploy: 4</span><br><span class="line">    relationships:  <span class="comment">#节点关系</span></span><br><span class="line">      - <span class="built_in">type</span>: cloudify.relationships.connected_to</span><br><span class="line">        target: app2        <span class="comment">#连接节点2</span></span><br><span class="line">  app2:</span><br><span class="line">    <span class="built_in">type</span>: cloudify.nodes.WebServer      <span class="comment">#节点2也是一个webserver</span></span><br><span class="line">relationships: &#123;&#125;</span><br></pre></td></tr></table></figure></p>
+<p>当我们把上面的节点丢到cloudify中，就会被执行，创建我们对应应用和相关的依赖</p>
+<h2 id="cloudify的安装"><a href="#cloudify的安装" class="headerlink" title="cloudify的安装"></a>cloudify的安装</h2><h3 id="下载对应系统的rpm包"><a href="#下载对应系统的rpm包" class="headerlink" title="下载对应系统的rpm包"></a>下载对应系统的rpm包</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">去官网上download你想要下载的cloudify-3.4.0-2.ga-402.el6.x86_64.rpm， 然后解压</span><br></pre></td></tr></table></figure>
+<h3 id="生成密钥"><a href="#生成密钥" class="headerlink" title="生成密钥"></a>生成密钥</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[root@devops ~]# ssh-keygen -t rsa  #我这里是直接在我的虚拟机上安装的，所以上面cloudify里面的所有组件，我都是安装在一台机器上的，生成的密钥用于执行对应的蓝图完成相关软件的自动安装</span><br><span class="line">Generating public/private rsa key pair.</span><br><span class="line">Enter file in which to save the key (/root/.ssh/id_rsa): </span><br><span class="line">Enter passphrase (empty for no passphrase): </span><br><span class="line">Enter same passphrase again: </span><br><span class="line">Your identification has been saved in /root/.ssh/id_rsa.</span><br><span class="line">Your public key has been saved in /root/.ssh/id_rsa.pub.</span><br><span class="line">The key fingerprint is:</span><br><span class="line">ea:54:98:4f:eb:1b:47:4d:dd:a8:71:e8:3e:3e:64:c9 root@devops</span><br><span class="line">The key&apos;s randomart image is:</span><br><span class="line">+--[ RSA 2048]----+</span><br><span class="line">|                 |</span><br><span class="line">|             o o |</span><br><span class="line">|            + + .|</span><br><span class="line">|       o   + +   |</span><br><span class="line">|      o S ..+.   |</span><br><span class="line">|       = o .E    |</span><br><span class="line">|      o + .oo    |</span><br><span class="line">|     o . o ...   |</span><br><span class="line">|      . o.  ..   |</span><br></pre></td></tr></table></figure>
+<p>然后执行<br>cat /root/.ssh/id_rsa &gt; /root/.ssh/authorized_keys </p>
+<h3 id="生成cloudify的环境"><a href="#生成cloudify的环境" class="headerlink" title="生成cloudify的环境"></a>生成cloudify的环境</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@devops ~]# cfy init</span><br></pre></td></tr></table></figure>
+<h3 id="修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件"><a href="#修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件" class="headerlink" title="修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)"></a>修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">[root@devops cloudify-manager-blueprints]# ll -hrt </span><br><span class="line">总用量 308K</span><br><span class="line">-rw-r--r--  1 root root  31K 9月   4 22:00 vsphere-manager-blueprint.yaml</span><br><span class="line">-rw-r--r--  1 root root  14K 9月   4 22:00 vsphere-manager-blueprint-inputs.yaml</span><br><span class="line">-rw-r--r--  1 root root  35K 9月   4 22:00 vcloud-manager-blueprint.yaml</span><br><span class="line">-rw-r--r--  1 root root  13K 9月   4 22:00 vcloud-manager-blueprint-inputs.yaml</span><br><span class="line">-rw-r--r--  1 root root  28K 9月   4 22:00 simple-manager-blueprint.yaml</span><br><span class="line">-rwxr-xr-x  1 root root  675 9月   4 22:00 run_test.sh</span><br><span class="line">-rw-r--r--  1 root root  398 9月   4 22:00 README.md</span><br><span class="line">-rw-r--r--  1 root root  32K 9月   4 22:00 openstack-manager-blueprint.yaml</span><br><span class="line">-rw-r--r--  1 root root  13K 9月   4 22:00 openstack-manager-blueprint-inputs.yaml</span><br><span class="line">-rw-r--r--  1 root root  12K 9月   4 22:00 LICENSE</span><br><span class="line">-rw-r--r--  1 root root 1.3K 9月   4 22:00 circle.yml</span><br><span class="line">-rw-r--r--  1 root root  37K 9月   4 22:00 azure-manager-blueprint.yaml</span><br><span class="line">-rw-r--r--  1 root root  558 9月   4 22:00 azure-manager-blueprint-inputs.yaml</span><br><span class="line">-rw-r--r--  1 root root  29K 9月   4 22:00 aws-ec2-manager-blueprint.yaml</span><br><span class="line">-rw-r--r--  1 root root  13K 9月   4 22:00 aws-ec2-manager-blueprint-inputs.yaml</span><br><span class="line">drwxr-xr-x 16 root root 4.0K 10月 12 10:25 components</span><br><span class="line">drwxr-xr-x  4 root root   27 10月 12 10:25 resources</span><br><span class="line">drwxr-xr-x  3 root root   79 10月 12 10:25 tests</span><br><span class="line">drwxr-xr-x  2 root root   31 10月 12 10:25 types</span><br><span class="line">-rw-r--r--  1 root root  11K 10月 13 21:12 simple-manager-blueprint-inputs.yaml</span><br><span class="line">[root@devops cloudify-manager-blueprints]# ls -l simple-manager-blueprint*</span><br><span class="line">-rw-r--r-- 1 root root 11212 10月 13 21:12 simple-manager-blueprint-inputs.yaml</span><br><span class="line">-rw-r--r-- 1 root root 28395 9月   4 22:00 simple-manager-blueprint.yaml</span><br><span class="line">[root@devops cloudify-manager-blueprints]# pwd</span><br><span class="line">/opt/cfy/cloudify-manager-blueprints</span><br></pre></td></tr></table></figure>
+<h4 id="simple-manager-blueprint-inputs-yaml配置文件的修改"><a href="#simple-manager-blueprint-inputs-yaml配置文件的修改" class="headerlink" title="simple-manager-blueprint-inputs.yaml配置文件的修改"></a>simple-manager-blueprint-inputs.yaml配置文件的修改</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># The public IP of the manager to which the CLI will connect.</span><br><span class="line">public_ip: &apos;10.0.5.213&apos;</span><br><span class="line"></span><br><span class="line"># The manager&apos;s private IP address. This is the address which will be used by the</span><br><span class="line"># application hosts to connect to the Manager&apos;s fileserver and message broker.</span><br><span class="line">private_ip: &apos;10.0.5.213&apos;</span><br><span class="line"></span><br><span class="line"># SSH user used to connect to the manager</span><br><span class="line">ssh_user: &apos;root&apos;  #cloudify会使用fabric来连接执行任务这是连接的用户</span><br><span class="line"></span><br><span class="line"># SSH key path used to connect to the manager</span><br><span class="line">ssh_key_filename: &apos;/root/.ssh/id_rsa&apos;   #连接使用的key文件</span><br></pre></td></tr></table></figure>
+<h3 id="执行安装命令"><a href="#执行安装命令" class="headerlink" title="执行安装命令"></a>执行安装命令</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@devops cloudify-manager-blueprints]# cd /opt/.cloudify/</span><br><span class="line">[root@devops .cloudify]# cfy bootstrap --install-plugins -p /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint.yaml -i /opt/cfy/cloudify-manager-blueprints/simple-manager-blueprint-inputs.yaml</span><br><span class="line">因为要联网，所以我先回家了，晚上在看看</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/27/1. cloudify_system_event_bus_01/" rel="next" title="cloudify的任务执行流程">
+                <i class="fa fa-chevron-left"></i> cloudify的任务执行流程
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/27/cloudify_agent_host_00/" rel="prev" title="cloudify agent执行日志">
+                cloudify agent执行日志 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify基本介绍"><span class="nav-number">1.</span> <span class="nav-text">cloudify基本介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify的安装"><span class="nav-number">2.</span> <span class="nav-text">cloudify的安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#下载对应系统的rpm包"><span class="nav-number">2.1.</span> <span class="nav-text">下载对应系统的rpm包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成密钥"><span class="nav-number">2.2.</span> <span class="nav-text">生成密钥</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成cloudify的环境"><span class="nav-number">2.3.</span> <span class="nav-text">生成cloudify的环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改对应的配置文件-如果用的是不同的平台则需要修改不同平台的文件"><span class="nav-number">2.4.</span> <span class="nav-text">修改对应的配置文件(如果用的是不同的平台则需要修改不同平台的文件)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#simple-manager-blueprint-inputs-yaml配置文件的修改"><span class="nav-number">2.4.1.</span> <span class="nav-text">simple-manager-blueprint-inputs.yaml配置文件的修改</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行安装命令"><span class="nav-number">2.5.</span> <span class="nav-text">执行安装命令</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

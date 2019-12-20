@@ -276,237 +276,6 @@
             
               
                 
-                <a class="post-title-link" href="/2019/10/08/grpc/grpc_base_study/" itemprop="url">
-                  grpc基础学习
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-10-08T11:25:38+08:00" content="2019-10-08 11:25">
-              2019-10-08 11:25
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/grpc/" itemprop="url" rel="index">
-                    <span itemprop="name">grpc</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="导图"><a href="#导图" class="headerlink" title="导图"></a>导图</h1><p><img src="https://cdn.nlark.com/yuque/0/2019/png/97498/1552645742033-5be99e96-b52b-4902-9859-12df0b061ba5.png" alt=""></p>
-<h1 id="1-什么是gRPC"><a href="#1-什么是gRPC" class="headerlink" title="1. 什么是gRPC"></a>1. 什么是gRPC</h1><h2 id="1-1-gRPC的含义"><a href="#1-1-gRPC的含义" class="headerlink" title="1.1 gRPC的含义"></a>1.1 gRPC的含义</h2><p>gRPC是由google创建的，是名为Stubby的内部GRPC技术演变过来的，其中RPC代表着Remote Procedure Call, 而g则在每个版本都会有不同的定义，包括了: good green gao gold godric等</p>
-<p><a href="https://github.com/grpc/grpc/blob/master/doc/g_stands_for.md" target="_blank" rel="noopener">https://github.com/grpc/grpc/blob/master/doc/g_stands_for.md</a></p>
-<h2 id="1-2-gRPC的分层设计"><a href="#1-2-gRPC的分层设计" class="headerlink" title="1.2 gRPC的分层设计"></a>1.2 gRPC的分层设计</h2><p>gRPC采用分层架构设计：</p>
-<h3 id="1-2-1-HTTP-2-0"><a href="#1-2-1-HTTP-2-0" class="headerlink" title="1.2.1 HTTP 2.0"></a>1.2.1 HTTP 2.0</h3><p>gRPC最底层使用了HTTP2.0作为传输协议, http2提供了HTTP的基础语言，同时提高了效率和安全性，1）支付连接复用，并行请求处理 2）双向通信</p>
-<h3 id="1-2-2-channel"><a href="#1-2-2-channel" class="headerlink" title="1.2.2 channel"></a>1.2.2 channel</h3><p>channel是对传输的一层抽象，通道定义调用约定和实现RPC底层传输的映射；</p>
-<p>在该层gRPC调用由客户端提供的服务名称和方法名称，可选的元数据(键值对)，以及零个或者多个请求消息组成；在请求结束后，服务端返回可选的响应头元数据、零个或者多个响应消息，完成调用</p>
-<p>在该层，不需要字段接口类型、消息类型或数据类型；消息就是一个零个或者多个的字节序列，一次调用可以包含任意数量的请求和响应消息</p>
-<h3 id="1-2-3-stub"><a href="#1-2-3-stub" class="headerlink" title="1.2.3 stub"></a>1.2.3 stub</h3><p>Stub是定义接口约束和数据类型的地方；方法是否是接收单个请求还是消息流？每条响应数消息中包含那些数据如何编码，都由Stub提供， Stub将IDL定义的接口和通道结合在一起；Stub代码是由IDL生成的， channel提供这些生成的Stub使用的ABI</p>
-<h2 id="1-3-protobufs"><a href="#1-3-protobufs" class="headerlink" title="1.3 protobufs"></a>1.3 protobufs</h2><p>Protocol Buffer是一种协议缓冲区技术，用于描述服务、方法和消息的IDL</p>
-<p>通过编译器将IDL为各种语言生成代码；实际上Protobufs仅仅作用域Stub这一层，这使任何IDL都可以与grpc一起使用, 比如messagepack</p>
-<h2 id="1-4-Streaming"><a href="#1-4-Streaming" class="headerlink" title="1.4  Streaming"></a>1.4  Streaming</h2><p>Streaming允许传输任意大小的请求或响应，大多数RPC系统要求RPC系统要求RPC的参数映射到内存中的数据结构，然后将其序列化成字节通过网络传输。当需要交换大量数据时，这会导致客户端和服务端进程都会产生巨大的内存压力。这就意味着通常要对请求和响应大小进行限制，防止资源耗尽。</p>
-<p>流式传输允许请求或响应任意长度的消息序列来缓解这种情况，请求或者响应的数据量可能很大，但通过流的方式，客户端和服务端进程不需要将整个流存储在内存中，只需要对数据子集进行操作</p>
-<p>gRPC支持全双工双向流操作，客户端可以使用流来上传任意数量的请求数据，并且服务端也通过流来返回任意数量的响应数据，所有的操作都在一个RPC中， gRPC的Streaming主要是通过HTTP/2来实现</p>
-<h2 id="1-5-gRPC的场景"><a href="#1-5-gRPC的场景" class="headerlink" title="1.5 gRPC的场景"></a>1.5 gRPC的场景</h2><p>微服务、客户端-服务器端应用、集成API、基于浏览器的web应用程序</p>
-<p>gRPC相比rest和json的优势</p>
-<ol>
-<li>性能／效率</li>
-</ol>
-<ul>
-<li><p>JSON非常适合人类阅读，但对计算机可读性太差，需要大量的字符串解析， HTTP1.1严重限制单个请求如何用于多个请求，所有请求必须按照接收响应的顺序返回，后来的响应必须等待先前的响应；</p>
-</li>
-<li><p>HTTP/2和协议缓冲区协议没有这些问题，由于标头压缩，消息比json会小很多，支持单个连接复用多个请求，协议缓冲区协议设计紧凑，可提供计算机解析；</p>
-</li>
-<li><p>gRPC可以减少资源使用，与rest和json相比，可以缩短响应时间，也意味着在移动设备上允许客户端可以减少网络并演唱电池寿命</p>
-</li>
-</ul>
-<ol start="2">
-<li>生产性编程模型</li>
-</ol>
-<p>使用gRPC的编程模型易于理解并可提高开发人员的工作效率，IDL中定义接口和规范消息格式，自动生成多种语言模版代码， 开发人员不需要关注语言差异</p>
-<ol start="3">
-<li>Streaming</li>
-</ol>
-<p>gRPC 支持全双工的Streaming通信方式，描述绝对大数RPC，通常要支持这种Streaming，需要RPC框架基于TCP的自定义协议，但这在基于互联网的上通常行不通的，在负载均衡和代理软件上通常不能高效的对我们的私有协议, 写一套私有的私有还是非常复杂的</p>
-<ol start="4">
-<li>安全性</li>
-</ol>
-<p>gRPC使用HTTP2, 默认是以纯文本连接的方式进行传输，但可以使用TLS(传输级安全性，SSL)， HHTP2比HTTP1.1更严格，只允许TLS1.2或者更高，并禁用压缩和重新协商</p>
-<h1 id="2-缓冲区协议"><a href="#2-缓冲区协议" class="headerlink" title="2. 缓冲区协议"></a>2. 缓冲区协议</h1><h2 id="2-1-gRPC优化的OSI三个层次"><a href="#2-1-gRPC优化的OSI三个层次" class="headerlink" title="2.1 gRPC优化的OSI三个层次"></a>2.1 gRPC优化的OSI三个层次</h2><ul>
-<li>应用层(HTTP2)</li>
-<li>表示层(Protobuf)</li>
-<li>会话层(RPC)</li>
-</ul>
-<h2 id="2-2-Protobufs及数据类型"><a href="#2-2-Protobufs及数据类型" class="headerlink" title="2.2 Protobufs及数据类型"></a>2.2 Protobufs及数据类型</h2><p>协议缓冲区是序列化数据的标准过程，其目标是最小化给定结构数据表示。协议缓冲区是Google于2001年创建，直到2008年才公开，该方法提供了一种语法用于描述强大类型变量，以及IDL（接口描述语言），以便自动生成多种语言的源代码。 </p>
-<p>编程语言可以轻松的将字节流解析为给定对象，首先创建一个.proto文件，并在其中定义我们需要的消息／对象及其特定字段，以及使用这些消息的服务，然后使用protoc来进行编译，为每个特定的消息生成对应语言的实现</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    string title = 1;</span><br><span class="line">    string director = 2;</span><br><span class="line">    string producer = 3;</span><br><span class="line">    optional string release_date = 4;</span><br><span class="line">    repeated string characters = 5;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-1-基础类型"><a href="#2-2-1-基础类型" class="headerlink" title="2.2.1 基础类型"></a>2.2.1 基础类型</h3><p><img src="https://cdn.nlark.com/yuque/0/2019/png/97498/1552546575931-392e1c8d-b365-41bf-b5d4-3fe3b41e096f.png" alt="image.png"><br>所有类型都使用可变大小进行编码，具体取决于值的大小，固定类型具有固定大小(4或者8字节)</p>
-<h3 id="2-2-2-嵌套类型"><a href="#2-2-2-嵌套类型" class="headerlink" title="2.2.2 嵌套类型"></a>2.2.2 嵌套类型</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    message Character &#123;</span><br><span class="line">        string name = 1;</span><br><span class="line">        int64 birth = 2;</span><br><span class="line">    &#125;</span><br><span class="line">    string title = 1;</span><br><span class="line">    string director = 2;</span><br><span class="line">    string producer = 3;</span><br><span class="line">    optional string release_date = 4;</span><br><span class="line">    repeated Character characters = 5;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>支持导入</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">message OtherFilm &#123;</span><br><span class="line">    repeated Film.Character characters = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-3-映射类型"><a href="#2-2-3-映射类型" class="headerlink" title="2.2.3 映射类型"></a>2.2.3 映射类型</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    message Character &#123;</span><br><span class="line">        string name = 1;</span><br><span class="line">        int64 birth = 2;</span><br><span class="line">    &#125;</span><br><span class="line">    map&lt;string, Character&gt; roles =  1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-4-Oneof类型"><a href="#2-2-4-Oneof类型" class="headerlink" title="2.2.4 Oneof类型"></a>2.2.4 Oneof类型</h3><p>消息中有多个可选字段时，Oneof在空间优化方面就变得很方面; Oneof的实现为所有字段共享相同的内存空间，因此不需要为具有空字段的其他标记保留空间</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    message Character &#123;</span><br><span class="line">        oneof has &#123;</span><br><span class="line">            string laser_gun_model = 1;</span><br><span class="line">            int32 laser_sword_power = 2;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-5-枚举类型"><a href="#2-2-5-枚举类型" class="headerlink" title="2.2.5 枚举类型"></a>2.2.5 枚举类型</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line">    enum ProducerCompanies &#123;</span><br><span class="line">        UNKNOWN = 0;</span><br><span class="line">        WARNER_BROS = 1;</span><br><span class="line">        PARAMOUNT = 2;</span><br><span class="line">        NETFLIX = 3;</span><br><span class="line">    &#125;</span><br><span class="line">    ProducerCompanies Producer = 1 [default = UNKNOWN];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>枚举类型可以帮助我们在序列化消息中节省大量字节，特别是通过网络发送字符串重复时，例如状态吗、错误消息等，序列化值仅仅包含字段的标记而不是整个值</p>
-<p>注意Unknown当 Producer代码中设置不存在列表时，当不存在，就会自动设置为0，避免将来出现不一致</p>
-<h3 id="2-2-6-服务"><a href="#2-2-6-服务" class="headerlink" title="2.2.6 服务"></a>2.2.6 服务</h3><p>gRPC服务在文件中定义RPC .proo, RPC转为开发人员设计，能够在源码中执行过程，而无需关系其执行，可以集中精力编写程序，无需担心序列化、通信和安全性</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">service Starwars &#123;</span><br><span class="line"></span><br><span class="line">    rpc GetFilm(GetFilmRequest) returns (GetFilmResponse);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>根据IDL，协议缓冲编译器根据所选的语言生成服务接口代码和Stubs(客户端和服务端)</p>
-<h3 id="2-2-7-Import"><a href="#2-2-7-Import" class="headerlink" title="2.2.7 Import"></a>2.2.7 Import</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Character &#123;</span><br><span class="line"></span><br><span class="line">    oneof has &#123;</span><br><span class="line">        string laser_gun_model = 1;</span><br><span class="line">        int32 laser_sword_power = 2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    repeated Character characters = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">import &quot;character.proto&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    repeated Character characters = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>级连导入</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">syntax = <span class="string">"proto2"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> public <span class="string">"character.proto"</span>;</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-8-重复字段优先"><a href="#2-2-8-重复字段优先" class="headerlink" title="2.2.8 重复字段优先"></a>2.2.8 重复字段优先</h3><h3 id="2-2-9-多态性"><a href="#2-2-9-多态性" class="headerlink" title="2.2.9 多态性"></a>2.2.9 多态性</h3><ul>
-<li>Proto 2使用Extensions</li>
-<li>Proto 3弃用Extensions而支持Any语句</li>
-</ul>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    extensions 50 to 99;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message TerrorFilm &#123;</span><br><span class="line"></span><br><span class="line">    extend Film &#123;</span><br><span class="line"></span><br><span class="line">        required TerrorFilm film = 50;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bool has_zombies = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message ScienceFictionFilm &#123;</span><br><span class="line"></span><br><span class="line">    extend Film &#123;</span><br><span class="line"></span><br><span class="line">        required ScienceFictionFilm film = 51;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bool has_jedis = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>任何类型是Proto3的新方法，可以使用任何类型而无需在protobuf文件中定义它</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto3&quot;;</span><br><span class="line"></span><br><span class="line">import &quot;google/protobuf/any.proto&quot;;</span><br><span class="line"></span><br><span class="line">message Film &#123;</span><br><span class="line"></span><br><span class="line">    google.protobuf.Any film_type = 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-10-包"><a href="#2-2-10-包" class="headerlink" title="2.2.10 包"></a>2.2.10 包</h3><p>可以在.proto文件中定义宝，以便从其他文件中导入，语言不同，产生不同的后果</p>
-<ul>
-<li>C++ .proto宝为命名空间</li>
-<li>Java .proto 包为.java包</li>
-<li>Python忽略它，唯一重要的是文件夹结构</li>
-</ul>
-<h3 id="2-2-11-版本"><a href="#2-2-11-版本" class="headerlink" title="2.2.11 版本"></a>2.2.11 版本</h3><h2 id="2-3-生成不同语言的方法"><a href="#2-3-生成不同语言的方法" class="headerlink" title="2.3 生成不同语言的方法"></a>2.3 生成不同语言的方法</h2><p>c++</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--cpp_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
-<p>c </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--csharp_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
-<p>java</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--java_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
-<p>python</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc -I =$SRC_DIR--python_out =$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
-<p>go</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">go get golang.org/x/sys/unix</span><br><span class="line">go get -u github.com/golang/protobuf/protoc-gen-go</span><br><span class="line"></span><br><span class="line">protoc -I=$SRC_DIR --go_out=$DST_DIR $SRC_DIR/sfapi.proto</span><br></pre></td></tr></table></figure>
-<h2 id="2-4-可选项"><a href="#2-4-可选项" class="headerlink" title="2.4 可选项"></a>2.4 可选项</h2><h3 id="2-4-1-包和命名空间"><a href="#2-4-1-包和命名空间" class="headerlink" title="2.4.1 包和命名空间"></a>2.4.1 包和命名空间</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Generated java classes will belong to com.starwars package</span></span><br><span class="line"><span class="keyword">option</span> java_package = <span class="string">"com.starwars"</span>; </span><br><span class="line"></span><br><span class="line"><span class="comment">// Almost always necessary and very handy to avoid conflicts when importing packages</span></span><br><span class="line"><span class="keyword">option</span> go_package = <span class="string">"github.com/backstopmedia/gRPC-book-example/com/starwars"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">option</span> csharp_namespace = <span class="string">"Com.Starwars"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">option</span> php_namespace = <span class="string">"com.starwars"</span></span><br></pre></td></tr></table></figure>
-<h3 id="2-4-2-类命名"><a href="#2-4-2-类命名" class="headerlink" title="2.4.2 类命名"></a>2.4.2 类命名</h3><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">option</span> java_outer_classname = <span class="string">"StarWars"</span>;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// You should use upper-cased prefixes (3-5 characters) as Apple recommends</span></span><br><span class="line">   <span class="keyword">option</span> objc_class_prefix = <span class="string">"SWS"</span>;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">option</span> php_class_prefix = <span class="string">"SWS"</span>;</span><br></pre></td></tr></table></figure>
-<h3 id="2-4-2-多个文件"><a href="#2-4-2-多个文件" class="headerlink" title="2.4.2 多个文件"></a>2.4.2 多个文件</h3><p>java代码生成器将.java每个根级别创建不同的文件</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">option</span> java_multiple_files = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
-<h3 id="2-4-3-编译器选项"><a href="#2-4-3-编译器选项" class="headerlink" title="2.4.3 编译器选项"></a>2.4.3 编译器选项</h3><p>仅适用于c++和java代码生成器<br><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">option</span> optimize_for = SPEED;</span><br></pre></td></tr></table></figure></p>
-<p>SPEED: 默认高度优化的生成代码<br>CODE_SIZE: 通过共享类和使用反射来优化生成代码的最终大小，表现更差，执行速度比较慢<br>LITE_RUNTIME: 生成器使用libprotobuf-lite而不是libprotobuf, 生成代码更小，执行速度更快，但可能会丢失某些功能</p>
-<h3 id="2-4-4-自定义选项"><a href="#2-4-4-自定义选项" class="headerlink" title="2.4.4 自定义选项"></a>2.4.4 自定义选项</h3><h2 id="2-5-编码了解"><a href="#2-5-编码了解" class="headerlink" title="2.5 编码了解"></a>2.5 编码了解</h2><p>我们将使用与我们要编码的数据类型不同的策略，每个字段都是二进制编码的，我们需要按照.proto文件中指定的顺序来连接每个字段，除了字段编码之外，还有另外一个策略用于界定下一个字段的开始文件</p>
-<p><img src="https://cdn.nlark.com/yuque/0/2019/png/97498/1552548667282-a1bf3250-a64f-4606-8cc6-3e70c96d480c.png" alt="image.png"></p>
-<h3 id="2-5-1-Varint"><a href="#2-5-1-Varint" class="headerlink" title="2.5.1 Varint"></a>2.5.1 Varint</h3><p>Varint是一种策略，可以根据值的大小，将整数压缩到较小的空间，而不是发送相同固定数量的字节</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">message Test &#123;</span><br><span class="line">  int32 a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># JSON representation &#123; &quot;a&quot;: 227 &#125;</span><br></pre></td></tr></table></figure>
-<p>数字227表示二进制为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127 =&gt; 11100011</span><br></pre></td></tr></table></figure>
-<p>将整个二进制分成7位组，这种情况下一个字节会被分成两部分<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1110 0011 =&gt; 000 0001  1100011</span><br></pre></td></tr></table></figure></p>
-<p>我们需要发送的每个字节都有一个标识，用于确定是否是消息的结尾，消息的最后一个字节此位置为0</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">000 0001  110 0011 =&gt; &apos;0&apos;000 0001  &apos;1&apos;1100011</span><br></pre></td></tr></table></figure>
-<p>最后反转所有 字节</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0000 0001  1110 0011 =&gt; 1110 0011  00000001</span><br></pre></td></tr></table></figure>
-<p> 我们只使用了两个字节，就编码了227， 而int32默认使用4个字节，一个值被编码需要添加两个重要的信息</p>
-<ul>
-<li>tag Number(1 )</li>
-<li>Encoding Strategy (0)</li>
-</ul>
-<h3 id="2-5-2-有符号Varint"><a href="#2-5-2-有符号Varint" class="headerlink" title="2.5.2 有符号Varint"></a>2.5.2 有符号Varint</h3><p>如果对负数进行编码，左位始终位1，而不是0，对于一个int32会一直使用4个字节, sint32 或sint64在多数情况会是负数，这种策略使用ZigZag编码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># For sint32:</span><br><span class="line">(ñ &lt;&lt; 1) ^ (n &gt;&gt; 31)</span><br><span class="line"></span><br><span class="line"># For sint64:</span><br><span class="line">(n &lt;&lt; 1 )^ (n &gt;&gt; 63)</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">if (n == 0) &#123;</span><br><span class="line">  return 0;</span><br><span class="line">&#125; else if (n &gt; 0) &#123;</span><br><span class="line">  return 2 * n;</span><br><span class="line">&#125; else if (n &lt; 0) &#123;</span><br><span class="line">  return 2 * Math.abs(n) - 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-3-非Vaint值-类型1和5"><a href="#2-5-3-非Vaint值-类型1和5" class="headerlink" title="2.5.3 非Vaint值(类型1和5)"></a>2.5.3 非Vaint值(类型1和5)</h3><p>使用非Varint值对线类型进行编码的策略将与之前相同，并且该值将以little-endian字节顺序存储。</p>
-<h3 id="2-5-4-长度分割-类型2"><a href="#2-5-4-长度分割-类型2" class="headerlink" title="2.5.4 长度分割(类型2)"></a>2.5.4 长度分割(类型2)</h3><p>编码线类型的策略将与之前相同，后跟字符串的长度，字符串的值将是ASCII编码的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">message Test &#123;</span><br><span class="line">  string a = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Wire type: 0A</span><br><span class="line"># Length:    04</span><br><span class="line">0A 04 74 65 73 74</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-5-嵌入式消息"><a href="#2-5-5-嵌入式消息" class="headerlink" title="2.5.5 嵌入式消息"></a>2.5.5 嵌入式消息</h3><p>嵌入的消息将被编码为长度分隔的类型：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">message Test &#123;</span><br><span class="line">  int32 a = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message Test1 &#123;</span><br><span class="line">  Test b = 2;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># JSON representation &#123; &quot;b&quot;: &#123; &quot;a&quot;: 227 &#125; &#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Wire type: 1A</span><br><span class="line"># Length:    03</span><br><span class="line">1A 03 08E3 01</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
                 <a class="post-title-link" href="/2019/05/23/microservices/register_center_registery_hashcode/" itemprop="url">
                   微服务注册中心注册表与hashcode实现golang版
                 </a>
@@ -521,8 +290,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-05-23T10:38:27+08:00" content="2019-05-23 10:38">
-              2019-05-23 10:38
+            <time itemprop="dateCreated" datetime="2019-05-23T10:47:17+08:00" content="2019-05-23 10:47">
+              2019-05-23 10:47
             </time>
           </span>
 
@@ -617,10 +386,10 @@
 
       
         
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="基于负载均衡的服务调用"><a href="#基于负载均衡的服务调用" class="headerlink" title="基于负载均衡的服务调用"></a>基于负载均衡的服务调用</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-43-21.png" alt=""><br>基于负载均衡的服务相互调用指的是通过基于Lvs、Haproxy、Nginx等负载均衡软件来构建一个负载均衡服务，所有的服务调用都通过负载均衡器</p>
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="基于负载均衡的服务调用"><a href="#基于负载均衡的服务调用" class="headerlink" title="基于负载均衡的服务调用"></a>基于负载均衡的服务调用</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-43-21.png" alt><br>基于负载均衡的服务相互调用指的是通过基于Lvs、Haproxy、Nginx等负载均衡软件来构建一个负载均衡服务，所有的服务调用都通过负载均衡器</p>
 <p>从负载均衡的这种模式下其实有两个主要的问题：<br> 一是中心化，整个系统都基于负载均衡器，负载均衡就相当于整个业务的中心，虽然我们可以通过一些高可用手段来保证，但其实内部流量通常是巨大的，很容易出现性能瓶颈<br>二是增加了一次TCP交互</p>
 <p>当然也有很多好处，比如可以做一些负载均衡、长链接维护、分布式跟踪等，这不是本文重点</p>
-<h2 id="基于注册中心的服务调用"><a href="#基于注册中心的服务调用" class="headerlink" title="基于注册中心的服务调用"></a>基于注册中心的服务调用</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-52-30.png" alt=""><br>所有的服务都启动后都通过注册中心来注册自己，同时把注册中心里面的服务信息拉回本地，后续调用，就直接检查本地的服务和节点信息来进行服务节点的调用</p>
+<h2 id="基于注册中心的服务调用"><a href="#基于注册中心的服务调用" class="headerlink" title="基于注册中心的服务调用"></a>基于注册中心的服务调用</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-52-30.png" alt><br>所有的服务都启动后都通过注册中心来注册自己，同时把注册中心里面的服务信息拉回本地，后续调用，就直接检查本地的服务和节点信息来进行服务节点的调用</p>
           <div class="post-more-link text-center">
             <a class="btn" href="/2019/05/23/microservices/register_center_registery_hashcode/#more" rel="contents">
               阅读全文 &raquo;
@@ -687,8 +456,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-05-21T00:36:30+08:00" content="2019-05-21 00:36">
-              2019-05-21 00:36
+            <time itemprop="dateCreated" datetime="2019-05-21T00:38:16+08:00" content="2019-05-21 00:38">
+              2019-05-21 00:38
             </time>
           </span>
 
@@ -772,22 +541,22 @@
       
         
           
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="基于Kafka消息队列的两级协调调度架构"><a href="#基于Kafka消息队列的两级协调调度架构" class="headerlink" title="基于Kafka消息队列的两级协调调度架构"></a>基于Kafka消息队列的两级协调调度架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-20-23-14-45.png" alt=""><br>Kafka内部为了协调内部的consumer和kafka connector的工作实现了一个复制协议， 主要工作分为两个步骤：</p>
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="基于Kafka消息队列的两级协调调度架构"><a href="#基于Kafka消息队列的两级协调调度架构" class="headerlink" title="基于Kafka消息队列的两级协调调度架构"></a>基于Kafka消息队列的两级协调调度架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-20-23-14-45.png" alt><br>Kafka内部为了协调内部的consumer和kafka connector的工作实现了一个复制协议， 主要工作分为两个步骤：</p>
 <ol>
 <li>通过worker(consumer或connect)获取自身的topic offset等元数据信息，交给kafka的broker完成Leader/Follower选举</li>
 <li>worker Leader节点获取到kafka存储的partation和member信息，来进行二级分配，实现结合具体业务的负载均衡分配</li>
 </ol>
 <p>从功能实现上两级调度，一级调度负责将Leader选举，二级调度则是worker节点完成每个成员的任务的分配</p>
 <p><strong>主要是学习这种架构设计思想，虽然这种方案场景非常有限</strong></p>
-<h2 id="基于消息队列实现分布式协调设计"><a href="#基于消息队列实现分布式协调设计" class="headerlink" title="基于消息队列实现分布式协调设计"></a>基于消息队列实现分布式协调设计</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-20-39.png" alt=""><br>一级协调器设计：一级协调器主要是指的Coordinator部分，通过记录成员的元数据信息，来进行Leader选举，比如根据offset的大小来决定谁是Leader<br>二级协调器设计：二级协调器主要是指的Leader任务分配部分， worker节点获取到所有的任务和节点信息，就可以根据合适的算法来进行任务的分配，最终广播到消息队列</p>
-<p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-37-12.png" alt=""><br>值得我们学习的地方， 通常在kafka这种场景下，如果要针对不同的业务实现统一调度，还是蛮麻烦的， 所以比如将具体任务的分配工作从架构中迁移出去， 在broker端只负责通用层的Leader选举即可， 将具体业务的分配工作，从主业务架构分离出去，由具体业务去实现</p>
-<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><h2 id="核心设计"><a href="#核心设计" class="headerlink" title="核心设计"></a>核心设计</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-50-41.png" alt=""><br>根据设计，我们抽象出: MemoryQueue、Worker、 Coordinator、GroupRequest、GroupResponse、Task、Assignment集合核心组件</p>
+<h2 id="基于消息队列实现分布式协调设计"><a href="#基于消息队列实现分布式协调设计" class="headerlink" title="基于消息队列实现分布式协调设计"></a>基于消息队列实现分布式协调设计</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-20-39.png" alt><br>一级协调器设计：一级协调器主要是指的Coordinator部分，通过记录成员的元数据信息，来进行Leader选举，比如根据offset的大小来决定谁是Leader<br>二级协调器设计：二级协调器主要是指的Leader任务分配部分， worker节点获取到所有的任务和节点信息，就可以根据合适的算法来进行任务的分配，最终广播到消息队列</p>
+<p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-37-12.png" alt><br>值得我们学习的地方， 通常在kafka这种场景下，如果要针对不同的业务实现统一调度，还是蛮麻烦的， 所以比如将具体任务的分配工作从架构中迁移出去， 在broker端只负责通用层的Leader选举即可， 将具体业务的分配工作，从主业务架构分离出去，由具体业务去实现</p>
+<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><h2 id="核心设计"><a href="#核心设计" class="headerlink" title="核心设计"></a>核心设计</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-50-41.png" alt><br>根据设计，我们抽象出: MemoryQueue、Worker、 Coordinator、GroupRequest、GroupResponse、Task、Assignment集合核心组件</p>
 <p> MemoryQueue: 模拟消息队列实现消息的分发，充当kafka broker角色<br>Worker: 任务执行和具体业务二级协调算法<br>Coordinator: 位于消息队列内部的一个协调器，用于Leader/Follower选举<br>Task: 任务<br>Assignment: Coordnator根据任务信息和节点信息构建的任务分配结果<br>GroupRequest: 加入集群请求<br>GroupResponse: 响应信息</p>
 <h2 id="MemoryQueue"><a href="#MemoryQueue" class="headerlink" title="MemoryQueue"></a>MemoryQueue</h2><h3 id="核心数据结构"><a href="#核心数据结构" class="headerlink" title="核心数据结构"></a>核心数据结构</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MemoryQueue 内存消息队列</span></span><br><span class="line"><span class="keyword">type</span> MemoryQueue <span class="keyword">struct</span> &#123;</span><br><span class="line">	done             <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	queue            <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	wg               sync.WaitGroup</span><br><span class="line">	coordinator      <span class="keyword">map</span>[<span class="keyword">string</span>]*Coordinator</span><br><span class="line">	worker           <span class="keyword">map</span>[<span class="keyword">string</span>]*Worker</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>其中coordinator用于标识每个Group组的协调器，为每个组都建立一个分配器</p>
-<h3 id="节点加入集群请求处理"><a href="#节点加入集群请求处理" class="headerlink" title="节点加入集群请求处理"></a>节点加入集群请求处理</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-59-49.png" alt=""><br>MemoryQueue 接收事件类型，然后根据事件类型进行分发，如果是GroupRequest事件，则分发给handleGroupRequest进行处理<br>handleGroupRequest内部先获取对应group的coordinator，然后根据当前信息buildGroupResponse发回消息队列</p>
+<h3 id="节点加入集群请求处理"><a href="#节点加入集群请求处理" class="headerlink" title="节点加入集群请求处理"></a>节点加入集群请求处理</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-20-23-59-49.png" alt><br>MemoryQueue 接收事件类型，然后根据事件类型进行分发，如果是GroupRequest事件，则分发给handleGroupRequest进行处理<br>handleGroupRequest内部先获取对应group的coordinator，然后根据当前信息buildGroupResponse发回消息队列</p>
 <h3 id="事件分发处理"><a href="#事件分发处理" class="headerlink" title="事件分发处理"></a>事件分发处理</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">handleEvent</span><span class="params">(event <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> event.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> GroupRequest:</span><br><span class="line">		request := event.(GroupRequest)</span><br><span class="line">		mq.handleGroupRequest(&amp;request)</span><br><span class="line">	<span class="keyword">case</span> Task:</span><br><span class="line">		task := event.(Task)</span><br><span class="line">		mq.handleTask(&amp;task)</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		mq.Notify(event)</span><br><span class="line">	&#125;</span><br><span class="line">	mq.wg.Done()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="加入Group组请求处理"><a href="#加入Group组请求处理" class="headerlink" title="加入Group组请求处理"></a>加入Group组请求处理</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-21-00-27-23.png" alt=""><br>其中Coordnator会调用自己的getLeaderID方法，来根据当前组内的各成员的信息来选举一个Leader节点<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// getGroupCoordinator 获取指定组的协调器</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">getGroupCoordinator</span><span class="params">(group <span class="keyword">string</span>)</span> *<span class="title">Coordinator</span></span> &#123;</span><br><span class="line">	coordinator, ok := mq.coordinator[group]</span><br><span class="line">	<span class="keyword">if</span> ok &#123;</span><br><span class="line">		<span class="keyword">return</span> coordinator</span><br><span class="line">	&#125;</span><br><span class="line">	coordinator = NewCoordinator(group)</span><br><span class="line">	mq.coordinator[group] = coordinator</span><br><span class="line">	<span class="keyword">return</span> coordinator</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">handleGroupRequest</span><span class="params">(request *GroupRequest)</span></span> &#123;</span><br><span class="line">	coordinator := mq.getGroupCoordinator(request.Group)</span><br><span class="line">	exist := coordinator.addMember(request.ID, &amp;request.Metadata)</span><br><span class="line">	<span class="comment">// 如果worker之前已经加入该组, 就不做任何操作</span></span><br><span class="line">	<span class="keyword">if</span> exist &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 重新构建请求信息</span></span><br><span class="line">	groupResponse := mq.buildGroupResponse(coordinator)</span><br><span class="line">	mq.send(groupResponse)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">buildGroupResponse</span><span class="params">(coordinator *Coordinator)</span> <span class="title">GroupResponse</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> GroupResponse&#123;</span><br><span class="line">		Tasks:       coordinator.Tasks,</span><br><span class="line">		Group:       coordinator.Group,</span><br><span class="line">		Members:     coordinator.AllMembers(),</span><br><span class="line">		LeaderID:    coordinator.getLeaderID(),</span><br><span class="line">		Generation:  coordinator.Generation,</span><br><span class="line">		Coordinator: coordinator,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="加入Group组请求处理"><a href="#加入Group组请求处理" class="headerlink" title="加入Group组请求处理"></a>加入Group组请求处理</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-21-00-27-23.png" alt><br>其中Coordnator会调用自己的getLeaderID方法，来根据当前组内的各成员的信息来选举一个Leader节点<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// getGroupCoordinator 获取指定组的协调器</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">getGroupCoordinator</span><span class="params">(group <span class="keyword">string</span>)</span> *<span class="title">Coordinator</span></span> &#123;</span><br><span class="line">	coordinator, ok := mq.coordinator[group]</span><br><span class="line">	<span class="keyword">if</span> ok &#123;</span><br><span class="line">		<span class="keyword">return</span> coordinator</span><br><span class="line">	&#125;</span><br><span class="line">	coordinator = NewCoordinator(group)</span><br><span class="line">	mq.coordinator[group] = coordinator</span><br><span class="line">	<span class="keyword">return</span> coordinator</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">handleGroupRequest</span><span class="params">(request *GroupRequest)</span></span> &#123;</span><br><span class="line">	coordinator := mq.getGroupCoordinator(request.Group)</span><br><span class="line">	exist := coordinator.addMember(request.ID, &amp;request.Metadata)</span><br><span class="line">	<span class="comment">// 如果worker之前已经加入该组, 就不做任何操作</span></span><br><span class="line">	<span class="keyword">if</span> exist &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 重新构建请求信息</span></span><br><span class="line">	groupResponse := mq.buildGroupResponse(coordinator)</span><br><span class="line">	mq.send(groupResponse)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">buildGroupResponse</span><span class="params">(coordinator *Coordinator)</span> <span class="title">GroupResponse</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> GroupResponse&#123;</span><br><span class="line">		Tasks:       coordinator.Tasks,</span><br><span class="line">		Group:       coordinator.Group,</span><br><span class="line">		Members:     coordinator.AllMembers(),</span><br><span class="line">		LeaderID:    coordinator.getLeaderID(),</span><br><span class="line">		Generation:  coordinator.Generation,</span><br><span class="line">		Coordinator: coordinator,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="Coordinator"><a href="#Coordinator" class="headerlink" title="Coordinator"></a>Coordinator</h2><h3 id="核心数据结构-1"><a href="#核心数据结构-1" class="headerlink" title="核心数据结构"></a>核心数据结构</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Coordinator 协调器</span></span><br><span class="line"><span class="keyword">type</span> Coordinator <span class="keyword">struct</span> &#123;</span><br><span class="line">	Group      <span class="keyword">string</span></span><br><span class="line">	Generation <span class="keyword">int</span></span><br><span class="line">	Members    <span class="keyword">map</span>[<span class="keyword">string</span>]*Metadata</span><br><span class="line">	Tasks      []<span class="keyword">string</span></span><br><span class="line">	Heartbeats <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">int64</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>Coordinator内部通过Members信息，来存储各个worker节点的元数据信息，  然后Tasks存储当前group的所有任务, Heartbeats存储workerd额心跳信息， Generation是一个分代计数器，每次节点变化都会递增</p>
 <h3 id="通过offset选举Leader"><a href="#通过offset选举Leader" class="headerlink" title="通过offset选举Leader"></a>通过offset选举Leader</h3><p>通过存储的worker的metadata信息，来进行主节点的选举<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// getLeaderID 根据当前信息获取leader节点</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Coordinator)</span> <span class="title">getLeaderID</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	leaderID, maxOffset := <span class="string">""</span>, <span class="number">0</span></span><br><span class="line">	<span class="comment">// 这里是通过offset大小来判定，offset大的就是leader, 实际上可能会更加复杂一些</span></span><br><span class="line">	<span class="keyword">for</span> wid, metadata := <span class="keyword">range</span> c.Members &#123;</span><br><span class="line">		<span class="keyword">if</span> leaderID == <span class="string">""</span> || metadata.offset() &gt; maxOffset &#123;</span><br><span class="line">			leaderID = wid</span><br><span class="line">			maxOffset = metadata.offset()</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> leaderID</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
@@ -796,7 +565,7 @@
 <h3 id="分发请求消息"><a href="#分发请求消息" class="headerlink" title="分发请求消息"></a>分发请求消息</h3><p>worker接收到不同的事件类型，根据类型来进行处理, 其中handleGroupResponse负责接收到服务端Coordinator响应的信息，里面会包含leader节点和任务信息，由worker 来进行二级分配, handleAssign则是处理分配完后的任务信息<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Execute 接收到分配的任务进行请求执行</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">Execute</span><span class="params">(event <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> event.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> GroupResponse:</span><br><span class="line">		response := event.(GroupResponse)</span><br><span class="line">		w.handleGroupResponse(&amp;response)</span><br><span class="line">	<span class="keyword">case</span> Assignment:</span><br><span class="line">		assign := event.(Assignment)</span><br><span class="line">		w.handleAssign(&amp;assign)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h3 id="GroupResponse根据角色类型进行后续业务逻辑"><a href="#GroupResponse根据角色类型进行后续业务逻辑" class="headerlink" title="GroupResponse根据角色类型进行后续业务逻辑"></a>GroupResponse根据角色类型进行后续业务逻辑</h3><p>GroupResponse会将节点分割为两种：Leader和Follower, Leader节点接收到GroupResponse后需要继续进行分配任务，而Follower则只需要监听事件和发送心跳<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">handleGroupResponse</span><span class="params">(response *GroupResponse)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> w.isLeader(response.LeaderID) &#123;</span><br><span class="line">		w.onLeaderJoin(response)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		w.onFollowerJoin(response)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h3 id="Follower节点"><a href="#Follower节点" class="headerlink" title="Follower节点"></a>Follower节点</h3><p>Follower节点进行心跳发送<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// onFollowerJoin 当前角色是follower</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onFollowerJoin</span><span class="params">(response *GroupResponse)</span></span> &#123;</span><br><span class="line">	w.Coordinator = response.Coordinator</span><br><span class="line">	<span class="keyword">go</span> w.heartbeat()</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// heartbeat 发送心跳</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">heartbeat</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// timer := time.NewTimer(time.Second)</span></span><br><span class="line">	<span class="comment">// for &#123;</span></span><br><span class="line">	<span class="comment">// 	select &#123;</span></span><br><span class="line">	<span class="comment">// 	case &lt;-timer.C:</span></span><br><span class="line">	<span class="comment">// 		w.Coordinator.heartbeat(w.ID, time.Now().Unix())</span></span><br><span class="line">	<span class="comment">// 		timer.Reset(time.Second)</span></span><br><span class="line">	<span class="comment">// 	case &lt;-w.done:</span></span><br><span class="line">	<span class="comment">// 		return</span></span><br><span class="line">	<span class="comment">// 	&#125;</span></span><br><span class="line">	<span class="comment">// &#125;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h3 id="Leader节点"><a href="#Leader节点" class="headerlink" title="Leader节点"></a>Leader节点</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-21-00-25-07.png" alt=""><br>Leader节点这个地方我将调度分配分为两个步骤：<br>1）通过节点数和任务数将任务进行分片<br>2）将分片后的任务分配给各个节点，最终发送回队列<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// onLeaderJoin 当前角色是leader, 执行任务分配并发送mq</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onLeaderJoin</span><span class="params">(response *GroupResponse)</span></span> &#123;</span><br><span class="line">	fmt.Printf(<span class="string">"Generation [%d] leaderID [%s]\n"</span>, response.Generation, w.ID)</span><br><span class="line">	w.Coordinator = response.Coordinator</span><br><span class="line">	<span class="keyword">go</span> w.heartbeat()</span><br><span class="line">	<span class="comment">// 进行任务分片</span></span><br><span class="line">	taskSlice := w.performAssign(response)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 将任务分配给各个worker</span></span><br><span class="line">	memerTasks, index := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>][]<span class="keyword">string</span>), <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> _, name := <span class="keyword">range</span> response.Members &#123;</span><br><span class="line">		memerTasks[name] = taskSlice[index]</span><br><span class="line">		index++</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 分发请求</span></span><br><span class="line">	assign := Assignment&#123;LeaderID: w.ID, Generation: response.Generation, result: memerTasks&#125;</span><br><span class="line">	w.queue.send(assign)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// performAssign 根据当前成员和任务数</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">performAssign</span><span class="params">(response *GroupResponse)</span> [][]<span class="title">string</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	perWorker := <span class="built_in">len</span>(response.Tasks) / <span class="built_in">len</span>(response.Members)</span><br><span class="line">	leftOver := <span class="built_in">len</span>(response.Tasks) - <span class="built_in">len</span>(response.Members)*perWorker</span><br><span class="line"></span><br><span class="line">	result := <span class="built_in">make</span>([][]<span class="keyword">string</span>, <span class="built_in">len</span>(response.Members))</span><br><span class="line"></span><br><span class="line">	taskIndex, memberTaskCount := <span class="number">0</span>, <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> index := <span class="keyword">range</span> result &#123;</span><br><span class="line">		<span class="keyword">if</span> index &lt; leftOver &#123;</span><br><span class="line">			memberTaskCount = perWorker + <span class="number">1</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			memberTaskCount = perWorker</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; memberTaskCount; i++ &#123;</span><br><span class="line">			result[index] = <span class="built_in">append</span>(result[index], response.Tasks[taskIndex])</span><br><span class="line">			taskIndex++</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="Leader节点"><a href="#Leader节点" class="headerlink" title="Leader节点"></a>Leader节点</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-21-00-25-07.png" alt><br>Leader节点这个地方我将调度分配分为两个步骤：<br>1）通过节点数和任务数将任务进行分片<br>2）将分片后的任务分配给各个节点，最终发送回队列<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// onLeaderJoin 当前角色是leader, 执行任务分配并发送mq</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onLeaderJoin</span><span class="params">(response *GroupResponse)</span></span> &#123;</span><br><span class="line">	fmt.Printf(<span class="string">"Generation [%d] leaderID [%s]\n"</span>, response.Generation, w.ID)</span><br><span class="line">	w.Coordinator = response.Coordinator</span><br><span class="line">	<span class="keyword">go</span> w.heartbeat()</span><br><span class="line">	<span class="comment">// 进行任务分片</span></span><br><span class="line">	taskSlice := w.performAssign(response)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 将任务分配给各个worker</span></span><br><span class="line">	memerTasks, index := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>][]<span class="keyword">string</span>), <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> _, name := <span class="keyword">range</span> response.Members &#123;</span><br><span class="line">		memerTasks[name] = taskSlice[index]</span><br><span class="line">		index++</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 分发请求</span></span><br><span class="line">	assign := Assignment&#123;LeaderID: w.ID, Generation: response.Generation, result: memerTasks&#125;</span><br><span class="line">	w.queue.send(assign)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// performAssign 根据当前成员和任务数</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">performAssign</span><span class="params">(response *GroupResponse)</span> [][]<span class="title">string</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	perWorker := <span class="built_in">len</span>(response.Tasks) / <span class="built_in">len</span>(response.Members)</span><br><span class="line">	leftOver := <span class="built_in">len</span>(response.Tasks) - <span class="built_in">len</span>(response.Members)*perWorker</span><br><span class="line"></span><br><span class="line">	result := <span class="built_in">make</span>([][]<span class="keyword">string</span>, <span class="built_in">len</span>(response.Members))</span><br><span class="line"></span><br><span class="line">	taskIndex, memberTaskCount := <span class="number">0</span>, <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> index := <span class="keyword">range</span> result &#123;</span><br><span class="line">		<span class="keyword">if</span> index &lt; leftOver &#123;</span><br><span class="line">			memberTaskCount = perWorker + <span class="number">1</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			memberTaskCount = perWorker</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; memberTaskCount; i++ &#123;</span><br><span class="line">			result[index] = <span class="built_in">append</span>(result[index], response.Tasks[taskIndex])</span><br><span class="line">			taskIndex++</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="测试数据"><a href="#测试数据" class="headerlink" title="测试数据"></a>测试数据</h2><p>启动一个队列，然后加入任务和worker，观察分配结果<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 构建队列</span></span><br><span class="line">queue := NewMemoryQueue(<span class="number">10</span>)</span><br><span class="line">queue.Start()</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送任务</span></span><br><span class="line">queue.send(Task&#123;Name: <span class="string">"test1"</span>, Group: <span class="string">"test"</span>&#125;)</span><br><span class="line">queue.send(Task&#123;Name: <span class="string">"test2"</span>, Group: <span class="string">"test"</span>&#125;)</span><br><span class="line">queue.send(Task&#123;Name: <span class="string">"test3"</span>, Group: <span class="string">"test"</span>&#125;)</span><br><span class="line">queue.send(Task&#123;Name: <span class="string">"test4"</span>, Group: <span class="string">"test"</span>&#125;)</span><br><span class="line">queue.send(Task&#123;Name: <span class="string">"test5"</span>, Group: <span class="string">"test"</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 启动worker, 为每个worker分配不同的offset观察是否能将leader正常分配</span></span><br><span class="line">workerOne := NewWorker(<span class="string">"test-1"</span>, <span class="string">"test"</span>, queue)</span><br><span class="line">workerOne.start(<span class="number">1</span>)</span><br><span class="line">queue.addWorker(workerOne.ID, workerOne)</span><br><span class="line"></span><br><span class="line">workerTwo := NewWorker(<span class="string">"test-2"</span>, <span class="string">"test"</span>, queue)</span><br><span class="line">workerTwo.start(<span class="number">2</span>)</span><br><span class="line">queue.addWorker(workerTwo.ID, workerTwo)</span><br><span class="line"></span><br><span class="line">workerThree := NewWorker(<span class="string">"test-3"</span>, <span class="string">"test"</span>, queue)</span><br><span class="line">workerThree.start(<span class="number">3</span>)</span><br><span class="line">queue.addWorker(workerThree.ID, workerThree)</span><br><span class="line"></span><br><span class="line">time.Sleep(time.Second)</span><br><span class="line">workerThree.stop()</span><br><span class="line">time.Sleep(time.Second)</span><br><span class="line">workerTwo.stop()</span><br><span class="line">time.Sleep(time.Second)</span><br><span class="line">workerOne.stop()</span><br><span class="line"></span><br><span class="line">queue.Stop()</span><br></pre></td></tr></table></figure></p>
 <p>运行结果: 首先根据offset, 最终test-3位Leader, 然后查看任务分配结果， 有两个节点2个任务，一个节点一个任务， 然后随着worker的退出，又会进行任务的重新分配<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Generation [1] leaderID [<span class="built_in">test</span>-1]</span><br><span class="line">Generation [2] leaderID [<span class="built_in">test</span>-2]</span><br><span class="line">Generation [3] leaderID [<span class="built_in">test</span>-3]</span><br><span class="line">Generation [1] worker [<span class="built_in">test</span>-1]  run tasks: [test1||test2||test3||test4||test5]</span><br><span class="line">Generation [1] worker [<span class="built_in">test</span>-2]  run tasks: []</span><br><span class="line">Generation [1] worker [<span class="built_in">test</span>-3]  run tasks: []</span><br><span class="line">Generation [2] worker [<span class="built_in">test</span>-1]  run tasks: [test1||test2||test3]</span><br><span class="line">Generation [2] worker [<span class="built_in">test</span>-2]  run tasks: [test4||test5]</span><br><span class="line">Generation [2] worker [<span class="built_in">test</span>-3]  run tasks: []</span><br><span class="line">Generation [3] worker [<span class="built_in">test</span>-1]  run tasks: [test1||test2]</span><br><span class="line">Generation [3] worker [<span class="built_in">test</span>-2]  run tasks: [test3||test4]</span><br><span class="line">Generation [3] worker [<span class="built_in">test</span>-3]  run tasks: [test5]</span><br><span class="line">Generation [4] leaderID [<span class="built_in">test</span>-2]</span><br><span class="line">Generation [4] worker [<span class="built_in">test</span>-1]  run tasks: [test1||test2||test3]</span><br><span class="line">Generation [4] worker [<span class="built_in">test</span>-2]  run tasks: [test4||test5]</span><br><span class="line">Generation [5] leaderID [<span class="built_in">test</span>-1]</span><br><span class="line">Generation [5] worker [<span class="built_in">test</span>-1]  run tasks: [test1||test2||test3||test4||test5]</span><br></pre></td></tr></table></figure></p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>其实在分布式场景中，这种Leader/Follower选举，其实更多的是会选择基于AP模型的consul、etcd、zk等， 本文的这种设计，与kafka自身的业务场景由很大的关系， 后续有时间，还是继续看看别的设计， 从kafka connet借鉴的设计，就到这了</p>
@@ -864,8 +633,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-05-17T10:44:18+08:00" content="2019-05-17 10:44">
-              2019-05-17 10:44
+            <time itemprop="dateCreated" datetime="2019-05-17T10:45:36+08:00" content="2019-05-17 10:45">
+              2019-05-17 10:45
             </time>
           </span>
 
@@ -949,17 +718,17 @@
       
         
           
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="分布式多消息事务问题"><a href="#分布式多消息事务问题" class="headerlink" title="分布式多消息事务问题"></a>分布式多消息事务问题</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-34.png" alt=""><br>在消息队列使用场景中，有时需要同时下发多条消息，但现在的消息队列比如kafka只支持单条消息的事务保证，不能保证多条消息，今天说的这个方案就时kafka内部的一个子项目中基于2PC和延迟更新来实现分布式事务</p>
-<h2 id="2PC"><a href="#2PC" class="headerlink" title="2PC"></a>2PC</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-44.png" alt=""><br>2PC俗称两阶段提交，通过将一个操作分为两个阶段：准备阶段和提交阶段来尽可能保证操作的原子执行(实际上不可能，大家有个概念先)</p>
-<h2 id="延迟更新"><a href="#延迟更新" class="headerlink" title="延迟更新"></a>延迟更新</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-57.png" alt=""><br>延迟更新其实是一个很常用的技术手段，简单来说，当某个操作条件不满足时，通过一定手段将数据暂存，等条件满足时在进行执行</p>
-<h1 id="基于2PC和延迟队列的分布式事务实现"><a href="#基于2PC和延迟队列的分布式事务实现" class="headerlink" title="基于2PC和延迟队列的分布式事务实现"></a>基于2PC和延迟队列的分布式事务实现</h1><h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-11.png" alt=""><br>实现也蛮简单的， 在原来的业务消息之后再添加一条事务消息(事务消息可以通过类似唯一ID来关联到之前提交的消息)， worker未消费到事物提交的消息，就会一直将消息放在本地延迟存储中，只有当接收到事物提交消息，才会进行业务逻辑处理</p>
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="分布式多消息事务问题"><a href="#分布式多消息事务问题" class="headerlink" title="分布式多消息事务问题"></a>分布式多消息事务问题</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-34.png" alt><br>在消息队列使用场景中，有时需要同时下发多条消息，但现在的消息队列比如kafka只支持单条消息的事务保证，不能保证多条消息，今天说的这个方案就时kafka内部的一个子项目中基于2PC和延迟更新来实现分布式事务</p>
+<h2 id="2PC"><a href="#2PC" class="headerlink" title="2PC"></a>2PC</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-44.png" alt><br>2PC俗称两阶段提交，通过将一个操作分为两个阶段：准备阶段和提交阶段来尽可能保证操作的原子执行(实际上不可能，大家有个概念先)</p>
+<h2 id="延迟更新"><a href="#延迟更新" class="headerlink" title="延迟更新"></a>延迟更新</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-57.png" alt><br>延迟更新其实是一个很常用的技术手段，简单来说，当某个操作条件不满足时，通过一定手段将数据暂存，等条件满足时在进行执行</p>
+<h1 id="基于2PC和延迟队列的分布式事务实现"><a href="#基于2PC和延迟队列的分布式事务实现" class="headerlink" title="基于2PC和延迟队列的分布式事务实现"></a>基于2PC和延迟队列的分布式事务实现</h1><h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-11.png" alt><br>实现也蛮简单的， 在原来的业务消息之后再添加一条事务消息(事务消息可以通过类似唯一ID来关联到之前提交的消息)， worker未消费到事物提交的消息，就会一直将消息放在本地延迟存储中，只有当接收到事物提交消息，才会进行业务逻辑处理</p>
 <h2 id="业务流程"><a href="#业务流程" class="headerlink" title="业务流程"></a>业务流程</h2><h3 id="生产者"><a href="#生产者" class="headerlink" title="生产者"></a>生产者</h3><ol>
 <li>逐条发送业务消息组</li>
 <li>发送事务提交消息<h3 id="消费者"><a href="#消费者" class="headerlink" title="消费者"></a>消费者</h3></li>
 <li>消费消息队列，将业务消息存放本地延迟存储</li>
 <li>接收提交事务消息，从本地延迟存储获取所有数据，然后从延迟存储中删除该消息</li>
 </ol>
-<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-24.png" alt=""><br>MemoryQuue: 用于模拟消息队列，接收事件分发事件<br>Worker: 模拟具体业务服务，接收消息，存入本地延迟更新存储，或者提交事务触发业务回调</p>
+<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-24.png" alt><br>MemoryQuue: 用于模拟消息队列，接收事件分发事件<br>Worker: 模拟具体业务服务，接收消息，存入本地延迟更新存储，或者提交事务触发业务回调</p>
 <h2 id="Event与EventListener"><a href="#Event与EventListener" class="headerlink" title="Event与EventListener"></a>Event与EventListener</h2><p>Event: 用于标识事件，用户将业务数据封装成事件存入到MemoryQueue中<br>EventListener: 事件回调接口，用于MemoryQueue接收到数据后的回调<br>事件在发送的时候，需要通过一个前缀来进行事件类型标识，这里有三种TaskPrefix、CommitTaskPrefix、ClearTaskPrefix<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	<span class="comment">// TaskPrefix 任务key前缀</span></span><br><span class="line">	TaskPrefix <span class="keyword">string</span> = <span class="string">"task-"</span></span><br><span class="line">	<span class="comment">// CommitTaskPrefix 提交任务key前缀</span></span><br><span class="line">	CommitTaskPrefix <span class="keyword">string</span> = <span class="string">"commit-"</span></span><br><span class="line">	<span class="comment">// ClearTaskPrefix 清除任务</span></span><br><span class="line">	ClearTaskPrefix <span class="keyword">string</span> = <span class="string">"clear-"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Event 事件类型</span></span><br><span class="line"><span class="keyword">type</span> Event <span class="keyword">struct</span> &#123;</span><br><span class="line">	Key   <span class="keyword">string</span></span><br><span class="line">	Name  <span class="keyword">string</span></span><br><span class="line">	Value <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// EventListener 用于接收消息回调</span></span><br><span class="line"><span class="keyword">type</span> EventListener <span class="keyword">interface</span> &#123;</span><br><span class="line">	onEvent(event *Event)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="MemoryQueue"><a href="#MemoryQueue" class="headerlink" title="MemoryQueue"></a>MemoryQueue</h2><p>MemoryQueue内存消息队列，通过Push接口接收用户数据，通过AddListener来注册EventListener, 同时内部通过poll来从chan event取出数据分发给所有的Listener<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MemoryQueue 内存消息队列</span></span><br><span class="line"><span class="keyword">type</span> MemoryQueue <span class="keyword">struct</span> &#123;</span><br><span class="line">	done      <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	queue     <span class="keyword">chan</span> Event</span><br><span class="line">	listeners []EventListener</span><br><span class="line">	wg        sync.WaitGroup</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Push 添加数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Push</span><span class="params">(eventType, name <span class="keyword">string</span>, value <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	mq.queue &lt;- Event&#123;Key: eventType + name, Name: name, Value: value&#125;</span><br><span class="line">	mq.wg.Add(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddListener 添加监听器</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">AddListener</span><span class="params">(listener EventListener)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> mq.listeners &#123;</span><br><span class="line">		<span class="keyword">if</span> item == listener &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	mq.listeners = <span class="built_in">append</span>(mq.listeners, listener)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Notify 分发消息</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Notify</span><span class="params">(event *Event)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> mq.wg.Done()</span><br><span class="line">	<span class="keyword">for</span> _, listener := <span class="keyword">range</span> mq.listeners &#123;</span><br><span class="line">		listener.onEvent(event)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">poll</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-mq.done:</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		<span class="keyword">case</span> event := &lt;-mq.queue:</span><br><span class="line">			mq.Notify(&amp;event)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Start 启动内存队列</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Start</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">go</span> mq.poll()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Stop 停止内存队列</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Stop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	mq.wg.Wait()</span><br><span class="line">	<span class="built_in">close</span>(mq.done)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="Worker"><a href="#Worker" class="headerlink" title="Worker"></a>Worker</h2><p>Worker接收MemoryQueue里面的数据，然后在本地根据不同类型来进行对应事件事件类型处理， 主要是通过事件的前缀来进行对应事件回调函数的选择<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// Worker 工作进程</span></span><br><span class="line"><span class="keyword">type</span> Worker <span class="keyword">struct</span> &#123;</span><br><span class="line">	name                <span class="keyword">string</span></span><br><span class="line">	deferredTaskUpdates <span class="keyword">map</span>[<span class="keyword">string</span>][]Task</span><br><span class="line">	onCommit            ConfigUpdateCallback</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onEvent</span><span class="params">(event *Event)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> &#123;</span><br><span class="line">	<span class="comment">// 获取任务事件</span></span><br><span class="line">	<span class="keyword">case</span> strings.Contains(event.Key, TaskPrefix):</span><br><span class="line">		w.onTaskEvent(event)</span><br><span class="line">		<span class="comment">// 清除本地延迟队列里面的任务</span></span><br><span class="line">	<span class="keyword">case</span> strings.Contains(event.Key, ClearTaskPrefix):</span><br><span class="line">		w.onTaskClear(event)</span><br><span class="line">		<span class="comment">// 获取commit事件</span></span><br><span class="line">	<span class="keyword">case</span> strings.Contains(event.Key, CommitTaskPrefix):</span><br><span class="line">		w.onTaskCommit(event)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
@@ -1020,8 +789,8 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/14/designpatter/circuit_breaker/" itemprop="url">
-                  微服务的断路器实现图解
+                <a class="post-title-link" href="/2019/05/14/k8s/k8s_service_controller/" itemprop="url">
+                  Service Controller 源码实现
                 </a>
               
             
@@ -1034,8 +803,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-05-14T21:52:02+08:00" content="2019-05-14 21:52">
-              2019-05-14 21:52
+            <time itemprop="dateCreated" datetime="2019-05-14T21:56:33+08:00" content="2019-05-14 21:56">
+              2019-05-14 21:56
             </time>
           </span>
 
@@ -1048,8 +817,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/微服务/" itemprop="url" rel="index">
-                    <span itemprop="name">微服务</span>
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
                   </a>
                 </span>
 
@@ -1060,8 +829,8 @@
 
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/微服务/断路器/" itemprop="url" rel="index">
-                    <span itemprop="name">断路器</span>
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
                   </a>
                 </span>
 
@@ -1072,8 +841,8 @@
 
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/微服务/断路器/go源码/" itemprop="url" rel="index">
-                    <span itemprop="name">go源码</span>
+                  <a href="/categories/k8s/k8s那些天/controller/" itemprop="url" rel="index">
+                    <span itemprop="name">controller</span>
                   </a>
                 </span>
 
@@ -1106,10 +875,15 @@
 
       
         
-          <h1 id="断路器背景"><a href="#断路器背景" class="headerlink" title="断路器背景"></a>断路器背景</h1><h2 id="微服务连锁故障场景"><a href="#微服务连锁故障场景" class="headerlink" title="微服务连锁故障场景"></a>微服务连锁故障场景</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-10-51-12.png" alt=""><br>在分布式环境中，各个微服务相互调用，当某些情况下，比如后端中间件服务故障、第三方服务中断导致某个服务无限期不可用，短时间无法恢复，则可能会导致连锁故障，最终影响压垮整个业务集群</p>
-<h2 id="断路器与重试"><a href="#断路器与重试" class="headerlink" title="断路器与重试"></a>断路器与重试</h2><p>断路器模式不同于重试模式，重试模式是使应用程序可以重试操作以期望它会成功，而断路器模式是防止应用程序执行一个可能失败的操作，减少执行可能失败操作的CPU、内存、线程等资源的浪费，从而保证服务的整体可用</p>
+          <p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-16-06-38-31.png" alt></p>
+<p>Kubernetes Service定义分为两个部分</p>
+<ul>
+<li>一组pod的逻辑分组(微服务中的一个服务)</li>
+<li>一组pod的访问方式和访问策略</li>
+</ul>
+<p>由于访问策略由kube-proxy控制，所以service Controller实际上只负责根据cloud.LoadBalancer的交互,  负责更新那些服务类型为LoadBalancer的service</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/05/14/designpatter/circuit_breaker/#more" rel="contents">
+            <a class="btn" href="/2019/05/14/k8s/k8s_service_controller/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1160,7 +934,159 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/09/data_struct/circular_queue_rr/" itemprop="url">
+                <a class="post-title-link" href="/2019/05/14/go/go_channel/" itemprop="url">
+                  Go里面Channel的实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-14T21:55:56+08:00" content="2019-05-14 21:55">
+              2019-05-14 21:55
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/图解/" itemprop="url" rel="index">
+                    <span itemprop="name">图解</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/图解/channel/" itemprop="url" rel="index">
+                    <span itemprop="name">channel</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/图解/channel/golang/" itemprop="url" rel="index">
+                    <span itemprop="name">golang</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h1 id="管道介绍"><a href="#管道介绍" class="headerlink" title="管道介绍"></a>管道介绍</h1><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-20.png" alt><br>Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步</p>
+<p>channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2019/05/14/go/go_channel/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2019/05/14/data_struct/circular_queue_rr/" itemprop="url">
                   基于环状队列和迭代器实现分布式任务RR分配策略
                 </a>
               
@@ -1174,8 +1100,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-05-09T18:39:47+08:00" content="2019-05-09 18:39">
-              2019-05-09 18:39
+            <time itemprop="dateCreated" datetime="2019-05-14T21:55:32+08:00" content="2019-05-14 21:55">
+              2019-05-14 21:55
             </time>
           </span>
 
@@ -1261,7 +1187,7 @@
           <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="分布式任务分配"><a href="#分布式任务分配" class="headerlink" title="分布式任务分配"></a>分布式任务分配</h2><p>在很多运维场景下，我们都会执行一些长时间的任务，比如装机、部署环境、打包镜像等长时间任务， 而通常我们的任务节点数量通常是有限的(排除基于k8s的hpa、或者knative等自动伸缩场景)。</p>
 <p>那么当我们有一个任务如何根据当前的worker和corrdinator和任务来进行合理的分配，分配其实也比较复杂，往复杂里面做，可以根据当前系统的负载、每个任务的执行资源消耗、当前集群的任务数量等， 这里我们就搞一个最简单的，基于任务和当前worker的RR算法</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/05/09/data_struct/circular_queue_rr/#more" rel="contents">
+            <a class="btn" href="/2019/05/14/data_struct/circular_queue_rr/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1312,8 +1238,8 @@
             
               
                 
-                <a class="post-title-link" href="/2019/04/30/go/go_channel/" itemprop="url">
-                  Go里面Channel的实现
+                <a class="post-title-link" href="/2019/05/14/designpatter/circuit_breaker/" itemprop="url">
+                  微服务的断路器实现图解
                 </a>
               
             
@@ -1326,8 +1252,148 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-04-30T14:20:54+08:00" content="2019-04-30 14:20">
-              2019-04-30 14:20
+            <time itemprop="dateCreated" datetime="2019-05-14T21:55:03+08:00" content="2019-05-14 21:55">
+              2019-05-14 21:55
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/" itemprop="url" rel="index">
+                    <span itemprop="name">微服务</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/断路器/" itemprop="url" rel="index">
+                    <span itemprop="name">断路器</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/断路器/go源码/" itemprop="url" rel="index">
+                    <span itemprop="name">go源码</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h1 id="断路器背景"><a href="#断路器背景" class="headerlink" title="断路器背景"></a>断路器背景</h1><h2 id="微服务连锁故障场景"><a href="#微服务连锁故障场景" class="headerlink" title="微服务连锁故障场景"></a>微服务连锁故障场景</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-14-10-51-12.png" alt><br>在分布式环境中，各个微服务相互调用，当某些情况下，比如后端中间件服务故障、第三方服务中断导致某个服务无限期不可用，短时间无法恢复，则可能会导致连锁故障，最终影响压垮整个业务集群</p>
+<h2 id="断路器与重试"><a href="#断路器与重试" class="headerlink" title="断路器与重试"></a>断路器与重试</h2><p>断路器模式不同于重试模式，重试模式是使应用程序可以重试操作以期望它会成功，而断路器模式是防止应用程序执行一个可能失败的操作，减少执行可能失败操作的CPU、内存、线程等资源的浪费，从而保证服务的整体可用</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2019/05/14/designpatter/circuit_breaker/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2019/05/14/go/go_restful_01/" itemprop="url">
+                  go-restful框架学习
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-14T21:48:33+08:00" content="2019-05-14 21:48">
+              2019-05-14 21:48
             </time>
           </span>
 
@@ -1347,42 +1413,6 @@
 
                 
                 
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/图解/" itemprop="url" rel="index">
-                    <span itemprop="name">图解</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/图解/channel/" itemprop="url" rel="index">
-                    <span itemprop="name">channel</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/图解/channel/golang/" itemprop="url" rel="index">
-                    <span itemprop="name">golang</span>
-                  </a>
-                </span>
-
-                
-                
 
               
             </span>
@@ -1410,10 +1440,9 @@
 
       
         
-          <h1 id="管道介绍"><a href="#管道介绍" class="headerlink" title="管道介绍"></a>管道介绍</h1><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-20.png" alt=""><br>Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步</p>
-<p>channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理</p>
+          <h3 id="go-restful初步了解"><a href="#go-restful初步了解" class="headerlink" title="go-restful初步了解"></a>go-restful初步了解</h3><h4 id="go-restful介绍"><a href="#go-restful介绍" class="headerlink" title="go-restful介绍"></a>go-restful介绍</h4><p>go-restful是一个基于go里面net/http构建的一个rest风格的包，这个库并没有做过多的封装， 再kubernets和蓝鲸的cmdb里面都有使用</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/04/30/go/go_channel/#more" rel="contents">
+            <a class="btn" href="/2019/05/14/go/go_restful_01/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1464,8 +1493,8 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/20/k8s/k8s_service_controller/" itemprop="url">
-                  Service Controller 源码实现
+                <a class="post-title-link" href="/2018/10/31/k8s/k8s_job_controller/" itemprop="url">
+                  Job Controller 源码实现
                 </a>
               
             
@@ -1478,8 +1507,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-20T09:56:40+08:00" content="2018-10-20 09:56">
-              2018-10-20 09:56
+            <time itemprop="dateCreated" datetime="2018-10-31T12:32:35+08:00" content="2018-10-31 12:32">
+              2018-10-31 12:32
             </time>
           </span>
 
@@ -1550,298 +1579,111 @@
 
       
         
-          <p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-16-06-38-31.png" alt=""></p>
-<p>Kubernetes Service定义分为两个部分</p>
+          <p>关注job controller需要关心哪些方面的事情</p>
 <ul>
-<li>一组pod的逻辑分组(微服务中的一个服务)</li>
-<li>一组pod的访问方式和访问策略</li>
-</ul>
-<p>由于访问策略由kube-proxy控制，所以service Controller实际上只负责根据cloud.LoadBalancer的交互,  负责更新那些服务类型为LoadBalancer的service</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/20/k8s/k8s_service_controller/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/10/19/k8s/k8s_endpoint_controller/" itemprop="url">
-                  Endpoints Controller 源码实现
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-19T06:11:05+08:00" content="2018-10-19 06:11">
-              2018-10-19 06:11
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/controller/" itemprop="url" rel="index">
-                    <span itemprop="name">controller</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="Endpoints理解"><a href="#Endpoints理解" class="headerlink" title="Endpoints理解"></a>Endpoints理解</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-16-15-22-30.png" alt=""><br>Endpoints并不同于其他的资源(service、job等都会watch自身的变化, 基于当前状态计算目标状态, 产生操作), 而是基于Service和Pod的一个聚合资源, 通过Pod和Service进行计算, 生成一个Endpoints</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/19/k8s/k8s_endpoint_controller/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/10/16/k8s/cron_job_controller/" itemprop="url">
-                  Cron Controller 源码实现
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-16T05:40:53+08:00" content="2018-10-16 05:40">
-              2018-10-16 05:40
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
-                    <span itemprop="name">k8s那些天</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/k8s/k8s那些天/controller/" itemprop="url" rel="index">
-                    <span itemprop="name">controller</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-12-11-47-31.png" alt=""><br>CronJobController主要负责周期性任务的调度, 就跟linux中的crontab程序类似, 当达到时间就根据策略调用apiserver进行任务的创建或者状态的修改</p>
-<p>当前CronJobController的问题</p>
-<ul>
-<li>CronJobController并没有使用informer来进行时间监听apiserver, 而是直接进行周期循环</li>
-<li>单groutine进行调度</li>
+<li>controller内部的数据结构(what  whyhow detail)</li>
+<li>controller内部的业务逻辑实现</li>
+<li>几种不同job模式的内部实现</li>
+<li>controller使用的算法</li>
 </ul>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/16/k8s/cron_job_controller/#more" rel="contents">
+            <a class="btn" href="/2018/10/31/k8s/k8s_job_controller/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/10/27/django_rest_auth_00/" itemprop="url">
+                  opstask web api的编写
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:35+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h3 id="django的rest登录设置"><a href="#django的rest登录设置" class="headerlink" title="django的rest登录设置"></a>django的rest登录设置</h3>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/10/27/django_rest_auth_00/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1916,7 +1758,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">45</span>
+              <span class="site-state-item-count">44</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1924,7 +1766,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">38</span>
+                <span class="site-state-item-count">37</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1933,7 +1775,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">43</span>
+                <span class="site-state-item-count">42</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

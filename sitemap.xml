@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/23/microservices/register_center_registery_hashcode/</loc>
+    
+    <lastmod>2019-05-23T02:47:17.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/21/distributed/kafka_leader_follower_coordinator/</loc>
+    
+    <lastmod>2019-05-20T16:38:16.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/17/data_struct/2pc_msg_queue_conf/</loc>
+    
+    <lastmod>2019-05-17T02:45:36.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/about/index.html</loc>
+    
+    <lastmod>2019-05-14T15:20:02.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/14/k8s/k8s_service_controller/</loc>
+    
+    <lastmod>2019-05-14T13:56:33.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/14/go/go_channel/</loc>
+    
+    <lastmod>2019-05-14T13:55:56.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/14/data_struct/circular_queue_rr/</loc>
+    
+    <lastmod>2019-05-14T13:55:32.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/14/designpatter/circuit_breaker/</loc>
+    
+    <lastmod>2019-05-14T13:55:03.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2019/05/14/go/go_restful_01/</loc>
+    
+    <lastmod>2019-05-14T13:48:33.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/about.html</loc>
+    
+    <lastmod>2019-04-30T06:24:23.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/31/k8s/k8s_job_controller/</loc>
+    
+    <lastmod>2018-10-31T04:32:35.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/django_rest_auth_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:35.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_workflow_code_01/</loc>
+    
+    <lastmod>2018-10-27T06:43:34.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_workflow_agent_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:32.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_run_workflow_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:30.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_run_flow_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:27.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_agent_run_steps_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:26.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_agent_manager_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:24.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_agent_host_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:22.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cloudify_00/</loc>
+    
+    <lastmod>2018-10-27T06:43:20.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/1.%20cloudify_system_event_bus_01/</loc>
+    
+    <lastmod>2018-10-27T06:43:18.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/watch_cache/</loc>
+    
+    <lastmod>2018-10-27T06:43:14.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/wait_poll/</loc>
+    
+    <lastmod>2018-10-27T06:43:12.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/lru_cache/</loc>
+    
+    <lastmod>2018-10-27T06:43:09.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_shared_informer/</loc>
+    
+    <lastmod>2018-10-27T06:43:07.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_request_filters/</loc>
+    
+    <lastmod>2018-10-27T06:43:05.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/cahce_watch/</loc>
+    
+    <lastmod>2018-10-27T06:42:49.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/admission_design/</loc>
+    
+    <lastmod>2018-10-27T06:42:47.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/devops/devop_event_sourcing/</loc>
+    
+    <lastmod>2018-10-27T06:42:45.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/devops/devops_baidu_ark/</loc>
+    
+    <lastmod>2018-10-27T06:42:43.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/data_struct/ring_queue/</loc>
+    
+    <lastmod>2018-10-27T06:42:38.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cmdb/cmdb_design/</loc>
+    
+    <lastmod>2018-10-27T06:42:35.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/cmdb/bk_cmdb_source_01/</loc>
+    
+    <lastmod>2018-10-27T06:42:33.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/ansible/ansible_api/</loc>
+    
+    <lastmod>2018-10-27T06:42:30.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_endpoint_controller/</loc>
+    
+    <lastmod>2018-10-27T06:42:18.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_basic_infomer/</loc>
+    
+    <lastmod>2018-10-27T06:42:17.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/event_broadcaster/</loc>
+    
+    <lastmod>2018-10-27T06:42:15.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/27/k8s/cron_job_controller/</loc>
+    
+    <lastmod>2018-10-27T06:42:13.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/django/user_permission_auth/</loc>
+    
+    <lastmod>2018-10-15T21:57:02.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/django/class_view_source_code/</loc>
+    
+    <lastmod>2018-10-15T21:56:59.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/go/go_array/</loc>
+    
+    <lastmod>2018-10-15T21:56:53.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/go/go_closure/</loc>
+    
+    <lastmod>2018-10-15T21:56:50.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/go/go_string/</loc>
+    
+    <lastmod>2018-10-15T21:56:46.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/go/go_slice/</loc>
+    
+    <lastmod>2018-10-15T21:56:43.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/go/go_func_scope/</loc>
+    
+    <lastmod>2018-10-15T21:56:32.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/2018/10/16/go/go_map_01/</loc>
+    
+    <lastmod>2018-10-15T21:56:14.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/categories/index.html</loc>
+    
+    <lastmod>2018-09-05T07:38:31.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/tags/index.html</loc>
+    
+    <lastmod>2018-09-05T07:38:29.000Z</lastmod>
+    
+  </url>
+  
+</urlset>

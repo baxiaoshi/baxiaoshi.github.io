@@ -1,0 +1,765 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="k8s,controller,job," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法">
+<meta name="keywords" content="k8s,controller,job">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Job Controller 源码实现">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/31/k8s/k8s_job_controller/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-09-10-58.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-09-35-12.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-12-23-11.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-13-57.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-17-02.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-20-09.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-16-53-26.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-26-03.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-30-06.png">
+<meta property="og:updated_time" content="2018-10-31T04:32:35.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Job Controller 源码实现">
+<meta name="twitter:description" content="关注job controller需要关心哪些方面的事情  controller内部的数据结构(what  whyhow detail) controller内部的业务逻辑实现 几种不同job模式的内部实现 controller使用的算法">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-09-10-58.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/31/k8s/k8s_job_controller/"/>
+
+
+  <title> Job Controller 源码实现 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Job Controller 源码实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-31T12:32:35+08:00" content="2018-10-31 12:32">
+              2018-10-31 12:32
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/controller/" itemprop="url" rel="index">
+                    <span itemprop="name">controller</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>关注job controller需要关心哪些方面的事情</p>
+<ul>
+<li>controller内部的数据结构(what  whyhow detail)</li>
+<li>controller内部的业务逻辑实现</li>
+<li>几种不同job模式的内部实现</li>
+<li>controller使用的算法</li>
+</ul>
+<a id="more"></a>
+<h3 id="Controller简介"><a href="#Controller简介" class="headerlink" title="Controller简介"></a>Controller简介</h3><p>Controller是k8s的控制器，每类资源都有一个controller, Controller只做两件事</p>
+<ul>
+<li>监听Apiserver产生的事件</li>
+<li>根据事件和资源参数, 构建要进行的操作修改资源的目标状态</li>
+</ul>
+<h3 id="Controller-组成"><a href="#Controller-组成" class="headerlink" title="Controller 组成"></a>Controller 组成</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-09-10-58.png" alt><br>Controller从功能上可以拆成下面几个部分</p>
+<ul>
+<li><code>事件源</code>: informer 负责同步apiserver的数据，放入queue</li>
+<li><code>控制器队列</code>queue 延迟队列,相当于本地的 <em>事件数据库</em></li>
+<li><code>worker</code> 从queue中获取事件, 实现业务逻辑的处理</li>
+</ul>
+<h3 id="Controller内部逻辑"><a href="#Controller内部逻辑" class="headerlink" title="Controller内部逻辑"></a>Controller内部逻辑</h3><h4 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-09-35-12.png" alt><br>Job Controller负责k8s中job资源的处理, job资源通过pod模版启动对应的任务, 然后根据设定的参数, 直到达到满足当前job定义的状态</p>
+<p>从上面可以看到内部处理逻辑如下</p>
+<ul>
+<li>Controller注册自身ResourceEventHandler到Informer</li>
+<li>informer接收到apiserver的事件, 分发事件到resourceEventHandler</li>
+<li>resourceEventHandler将事件放入到queue中</li>
+<li>worker 从queue中获取数据, 进行业务逻辑的处理</li>
+</ul>
+<h4 id="queue"><a href="#queue" class="headerlink" title="queue"></a>queue</h4><p>Queue用于存储接controller收到的事件，主要作用如下</p>
+<ul>
+<li>提供多个worker并发获取事件处理</li>
+<li>worker处理失败后, 提供延迟重试的功能</li>
+</ul>
+<h4 id="worker"><a href="#worker" class="headerlink" title="worker"></a>worker</h4><p>worker其实就干一件事, 从queue队列中获取需要job， 然后检查当前job的状态是否达到预期, 如果没有, 则计算添加或者删除pod， 然后更新job状态</p>
+<h4 id="syncHandler与updateHandler"><a href="#syncHandler与updateHandler" class="headerlink" title="syncHandler与updateHandler"></a>syncHandler与updateHandler</h4><p><code>sync</code>和<code>update</code>两个handler是controller一种通用编程模式的实现, 每个controller都有这两个handler, 具体功能如下</p>
+<ul>
+<li>syncHandler负责从informer获取数据, 同时判断当前事件是否需要处理(每个controller都不相同), 所以syncHandler我们可以理解为是一个<em>过滤层</em>, 从所有事件中过滤出需要被worker处理的事件(还有可能会从队列中删除事件), 同时根据事件计算出要进行的操作, 调用update</li>
+<li>updateHandler其实就比较简单, 通过 syncHandler的一系列计算, 我们最终会有一个确定的操作, updateHandler, 就是负责将我们接下来的状态, 更新到apiserver, 形成一个闭环</li>
+</ul>
+<h3 id="Controller内部实现"><a href="#Controller内部实现" class="headerlink" title="Controller内部实现"></a>Controller内部实现</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-12-23-11.png" alt></p>
+<p>Job Controller核心业务逻辑如上图, 除了基本的Controller逻辑, 加入了一个Expectations, 用于记录对指定key预期要进行的Create/Delete操作数量(原子的)</p>
+<p><strong>Job Controller首先Expectations里面的次数，进行决策，一旦决策成功, 目标的次数就不会变了，如果这时informer获取到变化, 对应期望的次数, 可能会递减小于0</strong></p>
+<h4 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">![](http:<span class="comment">//baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-10-13.png)</span></span><br><span class="line"><span class="keyword">type</span> JobController <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// 操作APISERVER的接口</span></span><br><span class="line">	kubeClient clientset.Interface</span><br><span class="line">	<span class="comment">// podControl调用APISERVER创建需要的pod</span></span><br><span class="line">	podControl controller.PodControlInterface</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 调用APISERVER进行更新的handler</span></span><br><span class="line">	updateHandler <span class="function"><span class="keyword">func</span><span class="params">(job *batch.Job)</span> <span class="title">error</span></span></span><br><span class="line">	<span class="comment">// 从queue和apiserver获取当前job的状态,并决定如何进行updateHandler操作</span></span><br><span class="line">	syncHandler   <span class="function"><span class="keyword">func</span><span class="params">(jobKey <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 等待Pod和Job Informer同步APISERVER完成</span></span><br><span class="line">	podStoreSynced cache.InformerSynced</span><br><span class="line">	jobStoreSynced cache.InformerSynced</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 存放对job预期Create/Delete的次数和过期处理(5分钟)</span></span><br><span class="line">	expectations controller.ControllerExpectationsInterface</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 用于获取Job和pod关联信息</span></span><br><span class="line">	jobLister batchv1listers.JobLister</span><br><span class="line">	podStore corelisters.PodLister</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 延迟队列, 存放待处理的事件</span></span><br><span class="line">	queue workqueue.RateLimitingInterface</span><br><span class="line">	<span class="comment">// 记录日志</span></span><br><span class="line">	recorder record.EventRecorder</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="创建Job-Controller"><a href="#创建Job-Controller" class="headerlink" title="创建Job Controller"></a>创建Job Controller</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-13-57.png" alt><br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NewJobController</span></span><br><span class="line">	jm := &amp;JobController&#123;</span><br><span class="line">		kubeClient: kubeClient,</span><br><span class="line">		podControl: controller.RealPodControl&#123;</span><br><span class="line">			KubeClient: kubeClient,</span><br><span class="line">			Recorder:   eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource&#123;Component: <span class="string">"job-controller"</span>&#125;),	<span class="comment">// Recorder记录当前事件来自那个组件</span></span><br><span class="line">		&#125;,</span><br><span class="line">		expectations: controller.NewControllerExpectations(),</span><br><span class="line">		queue:        workqueue.NewNamedRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(DefaultJobBackOff, MaxJobBackOff), <span class="string">"job"</span>),</span><br><span class="line">		recorder:     eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource&#123;Component: <span class="string">"job-controller"</span>&#125;),</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 调用shared informer监听事件, 监测到job对象变化, add/Delete直接将object丢到队列中,交给worker处理</span></span><br><span class="line">	jobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">		AddFunc: <span class="function"><span class="keyword">func</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">			jm.enqueueController(obj, <span class="literal">true</span>)</span><br><span class="line">		&#125;,</span><br><span class="line">		UpdateFunc: jm.updateJob,</span><br><span class="line">		DeleteFunc: <span class="function"><span class="keyword">func</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">			jm.enqueueController(obj, <span class="literal">true</span>)</span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="comment">// Lister从本地的cache中获取job对象</span></span><br><span class="line">	jm.jobLister = jobInformer.Lister()</span><br><span class="line">	jm.jobStoreSynced = jobInformer.Informer().HasSynced</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 设置监听pod事件过滤出job controller的job对象, 加入队列等待worker处理</span></span><br><span class="line">	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">		AddFunc:    jm.addPod,</span><br><span class="line">		UpdateFunc: jm.updatePod,</span><br><span class="line">		DeleteFunc: jm.deletePod,</span><br><span class="line">	&#125;)</span><br><span class="line">	jm.podStore = podInformer.Lister()</span><br><span class="line">	jm.podStoreSynced = podInformer.Informer().HasSynced</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 设置对应的处理同步和更新处理函数</span></span><br><span class="line">	jm.updateHandler = jm.updateJobStatus</span><br><span class="line">	jm.syncHandler = jm.syncJob</span><br></pre></td></tr></table></figure></p>
+<h4 id="启动job-Controller"><a href="#启动job-Controller" class="headerlink" title="启动job Controller"></a>启动job Controller</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Run the main goroutine responsible for watching and syncing jobs.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(jm *JobController)</span> <span class="title">Run</span><span class="params">(workers <span class="keyword">int</span>, stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="comment">// 等待pod和job同步完成</span></span><br><span class="line">	<span class="keyword">if</span> !controller.WaitForCacheSync(<span class="string">"job"</span>, stopCh, jm.podStoreSynced, jm.jobStoreSynced) &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 启动worker数量, ConcurrentJobSyncs, 默认是5</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; workers; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> wait.Until(jm.worker, time.Second, stopCh)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&lt;-stopCh</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Job-Informer的ResourceEventHandler"><a href="#Job-Informer的ResourceEventHandler" class="headerlink" title="Job Informer的ResourceEventHandler"></a>Job Informer的ResourceEventHandler</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-17-02.png" alt></p>
+<ul>
+<li><p>ResourceEventHandler</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">	<span class="comment">// 调用shared informer监听事件, 监测到job对象变化, add/Delete直接将object丢到队列中,交给worker处理</span></span><br><span class="line">jobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs&#123;</span><br><span class="line">		AddFunc: <span class="function"><span class="keyword">func</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">			jm.enqueueController(obj, <span class="literal">true</span>)</span><br><span class="line">		&#125;,</span><br><span class="line">		UpdateFunc: jm.updateJob,</span><br><span class="line">		DeleteFunc: <span class="function"><span class="keyword">func</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">			jm.enqueueController(obj, <span class="literal">true</span>)</span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>updateJob</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">	<span class="keyword">if</span> curJob.Status.StartTime != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// 如果job已经启动, 获取job的最后期限</span></span><br><span class="line">		curADS := curJob.Spec.ActiveDeadlineSeconds</span><br><span class="line">		<span class="keyword">if</span> curADS == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		oldADS := oldJob.Spec.ActiveDeadlineSeconds</span><br><span class="line">		<span class="keyword">if</span> oldADS == <span class="literal">nil</span> || *oldADS != *curADS &#123;</span><br><span class="line">			<span class="comment">// 获取当前时间和任务的启动时间，减去消耗的时间, 然后计算延迟时间, 最后加入到队列中</span></span><br><span class="line">			now := metav1.Now()</span><br><span class="line">			start := curJob.Status.StartTime.Time</span><br><span class="line">			passed := now.Time.Sub(start)</span><br><span class="line">			<span class="comment">// 获取延迟操作的时间</span></span><br><span class="line">			total := time.Duration(*curADS) * time.Second</span><br><span class="line">			<span class="comment">// AddAfter will handle total &lt; passed</span></span><br><span class="line">			<span class="comment">// 添加事件到队列中,</span></span><br><span class="line">			jm.queue.AddAfter(key, total-passed)</span><br><span class="line">			glog.V(<span class="number">4</span>).Infof(<span class="string">"job ActiveDeadlineSeconds updated, will rsync after %d seconds"</span>, total-passed)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>我省略了updateJob中解析job添加到队列的业务逻辑, 其实核心是对ActiveDeadlineSeconds这个参数的控制, 如果有job设置这个参数并且已经启动, controoler会主动添加一个事件到延迟队列中,  这样及时后面事件没有发生, 但是达到指定时间后, worker就可以接收到事件进行job的取消操作了</p>
+<h4 id="Pod-Informer的-ResourceEventHandler"><a href="#Pod-Informer的-ResourceEventHandler" class="headerlink" title="Pod Informer的 ResourceEventHandler"></a>Pod Informer的 ResourceEventHandler</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-20-09.png" alt></p>
+<ul>
+<li>addPod<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(jm *JobController)</span> <span class="title">addPod</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	pod := obj.(*v1.Pod)</span><br><span class="line">	<span class="comment">// pod已经被删除了,</span></span><br><span class="line">	<span class="keyword">if</span> pod.DeletionTimestamp != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// 在重启controller, 在等待被删除, 就从本地队列里面删除对应的pod</span></span><br><span class="line">		jm.deletePod(pod)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// pod Informer会接收到所有controller创建的pod, 通过ControllerRef确认是否是当前Controller处理的</span></span><br><span class="line">	<span class="keyword">if</span> controllerRef := metav1.GetControllerOf(pod); controllerRef != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// 获取job对象</span></span><br><span class="line">		job := jm.resolveControllerRef(pod.Namespace, controllerRef)</span><br><span class="line">		<span class="keyword">if</span> job == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		jobKey, err := controller.KeyFunc(job)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// watch到一个事件, 将对应期望的Create操作期望值-1</span></span><br><span class="line">		jm.expectations.CreationObserved(jobKey)</span><br><span class="line">		jm.enqueueController(job, <span class="literal">true</span>)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果pod没有对应到controllerRef, 就尝试获取当前pod，是否跟job关联, 如果有跟job关联就加入到当前的队列中</span></span><br><span class="line">	<span class="keyword">for</span> _, job := <span class="keyword">range</span> jm.getPodJobs(pod) &#123;</span><br><span class="line">		<span class="comment">// 获取当前</span></span><br><span class="line">		jm.enqueueController(job, <span class="literal">true</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>updatePod和deletePod处理逻辑同addPod类似, 都是监测当前job是不是自身类型创建的, 如果是就获取对应的job加入到队列处理, 不同的是在deletePod和addPod里面会修改对应job的expectations的Delete/add属性</p>
+<h4 id="expectations"><a href="#expectations" class="headerlink" title="expectations"></a>expectations</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-16-53-26.png" alt><br>expectations是job controller的一个辅助属性,表示当前controller对ControllerKey期望进行Create/Delete的次数, 主要功能如下</p>
+<ul>
+<li>用于存储对给定资源的预期操作(Create/Delete)两种类型</li>
+<li>通过判断预期条件是否满足和操作的时间，来确定当前job是否要从apiserver进行数据同步</li>
+</ul>
+<h4 id="worker-1"><a href="#worker-1" class="headerlink" title="worker"></a>worker</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-26-03.png" alt><br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(jm *JobController)</span> <span class="title">processNextWorkItem</span><span class="params">()</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="comment">// 从队列中获取任务一个事件, 处理完成后删除</span></span><br><span class="line">	key, quit := jm.queue.Get()</span><br><span class="line">	<span class="keyword">if</span> quit &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> jm.queue.Done(key)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// syncHandler里负责同步当前job的状态, 并通过计算预期状态触发updateHandler, 如果处理成功,就可以删除对应的key</span></span><br><span class="line">	<span class="comment">// 否则处理失败, 就将当前事件丢会到队列中, 等待重试</span></span><br><span class="line">	forget, err := jm.syncHandler(key.(<span class="keyword">string</span>))</span><br><span class="line">	<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> forget &#123;</span><br><span class="line">			<span class="comment">//  从当前队列中删除key</span></span><br><span class="line">			jm.queue.Forget(key)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	utilruntime.HandleError(fmt.Errorf(<span class="string">"Error syncing job: %v"</span>, err))</span><br><span class="line">	jm.queue.AddRateLimited(key)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="syncHandler"><a href="#syncHandler" class="headerlink" title="syncHandler"></a>syncHandler</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-11-17-30-06.png" alt><br>SyncHandler业务逻辑我从上下分了两个大的部分</p>
+<ul>
+<li>获取当前状态, 判断是否失败(如果需要同步, 则会直接同步)</li>
+<li>业务逻辑处理部分(根据上面获取的状态和预期状态, 调整当前状态)<br>最后调用updateHandler将修改的后的job提交大Apiserver完成逻辑处理</li>
+</ul>
+<ul>
+<li>代码<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(jm *JobController)</span> <span class="title">syncJob</span><span class="params">(key <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span> &#123;</span><br><span class="line">	startTime := time.Now()</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		glog.V(<span class="number">4</span>).Infof(<span class="string">"Finished syncing job %q (%v)"</span>, key, time.Since(startTime))</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取Job信息</span></span><br><span class="line">	ns, name, err := cache.SplitMetaNamespaceKey(key)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(ns) == <span class="number">0</span> || <span class="built_in">len</span>(name) == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, fmt.Errorf(<span class="string">"invalid job key %q: either namespace or name is missing"</span>, key)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 从informer中获取job的信息</span></span><br><span class="line">	sharedJob, err := jm.jobLister.Jobs(ns).Get(name)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> errors.IsNotFound(err) &#123;</span><br><span class="line">			glog.V(<span class="number">4</span>).Infof(<span class="string">"Job has been deleted: %v"</span>, key)</span><br><span class="line">			jm.expectations.DeleteExpectations(key)</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	job := *sharedJob</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 判断JOb是否结束</span></span><br><span class="line">	<span class="keyword">if</span> IsJobFinished(&amp;job) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取当前job重试的次数</span></span><br><span class="line">	previousRetry := jm.queue.NumRequeues(key)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 从 store中获取key判断是否需要进行同步, 需要同步的逻辑是</span></span><br><span class="line">	<span class="comment">// expectations, 会存储当前key的add/del数次数,还有时间, 如果超过对应的策略, 则需要跟apiserver进行同步</span></span><br><span class="line">	jobNeedsSync := jm.expectations.SatisfiedExpectations(key)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取job的所有pods</span></span><br><span class="line">	pods, err := jm.getPodsForJob(&amp;job)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取当前激活状态的pods</span></span><br><span class="line">	activePods := controller.FilterActivePods(pods)</span><br><span class="line">	<span class="comment">// 活动的pod数量</span></span><br><span class="line">	active := <span class="keyword">int32</span>(<span class="built_in">len</span>(activePods))</span><br><span class="line">	<span class="comment">// 成功和失败的pod</span></span><br><span class="line">	succeeded, failed := getStatus(pods)</span><br><span class="line">	conditions := <span class="built_in">len</span>(job.Status.Conditions)</span><br><span class="line">	<span class="comment">// job first start</span></span><br><span class="line">	<span class="keyword">if</span> job.Status.StartTime == <span class="literal">nil</span> &#123;</span><br><span class="line">		now := metav1.Now()</span><br><span class="line">		job.Status.StartTime = &amp;now</span><br><span class="line">		<span class="comment">// 如果job有设置最后期限,添加一个事件到延迟队列</span></span><br><span class="line">		<span class="keyword">if</span> job.Spec.ActiveDeadlineSeconds != <span class="literal">nil</span> &#123;</span><br><span class="line">			glog.V(<span class="number">4</span>).Infof(<span class="string">"Job %s have ActiveDeadlineSeconds will sync after %d seconds"</span>,</span><br><span class="line">				key, *job.Spec.ActiveDeadlineSeconds)</span><br><span class="line">			jm.queue.AddAfter(key, time.Duration(*job.Spec.ActiveDeadlineSeconds)*time.Second)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> manageJobErr error</span><br><span class="line">	jobFailed := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">var</span> failureReason <span class="keyword">string</span></span><br><span class="line">	<span class="keyword">var</span> failureMessage <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 是否有新的pod失败</span></span><br><span class="line">	jobHaveNewFailure := failed &gt; job.Status.Failed</span><br><span class="line">	<span class="comment">// 判断是否超过重试次数</span></span><br><span class="line">	exceedsBackoffLimit := jobHaveNewFailure &amp;&amp; (active != *job.Spec.Parallelism) &amp;&amp;</span><br><span class="line">		(<span class="keyword">int32</span>(previousRetry)+<span class="number">1</span> &gt; *job.Spec.BackoffLimit)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果超过重试次数, 同时已经超过了重试次数或者超过了最后期限则job失败</span></span><br><span class="line">	<span class="comment">// 注意，如果重试策略是RestartPolicyOnFailure则会一直重试</span></span><br><span class="line">	<span class="keyword">if</span> exceedsBackoffLimit || pastBackoffLimitOnFailure(&amp;job, pods) &#123;</span><br><span class="line">		jobFailed = <span class="literal">true</span></span><br><span class="line">		failureReason = <span class="string">"BackoffLimitExceeded"</span></span><br><span class="line">		failureMessage = <span class="string">"Job has reached the specified backoff limit"</span></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> pastActiveDeadline(&amp;job) &#123;</span><br><span class="line">		jobFailed = <span class="literal">true</span></span><br><span class="line">		failureReason = <span class="string">"DeadlineExceeded"</span></span><br><span class="line">		failureMessage = <span class="string">"Job was active longer than specified deadline"</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> jobFailed &#123;</span><br><span class="line">		<span class="comment">// 如果job已经失败,  就删除对应的pod</span></span><br><span class="line">		errCh := <span class="built_in">make</span>(<span class="keyword">chan</span> error, active)</span><br><span class="line">		jm.deleteJobPods(&amp;job, activePods, errCh)</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> manageJobErr = &lt;-errCh:</span><br><span class="line">			<span class="keyword">if</span> manageJobErr != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">		&#125;</span><br><span class="line">		failed += active</span><br><span class="line">		active = <span class="number">0</span></span><br><span class="line">		<span class="comment">// 为job添加新的状态同时记录事件</span></span><br><span class="line">		job.Status.Conditions = <span class="built_in">append</span>(job.Status.Conditions, newCondition(batch.JobFailed, failureReason, failureMessage))</span><br><span class="line">		jm.recorder.Event(&amp;job, v1.EventTypeWarning, failureReason, failureMessage)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">// 如果job需要同步, 并且Job并未被删除, 则调用manageJob</span></span><br><span class="line">		<span class="keyword">if</span> jobNeedsSync &amp;&amp; job.DeletionTimestamp == <span class="literal">nil</span> &#123;</span><br><span class="line">			active, manageJobErr = jm.manageJob(activePods, succeeded, &amp;job)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 已经完成的任务</span></span><br><span class="line">		completions := succeeded</span><br><span class="line">		complete := <span class="literal">false</span></span><br><span class="line">		<span class="comment">// 下面就是job工作模式中后两种模式的结束判断逻辑</span></span><br><span class="line">		<span class="keyword">if</span> job.Spec.Completions == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// 如果Completions为空, 则有一个成功并且没有活动的pod就成功, 这里会涉及到两种模式, 第一种和第三种, 只有有一个成功, 当前任务就成功</span></span><br><span class="line">			<span class="comment">// Job Template Expansion 模式1： 一个work item 一个pod 有一个成功, 当前job就成功</span></span><br><span class="line">			<span class="comment">// Queue with Variable Pod 模式2: 如果有一个任务成功, 并且active为0, 则当前任务成功, 否则需要等待所有的active都成功</span></span><br><span class="line">			<span class="keyword">if</span> succeeded &gt; <span class="number">0</span> &amp;&amp; active == <span class="number">0</span> &#123;</span><br><span class="line">				complete = <span class="literal">true</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">// 如果成功的任务数量大于Completions当前任务也成功</span></span><br><span class="line">			<span class="keyword">if</span> completions &gt;= *job.Spec.Completions &#123;</span><br><span class="line">				complete = <span class="literal">true</span></span><br><span class="line">				<span class="keyword">if</span> active &gt; <span class="number">0</span> &#123;</span><br><span class="line">					jm.recorder.Event(&amp;job, v1.EventTypeWarning, <span class="string">"TooManyActivePods"</span>, <span class="string">"Too many active pods running after completion count reached"</span>)</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">if</span> completions &gt; *job.Spec.Completions &#123;</span><br><span class="line">					jm.recorder.Event(&amp;job, v1.EventTypeWarning, <span class="string">"TooManySucceededPods"</span>, <span class="string">"Too many succeeded pods running after completion count reached"</span>)</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> complete &#123;</span><br><span class="line">			<span class="comment">// 如果成功, 就修改当前job的状态</span></span><br><span class="line">			job.Status.Conditions = <span class="built_in">append</span>(job.Status.Conditions, newCondition(batch.JobComplete, <span class="string">""</span>, <span class="string">""</span>))</span><br><span class="line">			now := metav1.Now()</span><br><span class="line">			job.Status.CompletionTime = &amp;now</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	forget := <span class="literal">false</span></span><br><span class="line">	<span class="comment">// 补偿策略, 如果最后成功的数量&gt; 当前成功的数量</span></span><br><span class="line">	<span class="comment">// 当并行数量&gt; 1, 有一些job失败, 但是其他的都成功, 应该从延迟队列清除当前key, 目标是快速成功</span></span><br><span class="line">	<span class="comment">// 主要用于操作controller失败, 后面仍然希望能够快速成功</span></span><br><span class="line">	<span class="keyword">if</span> job.Status.Succeeded &lt; succeeded &#123;</span><br><span class="line">		forget = <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// no need to update the job if the status hasn't changed since last time</span></span><br><span class="line">	<span class="keyword">if</span> job.Status.Active != active || job.Status.Succeeded != succeeded || job.Status.Failed != failed || <span class="built_in">len</span>(job.Status.Conditions) != conditions &#123;</span><br><span class="line">		<span class="comment">// 设置任务状态, 调用 APIserver修改任务</span></span><br><span class="line">		job.Status.Active = active</span><br><span class="line">		job.Status.Succeeded = succeeded</span><br><span class="line">		job.Status.Failed = failed</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> err := jm.updateHandler(&amp;job); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> forget, err</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> jobHaveNewFailure &amp;&amp; !IsJobFinished(&amp;job) &#123;</span><br><span class="line">			<span class="comment">// returning an error will re-enqueue Job after the backoff period</span></span><br><span class="line">			<span class="keyword">return</span> forget, fmt.Errorf(<span class="string">"failed pod(s) detected for job key %q"</span>, key)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		forget = <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> forget, manageJobErr</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="updateHandler"><a href="#updateHandler" class="headerlink" title="updateHandler"></a>updateHandler</h4><p>updatehandler其实比较简单就调用apiserver更新当前job的状态即可<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(jm *JobController)</span> <span class="title">updateJobStatus</span><span class="params">(job *batch.Job)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	jobClient := jm.kubeClient.BatchV1().Jobs(job.Namespace)</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt;= statusUpdateRetries; i = i + <span class="number">1</span> &#123;</span><br><span class="line">		<span class="keyword">var</span> newJob *batch.Job</span><br><span class="line">		newJob, err = jobClient.Get(job.Name, metav1.GetOptions&#123;&#125;)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">		newJob.Status = job.Status</span><br><span class="line">		<span class="keyword">if</span> _, err = jobClient.UpdateStatus(newJob); err == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="manageJob"><a href="#manageJob" class="headerlink" title="manageJob"></a>manageJob</h4><p>syncHandler里面最终调用了updateHandler修改当前job的状态, 那具体的创建动作，其实就是在manageJob中进行的</p>
+<ul>
+<li>syncHandler将活动的pod数量、成功的数量和job传递过来</li>
+<li>manageJob会根据并行参数、成功、活跃进行计算, 然后直接进行pod添加和删除操作, 具体代码如下 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(jm *JobController)</span> <span class="title">manageJob</span><span class="params">(activePods []*v1.Pod, succeeded <span class="keyword">int32</span>, job *batch.Job)</span> <span class="params">(<span class="keyword">int32</span>, error)</span></span> &#123;</span><br><span class="line">	<span class="comment">// manageJob 负责job的pod具体的操作, 如果超过job设定的并发数量就删除,  否则就添加</span></span><br><span class="line">	<span class="comment">// 会修改expectations中jobKey对应的具体操作的Expect, 同时进行对应的操作, 当流程走到当前模块, 后续及时还有当前job的操作, 也要继续进行</span></span><br><span class="line">	<span class="keyword">var</span> activeLock sync.Mutex</span><br><span class="line">	active := <span class="keyword">int32</span>(<span class="built_in">len</span>(activePods))</span><br><span class="line">	parallelism := *job.Spec.Parallelism</span><br><span class="line">	jobKey, err := controller.KeyFunc(job)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		utilruntime.HandleError(fmt.Errorf(<span class="string">"Couldn't get key for job %#v: %v"</span>, job, err))</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> errCh <span class="keyword">chan</span> error</span><br><span class="line">	<span class="keyword">if</span> active &gt; parallelism &#123;</span><br><span class="line">		diff := active - parallelism</span><br><span class="line">		errCh = <span class="built_in">make</span>(<span class="keyword">chan</span> error, diff)</span><br><span class="line">		<span class="comment">// 计算我们预期要删除diff数量的pod, 设置ControlleeExpectations的del数量为diff</span></span><br><span class="line">		jm.expectations.ExpectDeletions(jobKey, <span class="keyword">int</span>(diff))</span><br><span class="line">		glog.V(<span class="number">4</span>).Infof(<span class="string">"Too many pods running job %q, need %d, deleting %d"</span>, jobKey, parallelism, diff)</span><br><span class="line">		<span class="comment">// 根据状态和事件进行比较对应的pod排序, 按照时间等进行排序</span></span><br><span class="line">		sort.Sort(controller.ActivePods(activePods))</span><br><span class="line"></span><br><span class="line">		active -= diff</span><br><span class="line">		wait := sync.WaitGroup&#123;&#125;</span><br><span class="line">		wait.Add(<span class="keyword">int</span>(diff))</span><br><span class="line">		<span class="keyword">for</span> i := <span class="keyword">int32</span>(<span class="number">0</span>); i &lt; diff; i++ &#123;</span><br><span class="line">			<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(ix <span class="keyword">int32</span>)</span></span> &#123;</span><br><span class="line">				<span class="keyword">defer</span> wait.Done()</span><br><span class="line">				<span class="comment">// 删除对应的pod</span></span><br><span class="line">				<span class="keyword">if</span> err := jm.podControl.DeletePod(job.Namespace, activePods[ix].Name, job); err != <span class="literal">nil</span> &#123;</span><br><span class="line">					<span class="keyword">defer</span> utilruntime.HandleError(err)</span><br><span class="line">					<span class="comment">// Decrement the expected number of deletes because the informer won't observe this deletion</span></span><br><span class="line">					glog.V(<span class="number">2</span>).Infof(<span class="string">"Failed to delete %v, decrementing expectations for job %q/%q"</span>, activePods[ix].Name, job.Namespace, job.Name)</span><br><span class="line">					<span class="comment">// 每当完成一个操作就设置ControlleeExpectations的del删除减小1</span></span><br><span class="line">					jm.expectations.DeletionObserved(jobKey)</span><br><span class="line">					activeLock.Lock()</span><br><span class="line">					active++</span><br><span class="line">					activeLock.Unlock()</span><br><span class="line">					errCh &lt;- err</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;(i)</span><br><span class="line">		&#125;</span><br><span class="line">		wait.Wait()</span><br><span class="line"></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> active &lt; parallelism &#123;</span><br><span class="line">		wantActive := <span class="keyword">int32</span>(<span class="number">0</span>)</span><br><span class="line">		<span class="keyword">if</span> job.Spec.Completions == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> succeeded &gt; <span class="number">0</span> &#123;</span><br><span class="line">				wantActive = active</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				wantActive = parallelism</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			wantActive = *job.Spec.Completions - succeeded</span><br><span class="line">			<span class="keyword">if</span> wantActive &gt; parallelism &#123;</span><br><span class="line">				wantActive = parallelism</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 获取要创建的pod的数量</span></span><br><span class="line">		diff := wantActive - active</span><br><span class="line">		<span class="keyword">if</span> diff &lt; <span class="number">0</span> &#123;</span><br><span class="line">			utilruntime.HandleError(fmt.Errorf(<span class="string">"More active than wanted: job %q, want %d, have %d"</span>, jobKey, wantActive, active))</span><br><span class="line">			diff = <span class="number">0</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 设置根据当前计算所需要添加的数量，设置ControlleeExpectations的add值为diff</span></span><br><span class="line">		jm.expectations.ExpectCreations(jobKey, <span class="keyword">int</span>(diff))</span><br><span class="line">		<span class="comment">// 创建一个错误的管道</span></span><br><span class="line">		errCh = <span class="built_in">make</span>(<span class="keyword">chan</span> error, diff)</span><br><span class="line">		glog.V(<span class="number">4</span>).Infof(<span class="string">"Too few pods running job %q, need %d, creating %d"</span>, jobKey, wantActive, diff)</span><br><span class="line"></span><br><span class="line">		<span class="comment">// diff是我们要新建的pod, 期待结束后diff个pod都是成功的, 那active 就是active + diff</span></span><br><span class="line">		active += diff</span><br><span class="line">		wait := sync.WaitGroup&#123;&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 创建对应的pod, 这个地方有速率是每次*2</span></span><br><span class="line">		<span class="keyword">for</span> batchSize := <span class="keyword">int32</span>(integer.IntMin(<span class="keyword">int</span>(diff), controller.SlowStartInitialBatchSize)); diff &gt; <span class="number">0</span>; batchSize = integer.Int32Min(<span class="number">2</span>*batchSize, diff) &#123;</span><br><span class="line"></span><br><span class="line">			errorCount := <span class="built_in">len</span>(errCh)</span><br><span class="line">			wait.Add(<span class="keyword">int</span>(batchSize))</span><br><span class="line">			<span class="comment">// 开始创建任务, 如果创建任务失败</span></span><br><span class="line">			<span class="keyword">for</span> i := <span class="keyword">int32</span>(<span class="number">0</span>); i &lt; batchSize; i++ &#123;</span><br><span class="line">				<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">					<span class="keyword">defer</span> wait.Done()</span><br><span class="line">					err := jm.podControl.CreatePodsWithControllerRef(job.Namespace, &amp;job.Spec.Template, job, metav1.NewControllerRef(job, controllerKind))</span><br><span class="line">					<span class="keyword">if</span> err != <span class="literal">nil</span> &amp;&amp; errors.IsTimeout(err) &#123;</span><br><span class="line">						<span class="keyword">return</span></span><br><span class="line">					&#125;</span><br><span class="line">					<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">						<span class="keyword">defer</span> utilruntime.HandleError(err)</span><br><span class="line">						<span class="comment">// Decrement the expected number of creates because the informer won't observe this pod</span></span><br><span class="line">						glog.V(<span class="number">2</span>).Infof(<span class="string">"Failed creation, decrementing expectations for job %q/%q"</span>, job.Namespace, job.Name)</span><br><span class="line">						<span class="comment">// 每当进行操作的时候, 设置对应ControlleeExpectations的add减小1</span></span><br><span class="line">						<span class="comment">// pod创建失败了, 也修改了jobKey对应的expectations</span></span><br><span class="line">						jm.expectations.CreationObserved(jobKey)</span><br><span class="line">						activeLock.Lock()</span><br><span class="line">						<span class="comment">// active的数量 -1</span></span><br><span class="line">						active--</span><br><span class="line">						activeLock.Unlock()</span><br><span class="line">						<span class="comment">// 将错误放入的errCh管道中</span></span><br><span class="line">						errCh &lt;- err</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;()</span><br><span class="line">			&#125;</span><br><span class="line">			wait.Wait()</span><br><span class="line">			<span class="comment">// any skipped pods that we never attempted to start shouldn't be expected.</span></span><br><span class="line">			<span class="comment">// 本次pod创建操作已经完成, diff - batchSize, 表示剩余要操作的pod数量</span></span><br><span class="line">			skippedPods := diff - batchSize</span><br><span class="line">			<span class="comment">// 如果有错误, 并且未完成的pod数量大于0, 则关于jobKey的skippedPods数量的操作, 并不需要预期这些操作, 因为skippedPods这些pod不会被创建</span></span><br><span class="line">			<span class="comment">// 就不会被informer给watch到,</span></span><br><span class="line">			<span class="keyword">if</span> errorCount &lt; <span class="built_in">len</span>(errCh) &amp;&amp; skippedPods &gt; <span class="number">0</span> &#123;</span><br><span class="line">				glog.V(<span class="number">2</span>).Infof(<span class="string">"Slow-start failure. Skipping creation of %d pods, decrementing expectations for job %q/%q"</span>, skippedPods, job.Namespace, job.Name)</span><br><span class="line">				active -= skippedPods</span><br><span class="line">				<span class="keyword">for</span> i := <span class="keyword">int32</span>(<span class="number">0</span>); i &lt; skippedPods; i++ &#123;</span><br><span class="line">					<span class="comment">// Decrement the expected number of creates because the informer won't observe this pod</span></span><br><span class="line">					<span class="comment">// informer不需要关注</span></span><br><span class="line">					jm.expectations.CreationObserved(jobKey)</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">			diff -= batchSize</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> err := &lt;-errCh:</span><br><span class="line">		<span class="comment">// all errors have been reported before, we only need to inform the controller that there was an error and it should re-try this job once more next time.</span></span><br><span class="line">		<span class="comment">// 如果有多个错误就返回一个?</span></span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> active, err</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> active, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="思考"><a href="#思考" class="headerlink" title="思考"></a>思考</h3><p>Job Controller逻辑本身并不复杂, 但我想理解每一部分看的就很慢, 在延迟队列、expectations、ControllerRef等上花了很长时间, 结合嘴上面的初衷和代码, 从job controller中能读到什么</p>
+<ul>
+<li>一个通用的事件处理模型</li>
+<li>延迟队列用于失败事件的延迟处理</li>
+<li>expectations在informer和syncHandler之间的同步取舍</li>
+<li>业务逻辑故障后的恢复</li>
+<li>失败重试策略的具体实现 </li>
+<li>Job三种模式的实现</li>
+</ul>
+<p>Job Controller暂时先看到这里, 看了三个早晨才看完, 先这样，后面再回来温习</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag">#k8s</a>
+          
+            <a href="/tags/controller/" rel="tag">#controller</a>
+          
+            <a href="/tags/job/" rel="tag">#job</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/27/django_rest_auth_00/" rel="next" title="opstask web api的编写">
+                <i class="fa fa-chevron-left"></i> opstask web api的编写
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/05/14/go/go_restful_01/" rel="prev" title="go-restful框架学习">
+                go-restful框架学习 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Controller简介"><span class="nav-number">1.</span> <span class="nav-text">Controller简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Controller-组成"><span class="nav-number">2.</span> <span class="nav-text">Controller 组成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Controller内部逻辑"><span class="nav-number">3.</span> <span class="nav-text">Controller内部逻辑</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#概览"><span class="nav-number">3.1.</span> <span class="nav-text">概览</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#queue"><span class="nav-number">3.2.</span> <span class="nav-text">queue</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#worker"><span class="nav-number">3.3.</span> <span class="nav-text">worker</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#syncHandler与updateHandler"><span class="nav-number">3.4.</span> <span class="nav-text">syncHandler与updateHandler</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Controller内部实现"><span class="nav-number">4.</span> <span class="nav-text">Controller内部实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#数据结构"><span class="nav-number">4.1.</span> <span class="nav-text">数据结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建Job-Controller"><span class="nav-number">4.2.</span> <span class="nav-text">创建Job Controller</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#启动job-Controller"><span class="nav-number">4.3.</span> <span class="nav-text">启动job Controller</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Job-Informer的ResourceEventHandler"><span class="nav-number">4.4.</span> <span class="nav-text">Job Informer的ResourceEventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Pod-Informer的-ResourceEventHandler"><span class="nav-number">4.5.</span> <span class="nav-text">Pod Informer的 ResourceEventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#expectations"><span class="nav-number">4.6.</span> <span class="nav-text">expectations</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#worker-1"><span class="nav-number">4.7.</span> <span class="nav-text">worker</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#syncHandler"><span class="nav-number">4.8.</span> <span class="nav-text">syncHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#updateHandler"><span class="nav-number">4.9.</span> <span class="nav-text">updateHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#manageJob"><span class="nav-number">4.10.</span> <span class="nav-text">manageJob</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#思考"><span class="nav-number">5.</span> <span class="nav-text">思考</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

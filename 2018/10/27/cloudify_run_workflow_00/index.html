@@ -1,0 +1,644 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="cloudify," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="cloudif中的蓝图注册">
+<meta name="keywords" content="cloudify">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cloudify前端下发任务的流程">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/27/cloudify_run_workflow_00/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="cloudif中的蓝图注册">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-10-27T06:43:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="cloudify前端下发任务的流程">
+<meta name="twitter:description" content="cloudif中的蓝图注册">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/27/cloudify_run_workflow_00/"/>
+
+
+  <title> cloudify前端下发任务的流程 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                cloudify前端下发任务的流程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:30+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/cloudify/" itemprop="url" rel="index">
+                    <span itemprop="name">cloudify</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="cloudif中的蓝图注册"><a href="#cloudif中的蓝图注册" class="headerlink" title="cloudif中的蓝图注册"></a>cloudif中的蓝图注册</h2><a id="more"></a>
+<h3 id="cloudify中的flask的app是从rest-service-server里面生成的"><a href="#cloudify中的flask的app是从rest-service-server里面生成的" class="headerlink" title="cloudify中的flask的app是从rest-service/server里面生成的"></a>cloudify中的flask的app是从rest-service/server里面生成的</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"># app factory</span><br><span class="line">def setup_app(warnings=None):</span><br><span class="line">    if warnings is None:</span><br><span class="line">        warnings = []</span><br><span class="line"></span><br><span class="line">    app = Flask(__name__)</span><br><span class="line">    cfy_config = config.instance()</span><br><span class="line"></span><br><span class="line">    _detect_debug_environment()</span><br><span class="line"></span><br><span class="line">    app.logger_name = &apos;manager-rest&apos;</span><br><span class="line">    # setting up the app logger with a rotating file handler, in addition to</span><br><span class="line">    #  the built-in flask logger which can be helpful in debug mode.</span><br><span class="line">    create_logger(logger_name=app.logger.name,</span><br><span class="line">                  log_level=cfy_config.rest_service_log_level,</span><br><span class="line">                  log_file=cfy_config.rest_service_log_path,</span><br><span class="line">                  log_file_size_MB=cfy_config.rest_service_log_file_size_MB,</span><br><span class="line">                  log_files_backup_count=cfy_config.</span><br><span class="line">                  rest_service_log_files_backup_count)</span><br><span class="line"></span><br><span class="line">    # log all warnings passed to function</span><br><span class="line">    for w in warnings:</span><br><span class="line">        app.logger.warning(w)</span><br><span class="line"></span><br><span class="line">    # secure the app according to manager configuration</span><br><span class="line">    if cfy_config.security_enabled:</span><br><span class="line">        app.logger.info(&apos;initializing rest-service security&apos;)</span><br><span class="line">        init_secured_app(app)</span><br><span class="line">    # 下面是flask app记录应用的地方</span><br><span class="line">    app.before_request(log_request)</span><br><span class="line">    app.before_request(maintenance_mode_handler)</span><br><span class="line">    app.after_request(log_response)</span><br><span class="line"></span><br><span class="line">    # saving flask&apos;s original error handlers</span><br><span class="line">    flask_handle_exception = app.handle_exception</span><br><span class="line">    flask_handle_user_exception = app.handle_user_exception</span><br><span class="line">    # 下面是flask_restful里面的api</span><br><span class="line">    api = Api(app)</span><br><span class="line"></span><br><span class="line">    # saving flask-restful&apos;s error handlers</span><br><span class="line">    flask_restful_handle_exception = app.handle_exception</span><br><span class="line">    flask_restful_handle_user_exception = app.handle_user_exception</span><br><span class="line"></span><br><span class="line">    # setting it so that &lt;500 codes use flask-restful&apos;s error handlers,</span><br><span class="line">    # while 500+ codes use original flask&apos;s error handlers (for which we</span><br><span class="line">    # register an error handler on somewhere else in this module)</span><br><span class="line">    def handle_exception(flask_method, flask_restful_method, e):</span><br><span class="line">        code = getattr(e, &apos;code&apos;, 500)</span><br><span class="line">        if code &gt;= 500:</span><br><span class="line">            return flask_method(e)</span><br><span class="line">        else:</span><br><span class="line">            return flask_restful_method(e)</span><br><span class="line"></span><br><span class="line">    app.handle_exception = functools.partial(</span><br><span class="line">        handle_exception,</span><br><span class="line">        flask_handle_exception,</span><br><span class="line">        flask_restful_handle_exception)</span><br><span class="line">    app.handle_user_exception = functools.partial(</span><br><span class="line">        handle_exception,</span><br><span class="line">        flask_handle_user_exception,</span><br><span class="line">        flask_restful_handle_user_exception)</span><br><span class="line"></span><br><span class="line">    endpoint_mapper.setup_resources(api)</span><br><span class="line"></span><br><span class="line">    app.config[&apos;SQLALCHEMY_DATABASE_URI&apos;] = \</span><br><span class="line">        &apos;&#123;0&#125;://&#123;1&#125;:&#123;2&#125;@&#123;3&#125;/&#123;4&#125;&apos;.format(</span><br><span class="line">            SQL_DIALECT,</span><br><span class="line">            cfy_config.postgresql_username,</span><br><span class="line">            cfy_config.postgresql_password,</span><br><span class="line">            cfy_config.postgresql_host,</span><br><span class="line">            cfy_config.postgresql_db_name</span><br><span class="line">        )</span><br><span class="line">    app.config[&apos;SQLALCHEMY_TRACK_MODIFICATIONS&apos;] = False</span><br><span class="line"></span><br><span class="line">    with app.app_context():</span><br><span class="line">        db.init_app(app)            # Set the app to use the SQLAlchemy DB</span><br><span class="line">    app.app_context().push()</span><br><span class="line">    return app</span><br></pre></td></tr></table></figure>
+<h3 id="cloudify中蓝图注册rest-service-endpoint-mapper"><a href="#cloudify中蓝图注册rest-service-endpoint-mapper" class="headerlink" title="cloudify中蓝图注册rest-service/endpoint_mapper"></a>cloudify中蓝图注册rest-service/endpoint_mapper</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line">from manager_rest import resources, resources_v2, resources_v2_1</span><br><span class="line">from manager_rest import swagger as rest_swagger</span><br><span class="line"></span><br><span class="line">SUPPORTED_API_VERSIONS = [(&apos;v1&apos;, resources),</span><br><span class="line">                          (&apos;v2&apos;, resources_v2),</span><br><span class="line">                          (&apos;v2.1&apos;, resources_v2_1)]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def setup_resources(api):</span><br><span class="line">    resources_endpoints = &#123;</span><br><span class="line">        &apos;Blueprints&apos;: &apos;blueprints&apos;,</span><br><span class="line">        &apos;BlueprintsId&apos;: &apos;blueprints/&lt;string:blueprint_id&gt;&apos;,</span><br><span class="line">        &apos;BlueprintsIdArchive&apos;: &apos;blueprints/&lt;string:blueprint_id&gt;/archive&apos;,</span><br><span class="line">        &apos;Snapshots&apos;: &apos;snapshots&apos;,</span><br><span class="line">        &apos;SnapshotsId&apos;: &apos;snapshots/&lt;string:snapshot_id&gt;&apos;,</span><br><span class="line">        &apos;SnapshotsIdArchive&apos;: &apos;snapshots/&lt;string:snapshot_id&gt;/archive&apos;,</span><br><span class="line">        &apos;SnapshotsIdRestore&apos;: &apos;snapshots/&lt;string:snapshot_id&gt;/restore&apos;,</span><br><span class="line">        &apos;Executions&apos;: &apos;executions&apos;,</span><br><span class="line">        &apos;ExecutionsId&apos;: &apos;executions/&lt;string:execution_id&gt;&apos;,</span><br><span class="line">        &apos;Deployments&apos;: &apos;deployments&apos;,</span><br><span class="line">        &apos;DeploymentsId&apos;: &apos;deployments/&lt;string:deployment_id&gt;&apos;,</span><br><span class="line">        &apos;DeploymentsIdOutputs&apos;: &apos;deployments/&lt;string:deployment_id&gt;/outputs&apos;,</span><br><span class="line">        &apos;DeploymentModifications&apos;: &apos;deployment-modifications&apos;,</span><br><span class="line">        &apos;DeploymentModificationsId&apos;: &apos;deployment-modifications/&apos;</span><br><span class="line">                                     &apos;&lt;string:modification_id&gt;&apos;,</span><br><span class="line">        &apos;DeploymentModificationsIdFinish&apos;: &apos;deployment-modifications/&apos;</span><br><span class="line">                                           &apos;&lt;string:modification_id&gt;/finish&apos;,</span><br><span class="line">        &apos;DeploymentModificationsIdRollback&apos;: &apos;deployment-modifications/&apos;</span><br><span class="line">                                             &apos;&lt;string:modification_id&gt;/&apos;</span><br><span class="line">                                             &apos;rollback&apos;,</span><br><span class="line">        &apos;Nodes&apos;: &apos;nodes&apos;,</span><br><span class="line">        &apos;NodeInstances&apos;: &apos;node-instances&apos;,</span><br><span class="line">        &apos;NodeInstancesId&apos;: &apos;node-instances/&lt;string:node_instance_id&gt;&apos;,</span><br><span class="line">        &apos;Events&apos;: &apos;events&apos;,</span><br><span class="line">        &apos;Search&apos;: &apos;search&apos;,</span><br><span class="line">        &apos;Status&apos;: &apos;status&apos;,</span><br><span class="line">        &apos;ProviderContext&apos;: &apos;provider/context&apos;,</span><br><span class="line">        &apos;Version&apos;: &apos;version&apos;,</span><br><span class="line">        &apos;EvaluateFunctions&apos;: &apos;evaluate/functions&apos;,</span><br><span class="line">        &apos;Tokens&apos;: &apos;tokens&apos;,</span><br><span class="line">        &apos;Plugins&apos;: &apos;plugins&apos;,</span><br><span class="line">        &apos;PluginsId&apos;: &apos;plugins/&lt;string:plugin_id&gt;&apos;,</span><br><span class="line">        &apos;PluginsArchive&apos;: &apos;plugins/&lt;string:plugin_id&gt;/archive&apos;,</span><br><span class="line">        &apos;MaintenanceMode&apos;: &apos;maintenance&apos;,</span><br><span class="line">        &apos;MaintenanceModeAction&apos;: &apos;maintenance/&lt;string:maintenance_action&gt;&apos;,</span><br><span class="line"></span><br><span class="line">        &apos;DeploymentUpdate&apos;:</span><br><span class="line">            &apos;deployment-updates/&lt;string:id&gt;/update/&lt;string:phase&gt;&apos;,</span><br><span class="line">        &apos;DeploymentUpdateId&apos;: &apos;deployment-updates/&lt;string:update_id&gt;&apos;,</span><br><span class="line">        &apos;DeploymentUpdates&apos;: &apos;deployment-updates&apos;,</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    for resource, endpoint_suffix in resources_endpoints.iteritems():</span><br><span class="line">        _set_versioned_urls(api, resource, endpoint_suffix)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def _set_versioned_urls(api, resource_name, endpoint_suffix):</span><br><span class="line">    resource = None</span><br><span class="line">    for version in SUPPORTED_API_VERSIONS:</span><br><span class="line">        version_name, resources_impl = version</span><br><span class="line">        if hasattr(resources_impl, resource_name):</span><br><span class="line">            resource = getattr(resources_impl, resource_name)</span><br><span class="line">        # &apos;resource&apos; will persist throughout iterations, holding a reference</span><br><span class="line">        # to the latest impl.</span><br><span class="line">        if resource:</span><br><span class="line">            endpoint = &apos;&#123;0&#125;/&#123;1&#125;&apos;.format(version_name, endpoint_suffix)</span><br><span class="line">            url = &apos;/api/&#123;0&#125;&apos;.format(endpoint)</span><br><span class="line">            api.add_resource(resource,</span><br><span class="line">                             url,</span><br><span class="line">                             endpoint=endpoint)</span><br><span class="line">            rest_swagger.add_swagger_resource(api,</span><br><span class="line">                                              version_name,</span><br><span class="line">                                              resource,</span><br><span class="line">                                              url)</span><br></pre></td></tr></table></figure>
+<h2 id="任务执行流程"><a href="#任务执行流程" class="headerlink" title="任务执行流程"></a>任务执行流程</h2><h3 id="因为主要关心的是任务执行这一块，所以下面以一个任务执行下发的流程去看-rest-service-resources"><a href="#因为主要关心的是任务执行这一块，所以下面以一个任务执行下发的流程去看-rest-service-resources" class="headerlink" title="因为主要关心的是任务执行这一块，所以下面以一个任务执行下发的流程去看 rest-service/resources"></a>因为主要关心的是任务执行这一块，所以下面以一个任务执行下发的流程去看 rest-service/resources</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line">class Executions(SecuredResource):</span><br><span class="line"></span><br><span class="line">    @swagger.operation(</span><br><span class="line">        responseClass=&apos;List[&#123;0&#125;]&apos;.format(responses.Execution.__name__),</span><br><span class="line">        nickname=&quot;list&quot;,</span><br><span class="line">        notes=&quot;Returns a list of executions for the optionally provided &quot;</span><br><span class="line">              &quot;deployment id.&quot;,</span><br><span class="line">        parameters=[&#123;&apos;name&apos;: &apos;deployment_id&apos;,</span><br><span class="line">                     &apos;description&apos;: &apos;List execution of a specific deployment&apos;,</span><br><span class="line">                     &apos;required&apos;: False,</span><br><span class="line">                     &apos;allowMultiple&apos;: False,</span><br><span class="line">                     &apos;dataType&apos;: &apos;string&apos;,</span><br><span class="line">                     &apos;defaultValue&apos;: None,</span><br><span class="line">                     &apos;paramType&apos;: &apos;query&apos;&#125;,</span><br><span class="line">                    &#123;&apos;name&apos;: &apos;include_system_workflows&apos;,</span><br><span class="line">                     &apos;description&apos;: &apos;Include executions of system workflows&apos;,</span><br><span class="line">                     &apos;required&apos;: False,</span><br><span class="line">                     &apos;allowMultiple&apos;: False,</span><br><span class="line">                     &apos;dataType&apos;: &apos;bool&apos;,</span><br><span class="line">                     &apos;defaultValue&apos;: False,</span><br><span class="line">                     &apos;paramType&apos;: &apos;query&apos;&#125;]</span><br><span class="line">    )</span><br><span class="line">    @exceptions_handled</span><br><span class="line">    @marshal_with(responses.Execution)</span><br><span class="line">    def get(self, _include=None, **kwargs):</span><br><span class="line">        &quot;&quot;&quot;List executions&quot;&quot;&quot;</span><br><span class="line">        deployment_id = request.args.get(&apos;deployment_id&apos;)</span><br><span class="line">        if deployment_id:</span><br><span class="line">            get_storage_manager().get_deployment(deployment_id, include=[&apos;id&apos;])</span><br><span class="line">        is_include_system_workflows = verify_and_convert_bool(</span><br><span class="line">            &apos;include_system_workflows&apos;,</span><br><span class="line">            request.args.get(&apos;include_system_workflows&apos;, &apos;false&apos;))</span><br><span class="line"></span><br><span class="line">        deployment_id_filter = BlueprintsManager.create_filters_dict(</span><br><span class="line">            deployment_id=deployment_id)</span><br><span class="line">        executions = get_blueprints_manager().list_executions(</span><br><span class="line">            is_include_system_workflows=is_include_system_workflows,</span><br><span class="line">            include=_include,</span><br><span class="line">            filters=deployment_id_filter)</span><br><span class="line">        return executions.items</span><br><span class="line"></span><br><span class="line">    @exceptions_handled</span><br><span class="line">    @marshal_with(responses.Execution)</span><br><span class="line">    def post(self, **kwargs):</span><br><span class="line">        &quot;&quot;&quot;Execute a workflow&quot;&quot;&quot;</span><br><span class="line">        verify_json_content_type()</span><br><span class="line">        request_json = request.json</span><br><span class="line">        verify_parameter_in_request_body(&apos;deployment_id&apos;, request_json)</span><br><span class="line">        verify_parameter_in_request_body(&apos;workflow_id&apos;, request_json)</span><br><span class="line"></span><br><span class="line">        allow_custom_parameters = verify_and_convert_bool(</span><br><span class="line">            &apos;allow_custom_parameters&apos;,</span><br><span class="line">            request_json.get(&apos;allow_custom_parameters&apos;, &apos;false&apos;))</span><br><span class="line">        force = verify_and_convert_bool(</span><br><span class="line">            &apos;force&apos;,</span><br><span class="line">            request_json.get(&apos;force&apos;, &apos;false&apos;))</span><br><span class="line"></span><br><span class="line">        deployment_id = request.json[&apos;deployment_id&apos;]</span><br><span class="line">        workflow_id = request.json[&apos;workflow_id&apos;]</span><br><span class="line">        parameters = request.json.get(&apos;parameters&apos;, None)</span><br><span class="line"></span><br><span class="line">        if parameters is not None and parameters.__class__ is not dict:</span><br><span class="line">            raise manager_exceptions.BadParametersError(</span><br><span class="line">                &quot;request body&apos;s &apos;parameters&apos; field must be a dict but&quot;</span><br><span class="line">                &quot; is of type &#123;0&#125;&quot;.format(parameters.__class__.__name__))</span><br><span class="line"></span><br><span class="line">        bypass_maintenance = is_bypass_maintenance_mode()</span><br><span class="line">        execution = get_blueprints_manager().execute_workflow(</span><br><span class="line">            deployment_id, workflow_id, parameters=parameters,</span><br><span class="line">            allow_custom_parameters=allow_custom_parameters, force=force,</span><br><span class="line">            bypass_maintenance=bypass_maintenance)</span><br><span class="line">        return execution, 201</span><br></pre></td></tr></table></figure>
+<h3 id="真正下发执行的函数"><a href="#真正下发执行的函数" class="headerlink" title="真正下发执行的函数"></a>真正下发执行的函数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">def execute_workflow(self, deployment_id, workflow_id,</span><br><span class="line">                     parameters=None,</span><br><span class="line">                     allow_custom_parameters=False,</span><br><span class="line">                     force=False, bypass_maintenance=None):</span><br><span class="line">    deployment = self.sm.get_deployment(deployment_id)</span><br><span class="line">    blueprint = self.sm.get_blueprint(deployment.blueprint_id)</span><br><span class="line"></span><br><span class="line">    if workflow_id not in deployment.workflows:</span><br><span class="line">        raise manager_exceptions.NonexistentWorkflowError(</span><br><span class="line">            &apos;Workflow &#123;0&#125; does not exist in deployment &#123;1&#125;&apos;.format(</span><br><span class="line">                workflow_id, deployment_id))</span><br><span class="line">    workflow = deployment.workflows[workflow_id]</span><br><span class="line"></span><br><span class="line">    self._verify_deployment_environment_created_successfully(deployment_id)</span><br><span class="line"></span><br><span class="line">    self._check_for_active_system_wide_execution()</span><br><span class="line">    self._check_for_active_executions(deployment_id, force)</span><br><span class="line"></span><br><span class="line">    execution_parameters = \</span><br><span class="line">        BlueprintsManager._merge_and_validate_execution_parameters(</span><br><span class="line">            workflow, workflow_id, parameters, allow_custom_parameters)</span><br><span class="line"></span><br><span class="line">    execution_id = str(uuid.uuid4())</span><br><span class="line"></span><br><span class="line">    new_execution = models.Execution(</span><br><span class="line">        id=execution_id,</span><br><span class="line">        status=models.Execution.PENDING,</span><br><span class="line">        created_at=utils.get_formatted_timestamp(),</span><br><span class="line">        blueprint_id=deployment.blueprint_id,</span><br><span class="line">        workflow_id=workflow_id,</span><br><span class="line">        deployment_id=deployment_id,</span><br><span class="line">        error=&apos;&apos;,</span><br><span class="line">        parameters=self._get_only_user_execution_parameters(</span><br><span class="line">            execution_parameters),</span><br><span class="line">        is_system_workflow=False)</span><br><span class="line"></span><br><span class="line">    self.sm.put_execution(new_execution)</span><br><span class="line"></span><br><span class="line">    # executing the user workflow</span><br><span class="line">    workflow_plugins = blueprint.plan[</span><br><span class="line">        constants.WORKFLOW_PLUGINS_TO_INSTALL]</span><br><span class="line">    self.workflow_client.execute_workflow(</span><br><span class="line">        workflow_id,</span><br><span class="line">        workflow,</span><br><span class="line">        workflow_plugins=workflow_plugins,</span><br><span class="line">        blueprint_id=deployment.blueprint_id,</span><br><span class="line">        deployment_id=deployment_id,</span><br><span class="line">        execution_id=execution_id,</span><br><span class="line">        execution_parameters=execution_parameters,</span><br><span class="line">        bypass_maintenance=bypass_maintenance)</span><br><span class="line"></span><br><span class="line">    return new_execution</span><br></pre></td></tr></table></figure>
+<h2 id="cloudify中安全的数据库提交方式"><a href="#cloudify中安全的数据库提交方式" class="headerlink" title="cloudify中安全的数据库提交方式"></a>cloudify中安全的数据库提交方式</h2><h3 id="数据库执行提交的地方rest-service-blueprint-manager"><a href="#数据库执行提交的地方rest-service-blueprint-manager" class="headerlink" title="数据库执行提交的地方rest-service/blueprint-manager"></a>数据库执行提交的地方rest-service/blueprint-manager</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">def _safe_commit(exception=None):</span><br><span class="line">     &quot;&quot;&quot;Try to commit changes in the session. Roll back if exception raised</span><br><span class="line"></span><br><span class="line">     Excepts SQLAlchemy errors and rollbacks if they&apos;re caught</span><br><span class="line">     :param exception: Optional exception to raise instead of the</span><br><span class="line">     one raised by SQLAlchemy</span><br><span class="line">     &quot;&quot;&quot;</span><br><span class="line">     try:</span><br><span class="line">         db.session.flush()</span><br><span class="line">         db.session.expunge_all()</span><br><span class="line">         db.session.commit()</span><br><span class="line">     except SQLAlchemyError as e:</span><br><span class="line">         db.session.rollback()</span><br><span class="line">         if exception:</span><br><span class="line">             full_err = &apos;&#123;0&#125;\nSQL error: &#123;1&#125;&apos;.format(</span><br><span class="line">                 str(exception), str(e)</span><br><span class="line">             )</span><br><span class="line">             exception.args = (full_err,) + exception.args[1:]</span><br><span class="line">             raise exception</span><br><span class="line">         raise</span><br><span class="line"></span><br><span class="line"> def _safe_add(self, instance):</span><br><span class="line">     &quot;&quot;&quot;Add `instance` to the DB session, and attempt to commit</span><br><span class="line"></span><br><span class="line">     :param instance: Instance to be added to the DB</span><br><span class="line">     &quot;&quot;&quot;</span><br><span class="line">     db.session.add(instance)</span><br><span class="line">     custom_exception = manager_exceptions.ConflictError(</span><br><span class="line">         &apos;&#123;0&#125; with ID `&#123;1&#125;` already exists&apos;.format(</span><br><span class="line">             instance.__class__.__name__,</span><br><span class="line">             instance.id</span><br><span class="line">         )</span><br><span class="line">     )</span><br><span class="line">     self._safe_commit(custom_exception)</span><br><span class="line">     return instance</span><br><span class="line"></span><br><span class="line"> def _create_model(self, model_class, model):</span><br><span class="line">     &quot;&quot;&quot;Create a `model_class` instance from a serializable `model` object</span><br><span class="line"></span><br><span class="line">     :param model_class: SQL DB table class</span><br><span class="line">     :param model: An instance of a class that has a `to_dict` method, and</span><br><span class="line">     whose attributes match the columns of `model_class`</span><br><span class="line">     :return: An instance of `model_class`</span><br><span class="line">     &quot;&quot;&quot;</span><br><span class="line">     instance = self._get_instance(model_class, model)</span><br><span class="line">     return self._safe_add(instance)</span><br><span class="line"></span><br><span class="line"> def put_execution(self, execution):</span><br><span class="line">     return self._create_model(Execution, execution)     #创建一个model的Instance</span><br></pre></td></tr></table></figure>
+<h3 id="调用的方式"><a href="#调用的方式" class="headerlink" title="调用的方式"></a>调用的方式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">new_execution = models.Execution(</span><br><span class="line">    id=execution_id,</span><br><span class="line">    status=models.Execution.PENDING,</span><br><span class="line">    created_at=utils.get_formatted_timestamp(),</span><br><span class="line">    blueprint_id=deployment.blueprint_id,</span><br><span class="line">    workflow_id=workflow_id,</span><br><span class="line">    deployment_id=deployment_id,</span><br><span class="line">    error=&apos;&apos;,</span><br><span class="line">    parameters=self._get_only_user_execution_parameters(</span><br><span class="line">        execution_parameters),</span><br><span class="line">    is_system_workflow=False)</span><br><span class="line"></span><br><span class="line">self.sm.put_execution(new_execution)    #通过下面函数提交</span><br></pre></td></tr></table></figure>
+<h2 id="workflow任务下发-rest-service-workflow-client"><a href="#workflow任务下发-rest-service-workflow-client" class="headerlink" title="workflow任务下发　rest-service/workflow_client"></a>workflow任务下发　rest-service/workflow_client</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">def execute_workflow(cls,</span><br><span class="line">                     name,</span><br><span class="line">                     workflow,</span><br><span class="line">                     workflow_plugins,</span><br><span class="line">                     blueprint_id,</span><br><span class="line">                     deployment_id,</span><br><span class="line">                     execution_id,</span><br><span class="line">                     execution_parameters=None,</span><br><span class="line">                     bypass_maintenance=None):</span><br><span class="line">    execution_parameters = execution_parameters or &#123;&#125;</span><br><span class="line">    task_name = workflow[&apos;operation&apos;]</span><br><span class="line">    task_queue = &apos;cloudify.management&apos;</span><br><span class="line"></span><br><span class="line">    plugin_name = workflow[&apos;plugin&apos;]</span><br><span class="line">    plugin = [p for p in workflow_plugins if p[&apos;name&apos;] == plugin_name][0]</span><br><span class="line"></span><br><span class="line">    execution_parameters[&apos;__cloudify_context&apos;] = &#123;</span><br><span class="line">        &apos;type&apos;: &apos;workflow&apos;,</span><br><span class="line">        &apos;task_name&apos;: task_name,</span><br><span class="line">        &apos;task_id&apos;: execution_id,</span><br><span class="line">        &apos;task_target&apos;: task_queue,</span><br><span class="line">        &apos;workflow_id&apos;: name,</span><br><span class="line">        &apos;blueprint_id&apos;: blueprint_id,</span><br><span class="line">        &apos;deployment_id&apos;: deployment_id,</span><br><span class="line">        &apos;execution_id&apos;: execution_id,</span><br><span class="line">        &apos;bypass_maintenance&apos;: bypass_maintenance,</span><br><span class="line">        &apos;plugin&apos;: &#123;</span><br><span class="line">            &apos;name&apos;: plugin_name,</span><br><span class="line">            &apos;package_name&apos;: plugin.get(&apos;package_name&apos;),</span><br><span class="line">            &apos;package_version&apos;: plugin.get(&apos;package_version&apos;)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    execution_parameters[&apos;__cloudify_context&apos;].update(</span><br><span class="line">        cls._get_rest_credentials())</span><br><span class="line"></span><br><span class="line">    return execute_task(task_queue=task_queue,</span><br><span class="line">                        execution_id=execution_id,</span><br><span class="line">                        execution_parameters=execution_parameters)</span><br></pre></td></tr></table></figure>
+<h3 id="celery-client"><a href="#celery-client" class="headerlink" title="celery　client"></a>celery　client</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">def execute_task(task_queue, execution_id, execution_parameters):</span><br><span class="line">    celery = celery_client.get_client()</span><br><span class="line">    try:</span><br><span class="line">        return celery.execute_task(task_queue=task_queue,</span><br><span class="line">                                   task_id=execution_id,</span><br><span class="line">                                   kwargs=execution_parameters)</span><br><span class="line">    finally:</span><br><span class="line">        celery.close()</span><br></pre></td></tr></table></figure>
+<h3 id="celery-client的下发操作-rest-service-celery-client"><a href="#celery-client的下发操作-rest-service-celery-client" class="headerlink" title="celery client的下发操作　rest-service/celery_client"></a>celery client的下发操作　rest-service/celery_client</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line">class CeleryClient(object):</span><br><span class="line"></span><br><span class="line">    def __init__(self):</span><br><span class="line">        ssl_settings = self._get_broker_ssl_settings(</span><br><span class="line">            ssl_enabled=config.instance().amqp_ssl_enabled,</span><br><span class="line">            cert_path=config.instance().amqp_ca_path,</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        # Port not required as currently the address is provided with port and</span><br><span class="line">        # vhost included.</span><br><span class="line">        amqp_uri = &apos;amqp://&#123;username&#125;:&#123;password&#125;@&#123;address&#125;&apos;.format(</span><br><span class="line">            address=config.instance().amqp_address,</span><br><span class="line">            username=config.instance().amqp_username,</span><br><span class="line">            password=config.instance().amqp_password,</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        self.celery = Celery(broker=amqp_uri, backend=amqp_uri)</span><br><span class="line">        self.celery.conf.update(</span><br><span class="line">            CELERY_TASK_SERIALIZER=&quot;json&quot;,</span><br><span class="line">            CELERY_TASK_RESULT_EXPIRES=600)</span><br><span class="line">        if config.instance().amqp_ssl_enabled:</span><br><span class="line">            self.celery.conf.update(BROKER_USE_SSL=ssl_settings)</span><br><span class="line"></span><br><span class="line">    def close(self):</span><br><span class="line">        if self.celery:</span><br><span class="line">            self.celery.close()</span><br><span class="line"></span><br><span class="line">    def execute_task(self, task_queue, task_id=None, kwargs=None):</span><br><span class="line">        &quot;&quot;&quot;</span><br><span class="line">            Execute a task</span><br><span class="line"></span><br><span class="line">            :param task_queue: the task queue</span><br><span class="line">            :param task_id: optional id for the task</span><br><span class="line">            :param kwargs: optional kwargs to be passed to the task</span><br><span class="line">            :return: the celery task async result</span><br><span class="line">        &quot;&quot;&quot;</span><br><span class="line"></span><br><span class="line">        return self.celery.send_task(&apos;cloudify.dispatch.dispatch&apos;,</span><br><span class="line">                                     queue=task_queue,</span><br><span class="line">                                     task_id=task_id,</span><br><span class="line">                                     kwargs=kwargs)</span><br><span class="line"></span><br><span class="line">    def get_task_status(self, task_id):</span><br><span class="line">        &quot;&quot;&quot;</span><br><span class="line">            Gets task&apos;s celery status by the task&apos;s id</span><br><span class="line"></span><br><span class="line">            :param task_id: the task id</span><br><span class="line">            :return: the task&apos;s celery status</span><br><span class="line">        &quot;&quot;&quot;</span><br><span class="line">        async_result = self.celery.AsyncResult(task_id)</span><br><span class="line">        return async_result.status</span><br><span class="line"></span><br><span class="line">    def get_failed_task_error(self, task_id):</span><br><span class="line">        &quot;&quot;&quot;</span><br><span class="line">            Gets a failed task&apos;s error by the task&apos;s id</span><br><span class="line"></span><br><span class="line">            :param task_id: the task id</span><br><span class="line">            :return: the exception object</span><br><span class="line">        &quot;&quot;&quot;</span><br><span class="line">        async_result = self.celery.AsyncResult(task_id)</span><br><span class="line">        return async_result.result</span><br><span class="line"></span><br><span class="line">    @staticmethod</span><br><span class="line">    def _get_broker_ssl_settings(ssl_enabled, cert_path):</span><br><span class="line">        # Input vars may be None if not set. Explicitly defining defaults.</span><br><span class="line">        ssl_enabled = ssl_enabled or False</span><br><span class="line">        cert_path = cert_path or &apos;&apos;</span><br><span class="line"></span><br><span class="line">        if ssl_enabled:</span><br><span class="line">            if not cert_path:</span><br><span class="line">                raise ValueError(</span><br><span class="line">                    &quot;Broker SSL enabled but no SSL cert was provided. &quot;</span><br><span class="line">                    &quot;If rabbitmq_ssl_enabled is True in the inputs, &quot;</span><br><span class="line">                    &quot;rabbitmq_cert_public (and private) must be populated.&quot;</span><br><span class="line">                )</span><br><span class="line">            ssl_options = &#123;</span><br><span class="line">                &apos;ca_certs&apos;: cert_path,</span><br><span class="line">                &apos;cert_reqs&apos;: ssl.CERT_REQUIRED,</span><br><span class="line">            &#125;</span><br><span class="line">        else:</span><br><span class="line">            ssl_options = &#123;&#125;</span><br><span class="line"></span><br><span class="line">        return ssl_options</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def get_client():</span><br><span class="line">    if config.instance().test_mode:</span><br><span class="line">        from test.mocks import MockCeleryClient</span><br><span class="line">        return MockCeleryClient()</span><br><span class="line">    else:</span><br><span class="line">        return CeleryClient()</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/cloudify/" rel="tag">#cloudify</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/27/cloudify_run_flow_00/" rel="next" title="cloudify执行逻辑(2016/10/20更新)">
+                <i class="fa fa-chevron-left"></i> cloudify执行逻辑(2016/10/20更新)
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/27/cloudify_workflow_agent_00/" rel="prev" title="cloudify agent解析workflow对应的Task">
+                cloudify agent解析workflow对应的Task <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudif中的蓝图注册"><span class="nav-number">1.</span> <span class="nav-text">cloudif中的蓝图注册</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#cloudify中的flask的app是从rest-service-server里面生成的"><span class="nav-number">1.1.</span> <span class="nav-text">cloudify中的flask的app是从rest-service/server里面生成的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cloudify中蓝图注册rest-service-endpoint-mapper"><span class="nav-number">1.2.</span> <span class="nav-text">cloudify中蓝图注册rest-service/endpoint_mapper</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#任务执行流程"><span class="nav-number">2.</span> <span class="nav-text">任务执行流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#因为主要关心的是任务执行这一块，所以下面以一个任务执行下发的流程去看-rest-service-resources"><span class="nav-number">2.1.</span> <span class="nav-text">因为主要关心的是任务执行这一块，所以下面以一个任务执行下发的流程去看 rest-service/resources</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#真正下发执行的函数"><span class="nav-number">2.2.</span> <span class="nav-text">真正下发执行的函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudify中安全的数据库提交方式"><span class="nav-number">3.</span> <span class="nav-text">cloudify中安全的数据库提交方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#数据库执行提交的地方rest-service-blueprint-manager"><span class="nav-number">3.1.</span> <span class="nav-text">数据库执行提交的地方rest-service/blueprint-manager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调用的方式"><span class="nav-number">3.2.</span> <span class="nav-text">调用的方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#workflow任务下发-rest-service-workflow-client"><span class="nav-number">4.</span> <span class="nav-text">workflow任务下发　rest-service/workflow_client</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#celery-client"><span class="nav-number">4.1.</span> <span class="nav-text">celery　client</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#celery-client的下发操作-rest-service-celery-client"><span class="nav-number">4.2.</span> <span class="nav-text">celery client的下发操作　rest-service/celery_client</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

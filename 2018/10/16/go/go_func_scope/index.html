@@ -1,0 +1,641 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="go语言," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="问题go里面我们可以通过:= 直接通过返回值生成一个变量, 而不需要使用var事先声明, 但如果我们事先声明了整个变量, 是否再当前函数所有地方,都会使用我们声明的变量呢?">
+<meta name="keywords" content="go语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go里面的语句段和变量声明的小问题">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/16/go/go_func_scope/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="问题go里面我们可以通过:= 直接通过返回值生成一个变量, 而不需要使用var事先声明, 但如果我们事先声明了整个变量, 是否再当前函数所有地方,都会使用我们声明的变量呢?">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-10-15T21:56:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Go里面的语句段和变量声明的小问题">
+<meta name="twitter:description" content="问题go里面我们可以通过:= 直接通过返回值生成一个变量, 而不需要使用var事先声明, 但如果我们事先声明了整个变量, 是否再当前函数所有地方,都会使用我们声明的变量呢?">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/16/go/go_func_scope/"/>
+
+
+  <title> Go里面的语句段和变量声明的小问题 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Go里面的语句段和变量声明的小问题
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-16T05:56:32+08:00" content="2018-10-16 05:56">
+              2018-10-16 05:56
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>go里面我们可以通过:= 直接通过返回值生成一个变量, 而不需要使用var事先声明, 但如果我们事先声明了整个变量, 是否再当前函数所有地方,都会使用我们声明的变量呢?</p>
+<a id="more"></a>
+<h4 id="go代码"><a href="#go代码" class="headerlink" title="go代码"></a>go代码</h4><h4 id="gdb-调试过程"><a href="#gdb-调试过程" class="headerlink" title="gdb 调试过程"></a>gdb 调试过程</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">add</span><span class="params">(x <span class="keyword">int</span>)</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> x + <span class="number">1</span>, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> ret <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line">	v := <span class="number">1</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> v%<span class="number">2</span> != <span class="number">0</span> &#123;</span><br><span class="line">		ret, err := add(v)</span><br><span class="line">		<span class="built_in">println</span>(ret, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">println</span>(ret)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">(gdb) l</span><br><span class="line">1	package main</span><br><span class="line">2</span><br><span class="line">3	func add(x int) (int, error) &#123;</span><br><span class="line">4		return x + 1, nil</span><br><span class="line">5	&#125;</span><br><span class="line">6</span><br><span class="line">7	func main() &#123;</span><br><span class="line">8		var ret int</span><br><span class="line">9</span><br><span class="line">10		v := 1</span><br><span class="line">(gdb) l</span><br><span class="line">11</span><br><span class="line">12		if v%2 != 0 &#123;</span><br><span class="line">13			ret, err := add(v)</span><br><span class="line">14			println(ret, err)</span><br><span class="line">15		&#125;</span><br><span class="line">16</span><br><span class="line">17		println(ret)</span><br><span class="line">18	&#125;</span><br><span class="line">(gdb) b 12</span><br><span class="line">Breakpoint 1 at 0x44da93: file /home/devops/study/src/function/scope/test1.go, line 12.</span><br><span class="line">(gdb) b 13</span><br><span class="line">Breakpoint 2 at 0x44da95: file /home/devops/study/src/function/scope/test1.go, line 13.</span><br><span class="line">(gdb) b 14</span><br><span class="line">Breakpoint 3 at 0x44dae7: file /home/devops/study/src/function/scope/test1.go, line 14.</span><br><span class="line">(gdb) b 17</span><br><span class="line">Breakpoint 4 at 0x44db23: file /home/devops/study/src/function/scope/test1.go, line 17.</span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/devops/study/src/function/scope/test</span><br><span class="line"></span><br><span class="line">Breakpoint 1, main.main () at /home/devops/study/src/function/scope/test1.go:12</span><br><span class="line">12		if v%2 != 0 &#123;</span><br><span class="line">(gdb) info locals</span><br><span class="line">ret = 0</span><br><span class="line">v = 1</span><br><span class="line">(gdb) p/x &amp;ret	#查看变量的内存地址</span><br><span class="line">$1 = 0xc420047f48</span><br></pre></td></tr></table></figure>
+<h4 id="gdb函数执行"><a href="#gdb函数执行" class="headerlink" title="gdb函数执行"></a>gdb函数执行</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">ump of assembler code for function main.main:</span><br><span class="line">=&gt; 0x000000000044da93 &lt;+51&gt;:	jmp    0x44da95 &lt;main.main+53&gt;</span><br><span class="line">   0x000000000044da95 &lt;+53&gt;:	xorps  xmm0,xmm0</span><br><span class="line">   0x000000000044da98 &lt;+56&gt;:	movups XMMWORD PTR [rsp+0x50],xmm0</span><br><span class="line">   0x000000000044da9d &lt;+61&gt;:	mov    rax,QWORD PTR [rsp+0x20] # 复制v变量到rax, 然后吧rax放入到rsp中</span><br><span class="line">   0x000000000044daa2 &lt;+66&gt;:	mov    QWORD PTR [rsp],rax</span><br><span class="line">   0x000000000044daa6 &lt;+70&gt;:	call   0x44da30 &lt;main.add&gt;	# 将IP寄存器压栈, 同时向下移动rsp</span><br><span class="line">   0x000000000044daab &lt;+75&gt;:	mov    rax,QWORD PTR [rsp+0x8]</span><br><span class="line"></span><br><span class="line">(gdb) p/x $rsp+0x20	# rsp+0x20其实就是我们的v的地址</span><br><span class="line">$2 = 0xc420047f38</span><br><span class="line">(gdb) info locals</span><br><span class="line">ret = 0</span><br><span class="line">v = 1</span><br><span class="line">(gdb) p/x &amp;v</span><br><span class="line">$3 = 0xc420047f38</span><br><span class="line">(gdb) disassemble</span><br><span class="line">Dump of assembler code for function main.main:</span><br><span class="line">Quit</span><br><span class="line">(gdb) c</span><br><span class="line">(gdb) info locals</span><br><span class="line">err = &#123;tab = 0x0, data = 0xc42005e000&#125;</span><br><span class="line">ret = 4207414</span><br><span class="line">ret = 0   #0xc420047f48</span><br><span class="line">v = 1</span><br><span class="line">(gdb) p/x &amp;ret	# 我们可以看到这个地方有两个ret变量, 我们看看ret的地址, 其实我们就知道了, 当我们调用函数接收返回值的时候, 如果当前是一个单独的语句段, 则go并不会继续向上继续查找这个变量是否有声明, 而是直接生成一个环境变量, 当当前语句段结束的时候, 也不会影响语句段外面的变量的值</span><br><span class="line">$4 = 0xc420047f40</span><br></pre></td></tr></table></figure>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>通过上面的观察,其实已经很明确, 当我们再一个语句段内使用:=去生成一个变量, go并没有向上一级继续查看是否有该变量, 同时离开该语句段, 该变量也自动失效了</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/go语言/" rel="tag">#go语言</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/16/go/go_map_01/" rel="next" title="Go里面的map,底层实现">
+                <i class="fa fa-chevron-left"></i> Go里面的map,底层实现
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/16/go/go_slice/" rel="prev" title="Go里面的slice,切片,底层实现">
+                Go里面的slice,切片,底层实现 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#问题"><span class="nav-number">1.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#go代码"><span class="nav-number">2.</span> <span class="nav-text">go代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#gdb-调试过程"><span class="nav-number">3.</span> <span class="nav-text">gdb 调试过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#gdb函数执行"><span class="nav-number">4.</span> <span class="nav-text">gdb函数执行</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结论"><span class="nav-number">5.</span> <span class="nav-text">结论</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

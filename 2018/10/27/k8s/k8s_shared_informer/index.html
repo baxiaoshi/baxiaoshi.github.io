@@ -1,0 +1,725 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="k8s,k8s那些天,informer,sharedInformer," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="概况informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod) shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer,">
+<meta name="keywords" content="k8s,k8s那些天,informer,sharedInformer">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes sharedInformer 图解">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/27/k8s/k8s_shared_informer/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="概况informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod) shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer,">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-29-09-26-50.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-29-11-51-47.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-29-11-17-09.png">
+<meta property="og:updated_time" content="2018-10-27T06:43:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kubernetes sharedInformer 图解">
+<meta name="twitter:description" content="概况informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod) shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer,">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-29-09-26-50.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/27/k8s/k8s_shared_informer/"/>
+
+
+  <title> Kubernetes sharedInformer 图解 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Kubernetes sharedInformer 图解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:07+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/k8s那些天/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s那些天</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod)</p>
+<p>shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer, 如果其他的controller关注对应的资源, 就只注册一个对应的处理函数, 当事件发生的时候, 由shared informer统一进行事件的分发处理(有点类似观察者模式, 但是里面的消息传递大量使用了go里面channel)</p>
+<a id="more"></a>
+<h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-29-09-26-50.png" alt></p>
+<ul>
+<li>controller调用ctx.InformerFactory获取关心的informer</li>
+<li>sharedInformerFactory从当前缓存中获取或者创建对应informer</li>
+<li>controller添加自己的ResourceEventHandler</li>
+<li>sharedInformer接收Reflector里面的事件回调，触发controoler的ResourceEventHandler</li>
+</ul>
+<h4 id="sharedInformerFactory"><a href="#sharedInformerFactory" class="headerlink" title="sharedInformerFactory"></a>sharedInformerFactory</h4><p>sharedInformerFactory(工厂模式)负责给各种controller提供创建对应的informer, 并提供缓存功能(如果存在就返回, 否则创建)</p>
+<h4 id="sharedInformer"><a href="#sharedInformer" class="headerlink" title="sharedInformer"></a>sharedInformer</h4><p>sharedInformer的核心功能跟其他的informer其实类似, 不过不同的是, 其允许注册多个ResourceEventHandler</p>
+<h4 id="sharedProcessor"><a href="#sharedProcessor" class="headerlink" title="sharedProcessor"></a>sharedProcessor</h4><p>sharedProcessor负责所有controller的ResourceEventHandler的注册, 同时接收informer的事件，分发给所有的processorListener</p>
+<p>负责所有listener的启动和停止操作</p>
+<h4 id="processorListener"><a href="#processorListener" class="headerlink" title="processorListener"></a>processorListener</h4><p>processorListener是controller传递进来的Handler的一层包装, 内部通过一个环状队列来缓冲了sharedProcessor传递过来的所有事件, 同时在自己内部又构建了一个事件通道nextCh, 用于自身获取事件和传递给controller</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><h4 id="sharedInformerFactory-1"><a href="#sharedInformerFactory-1" class="headerlink" title="sharedInformerFactory"></a>sharedInformerFactory</h4><ul>
+<li><p>结构体</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> sharedInformerFactory <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// 客户端用于访问k8s apiserver</span></span><br><span class="line">	client           kubernetes.Interface</span><br><span class="line">	<span class="comment">// 默认会监听所有namespace</span></span><br><span class="line">	namespace        <span class="keyword">string</span></span><br><span class="line">	tweakListOptions internalinterfaces.TweakListOptionsFunc</span><br><span class="line">	lock             sync.Mutex</span><br><span class="line">	defaultResync    time.Duration</span><br><span class="line">	customResync     <span class="keyword">map</span>[reflect.Type]time.Duration</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 存放已经创建的sharedinformer</span></span><br><span class="line">	informers <span class="keyword">map</span>[reflect.Type]cache.SharedIndexInformer</span><br><span class="line">	<span class="comment">// startedInformers is used for tracking which informers have been started.</span></span><br><span class="line">	<span class="comment">// This allows Start() to be called multiple times safely.</span></span><br><span class="line">	startedInformers <span class="keyword">map</span>[reflect.Type]<span class="keyword">bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>工厂函数</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 当前工厂会以一个factory的函数传递给所有的informer, 在informer生成的时候, 会传递出当前informer的newFunc, 如果不存在就创建, 否则直接返回</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(f *sharedInformerFactory)</span> <span class="title">InformerFor</span><span class="params">(obj runtime.Object, newFunc internalinterfaces.NewInformerFunc)</span> <span class="title">cache</span>.<span class="title">SharedIndexInformer</span></span> &#123;</span><br><span class="line">	f.lock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> f.lock.Unlock()</span><br><span class="line"></span><br><span class="line">	informerType := reflect.TypeOf(obj)</span><br><span class="line">	informer, exists := f.informers[informerType]</span><br><span class="line">	<span class="keyword">if</span> exists &#123;</span><br><span class="line">		<span class="keyword">return</span> informer</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	resyncPeriod, exists := f.customResync[informerType]</span><br><span class="line">	<span class="keyword">if</span> !exists &#123;</span><br><span class="line">		resyncPeriod = f.defaultResync</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	informer = newFunc(f.client, resyncPeriod)</span><br><span class="line">	f.informers[informerType] = informer</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> informer</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="sharedInformer-1"><a href="#sharedInformer-1" class="headerlink" title="sharedInformer"></a>sharedInformer</h4><ul>
+<li><p>结构体</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> sharedIndexInformer <span class="keyword">struct</span> &#123;</span><br><span class="line">	indexer    Indexer</span><br><span class="line">	controller Controller</span><br><span class="line">    <span class="comment">// 负责接收所有controller传递进来的ResourceEventHandler</span></span><br><span class="line">	processor             *sharedProcessor</span><br><span class="line">	cacheMutationDetector CacheMutationDetector</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 监听apiserver对应resource数据的变化</span></span><br><span class="line">	listerWatcher ListerWatcher</span><br><span class="line">	objectType    runtime.Object</span><br><span class="line"></span><br><span class="line">	<span class="comment">// resyncCheckPeriod is how often we want the reflector's resync timer to fire so it can call</span></span><br><span class="line">	<span class="comment">// shouldResync to check if any of our listeners need a resync.</span></span><br><span class="line">	resyncCheckPeriod time.Duration</span><br><span class="line">	<span class="comment">// defaultEventHandlerResyncPeriod is the default resync period for any handlers added via</span></span><br><span class="line">	<span class="comment">// AddEventHandler (i.e. they don't specify one and just want to use the shared informer's default</span></span><br><span class="line">	<span class="comment">// value).</span></span><br><span class="line">	defaultEventHandlerResyncPeriod time.Duration</span><br><span class="line">	<span class="comment">// clock allows for testability</span></span><br><span class="line">	clock clock.Clock</span><br><span class="line"></span><br><span class="line">	started, stopped <span class="keyword">bool</span></span><br><span class="line">	startedLock      sync.Mutex</span><br><span class="line"></span><br><span class="line">	<span class="comment">// blockDeltas gives a way to stop all event distribution so that a late event handler</span></span><br><span class="line">	<span class="comment">// can safely join the shared informer.</span></span><br><span class="line">	blockDeltas sync.Mutex</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>run</p>
+</li>
+</ul>
+<p>跟其他的informer逻辑是一样的， 生成一个队列， 然后构建Reflector, 后面listwatch apiserver的数据变化, 回调<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *sharedIndexInformer)</span> <span class="title">Run</span><span class="params">(stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 注意这个地方, 当启动的时候,  会获取所有的processorListener, 然后启动processorListener的pop和run方法, 来监听informer添加的事件，来进行业务逻辑的处理</span></span><br><span class="line">	wg.StartWithChannel(processorStopCh, s.processor.run)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		s.startedLock.Lock()</span><br><span class="line">		<span class="keyword">defer</span> s.startedLock.Unlock()</span><br><span class="line">		s.stopped = <span class="literal">true</span> <span class="comment">// Don't want any new listeners</span></span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="comment">// controller.Run启动controller和reflector</span></span><br><span class="line">	s.controller.Run(stopCh)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>AddEventHandlerWithResyncPeriod<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 包装controller传递的ResourceEventHandler, 并注册到sharedProcessor</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *sharedIndexInformer)</span> <span class="title">AddEventHandlerWithResyncPeriod</span><span class="params">(handler ResourceEventHandler, resyncPeriod time.Duration)</span></span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 根据当前注册的所有handler需要同步的周期， 获取一个最小值</span></span><br><span class="line">	<span class="keyword">if</span> resyncPeriod &gt; <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> resyncPeriod &lt; minimumResyncPeriod &#123;</span><br><span class="line">			glog.Warningf(<span class="string">"resyncPeriod %d is too small. Changing it to the minimum allowed value of %d"</span>, resyncPeriod, minimumResyncPeriod)</span><br><span class="line">			resyncPeriod = minimumResyncPeriod</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> resyncPeriod &lt; s.resyncCheckPeriod &#123;</span><br><span class="line">			<span class="keyword">if</span> s.started &#123;</span><br><span class="line">				glog.Warningf(<span class="string">"resyncPeriod %d is smaller than resyncCheckPeriod %d and the informer has already started. Changing it to %d"</span>, resyncPeriod, s.resyncCheckPeriod, s.resyncCheckPeriod)</span><br><span class="line">				resyncPeriod = s.resyncCheckPeriod</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				<span class="comment">// if the event handler's resyncPeriod is smaller than the current resyncCheckPeriod, update</span></span><br><span class="line">				<span class="comment">// resyncCheckPeriod to match resyncPeriod and adjust the resync periods of all the listeners</span></span><br><span class="line">				<span class="comment">// accordingly</span></span><br><span class="line">				<span class="comment">// 设置同步周期</span></span><br><span class="line">				s.resyncCheckPeriod = resyncPeriod</span><br><span class="line">				s.processor.resyncCheckPeriodChanged(resyncPeriod)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 生成一个新的processListener</span></span><br><span class="line">	listener := newProcessListener(handler, resyncPeriod, determineResyncPeriod(resyncPeriod, s.resyncCheckPeriod), s.clock.Now(), initialBufferSize)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果当前sharedInformer没有启动, 就直接添加到processor&#123;sharedProcessor&#125;</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="keyword">if</span> !s.started &#123;</span><br><span class="line">		s.processor.addListener(listener)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// in order to safely join, we have to</span></span><br><span class="line">	<span class="comment">// 1. stop sending add/update/delete notifications</span></span><br><span class="line">	<span class="comment">// 2. do a list against the store</span></span><br><span class="line">	<span class="comment">// 3. send synthetic "Add" events to the new handler</span></span><br><span class="line">	<span class="comment">// 4. unblock</span></span><br><span class="line">	s.blockDeltas.Lock()</span><br><span class="line">	<span class="keyword">defer</span> s.blockDeltas.Unlock()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果informer已经启动, 就调用indexer.List(), 传送给当前的listener</span></span><br><span class="line">	s.processor.addListener(listener)</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> s.indexer.List() &#123;</span><br><span class="line">		listener.add(addNotification&#123;newObj: item&#125;)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="sharedProcessor-1"><a href="#sharedProcessor-1" class="headerlink" title="sharedProcessor"></a>sharedProcessor</h4><ul>
+<li><p>结构体</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> sharedProcessor <span class="keyword">struct</span> &#123;</span><br><span class="line">	listenersStarted <span class="keyword">bool</span></span><br><span class="line">	listenersLock    sync.RWMutex</span><br><span class="line">	listeners        []*processorListener    <span class="comment">// 注册listeners, 由controller添加进来</span></span><br><span class="line">	syncingListeners []*processorListener</span><br><span class="line">	clock            clock.Clock</span><br><span class="line">	wg               wait.Group</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>run</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *sharedProcessor)</span> <span class="title">run</span><span class="params">(stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		p.listenersLock.RLock()</span><br><span class="line">		<span class="keyword">defer</span> p.listenersLock.RUnlock()</span><br><span class="line">		<span class="keyword">for</span> _, listener := <span class="keyword">range</span> p.listeners &#123;</span><br><span class="line">			<span class="comment">// 启动所有 listener的run方法和pop方法</span></span><br><span class="line">			p.wg.Start(listener.run)</span><br><span class="line">			p.wg.Start(listener.pop)</span><br><span class="line">		&#125;</span><br><span class="line">		p.listenersStarted = <span class="literal">true</span></span><br><span class="line">	&#125;()</span><br><span class="line">        <span class="comment">// 等待停止然后暂停所有listener</span></span><br><span class="line">	&lt;-stopCh</span><br><span class="line">	p.listenersLock.RLock()</span><br><span class="line">	<span class="keyword">defer</span> p.listenersLock.RUnlock()</span><br><span class="line">	<span class="keyword">for</span> _, listener := <span class="keyword">range</span> p.listeners &#123;</span><br><span class="line">		<span class="built_in">close</span>(listener.addCh) <span class="comment">// Tell .pop() to stop. .pop() will tell .run() to stop</span></span><br><span class="line">	&#125;</span><br><span class="line">	p.wg.Wait() <span class="comment">// Wait for all .pop() and .run() to stop</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>distribute<br>分发事件给所有的listener</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *sharedProcessor)</span> <span class="title">distribute</span><span class="params">(obj <span class="keyword">interface</span>&#123;&#125;, sync <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	p.listenersLock.RLock()</span><br><span class="line">	<span class="keyword">defer</span> p.listenersLock.RUnlock()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> sync &#123;</span><br><span class="line">		<span class="keyword">for</span> _, listener := <span class="keyword">range</span> p.syncingListeners &#123;</span><br><span class="line">			listener.add(obj)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">for</span> _, listener := <span class="keyword">range</span> p.listeners &#123;</span><br><span class="line">			listener.add(obj)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="processorListener-1"><a href="#processorListener-1" class="headerlink" title="processorListener"></a>processorListener</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-29-11-51-47.png" alt><br> 为什么是这个样子呢? </p>
+<ul>
+<li>查看了之前版本的代码, 这个地方最初是使用一个切片来来做事件的缓冲, 后来才变成了RingGrowing</li>
+<li>首先当sharedProcessor进行事件分发的时候, 应该尽可能少的阻塞(要不会因为某个controller消费慢而影响所有controller的进度)</li>
+<li>其次事件应该尽可能快的被消费,  informer这个地方使用select来监听事件的变化，同时通过阻塞channel的方式来实时的获取数据, 就出现了上面的两个channel: nextCh(内部消息转发通道)和addCh(外部通道)</li>
+<li>但是两边的处理速率可能并不相同, 那多出来的数据怎么办?就是我们看到的RingGrowing, 由它来进行数据的缓冲</li>
+<li><p>如果发现容量不够了，就直接进行扩容操作<br><em>个人理解其实跟正常业务开发使用MQ进行削峰是一样的道理</em></p>
+<ul>
+<li><ul>
+<li>结构体<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> processorListener <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// nextCh是当前listener内部事件通道</span></span><br><span class="line">	nextCh <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">    <span class="comment">// addCh负责接收sharedProessor传递进来的事件通知 </span></span><br><span class="line">	addCh  <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">    <span class="comment">// controller的ResourceEventHandler</span></span><br><span class="line">	handler ResourceEventHandler</span><br><span class="line">    <span class="comment">// 内部缓冲队列</span></span><br><span class="line">	pendingNotifications buffer.RingGrowing</span><br><span class="line"></span><br><span class="line">	<span class="comment">// requestedResyncPeriod is how frequently the listener wants a full resync from the shared informer</span></span><br><span class="line">	requestedResyncPeriod time.Duration</span><br><span class="line">	<span class="comment">// resyncPeriod is how frequently the listener wants a full resync from the shared informer. This</span></span><br><span class="line">	<span class="comment">// value may differ from requestedResyncPeriod if the shared informer adjusts it to align with the</span></span><br><span class="line">	<span class="comment">// informer's overall resync check period.</span></span><br><span class="line">	resyncPeriod time.Duration</span><br><span class="line">	<span class="comment">// nextResync is the earliest time the listener should get a full resync</span></span><br><span class="line">	nextResync time.Time</span><br><span class="line">	<span class="comment">// resyncLock guards access to resyncPeriod and nextResync</span></span><br><span class="line">	resyncLock sync.Mutex</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>pop<br><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-09-29-11-17-09.png" alt></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// pop方法设计的太精妙了， 主要是是通过addCh-&gt; RingGrowing -&gt; nextCh来进行事件的实时分发</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *processorListener)</span> <span class="title">pop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// processorListener从当前 addCh中获取对应的事件</span></span><br><span class="line">	<span class="comment">// 获取事件后传递给.NextCh,给后续的run使用</span></span><br><span class="line">	<span class="keyword">defer</span> utilruntime.HandleCrash()</span><br><span class="line">	<span class="keyword">defer</span> <span class="built_in">close</span>(p.nextCh) <span class="comment">// Tell .run() to stop</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> nextCh <span class="keyword">chan</span>&lt;- <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">var</span> notification <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="comment">// 当第一次运行的时候, notification-&gt;nextCh中, 这时候,从pendingNotifications中读取数据会返回notification为nil</span></span><br><span class="line">		<span class="comment">// 同时ok是false,nextCh为置为nil, 当channel为nil的时候, 不接收任何数据, 当前case条件就不会被满足</span></span><br><span class="line">		<span class="keyword">case</span> nextCh &lt;- notification:</span><br><span class="line">			<span class="comment">// Notification dispatched</span></span><br><span class="line">			<span class="comment">// 精妙的地方在这, 当我从pendingNotifications一直能读取到数据(本地队列中一直有缓冲的事件)</span></span><br><span class="line">			<span class="comment">// 那我就一直可以读取数据, 当前的这个case分支就可以一直读取数据, 然后就会将notification加入到nextCh(p.nextCh)中</span></span><br><span class="line">			<span class="keyword">var</span> ok <span class="keyword">bool</span></span><br><span class="line">			notification, ok = p.pendingNotifications.ReadOne()</span><br><span class="line">			<span class="keyword">if</span> !ok &#123; <span class="comment">// Nothing to pop</span></span><br><span class="line">				nextCh = <span class="literal">nil</span> <span class="comment">// Disable this select case</span></span><br><span class="line">			&#125;</span><br><span class="line">		<span class="comment">// 当sharedProcessor添加数据的时候, 会从addCh中获取到对应的事件</span></span><br><span class="line">		<span class="keyword">case</span> notificationToAdd, ok := &lt;-p.addCh:</span><br><span class="line">			<span class="comment">// 当sharedProcessor分发一个事件, 如果当的notification不为空, 表示当前正在分发数据到nextCh中</span></span><br><span class="line">			<span class="comment">// 就先将数据写入到队列中等待后续读取数据</span></span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// notification在上一个ReadOne中已经被置为nil, 这时候继续读取数据, 然后将p.nextCh设置为nextCh(nextCh不为nil, 就可以继续接收数据了)</span></span><br><span class="line">			<span class="keyword">if</span> notification == <span class="literal">nil</span> &#123; <span class="comment">// No notification to pop (and pendingNotifications is empty)</span></span><br><span class="line">				<span class="comment">// Optimize the case - skip adding to pendingNotifications</span></span><br><span class="line">				notification = notificationToAdd</span><br><span class="line">				nextCh = p.nextCh</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123; <span class="comment">// There is already a notification waiting to be dispatched</span></span><br><span class="line">				<span class="comment">// 将事件加入环状队列中, 如果队列容量不足，就进行扩容</span></span><br><span class="line">				p.pendingNotifications.WriteOne(notificationToAdd)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>run</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// run方法其实就比较简单了, 就直接从.nextCh中获取事件然后调用handler里面对应的事件进行处理就可以了</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *processorListener)</span> <span class="title">run</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// this call blocks until the channel is closed.  When a panic happens during the notification</span></span><br><span class="line">	<span class="comment">// we will catch it, **the offending item will be skipped!**, and after a short delay (one second)</span></span><br><span class="line">	<span class="comment">// the next notification will be attempted.  This is usually better than the alternative of never</span></span><br><span class="line">	<span class="comment">// delivering again.</span></span><br><span class="line">	stopCh := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line">	wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="comment">// this gives us a few quick retries before a long pause and then a few more quick retries</span></span><br><span class="line">		err := wait.ExponentialBackoff(retry.DefaultRetry, <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span> &#123;</span><br><span class="line">			<span class="comment">// run从nextCh获取一个事件, 同时根据事件的类型,  调用最初传递进来的handler函数对应的action处理方法</span></span><br><span class="line">			<span class="keyword">for</span> next := <span class="keyword">range</span> p.nextCh &#123;</span><br><span class="line">				<span class="keyword">switch</span> notification := next.(<span class="keyword">type</span>) &#123;</span><br><span class="line">				<span class="keyword">case</span> updateNotification:</span><br><span class="line">					p.handler.OnUpdate(notification.oldObj, notification.newObj)</span><br><span class="line">				<span class="keyword">case</span> addNotification:</span><br><span class="line">					p.handler.OnAdd(notification.newObj)</span><br><span class="line">				<span class="keyword">case</span> deleteNotification:</span><br><span class="line">					p.handler.OnDelete(notification.oldObj)</span><br><span class="line">				<span class="keyword">default</span>:</span><br><span class="line">					utilruntime.HandleError(fmt.Errorf(<span class="string">"unrecognized notification: %#v"</span>, next))</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// the only way to get here is if the p.nextCh is empty and closed</span></span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line">		&#125;)</span><br><span class="line"></span><br><span class="line">		<span class="comment">// the only way to get here is if the p.nextCh is empty and closed</span></span><br><span class="line">		<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="built_in">close</span>(stopCh)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;, <span class="number">1</span>*time.Minute, stopCh)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag">#k8s</a>
+          
+            <a href="/tags/k8s那些天/" rel="tag">#k8s那些天</a>
+          
+            <a href="/tags/informer/" rel="tag">#informer</a>
+          
+            <a href="/tags/sharedInformer/" rel="tag">#sharedInformer</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/27/k8s/k8s_request_filters/" rel="next" title="K8s中的request与filters">
+                <i class="fa fa-chevron-left"></i> K8s中的request与filters
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/27/k8s/lru_cache/" rel="prev" title="LRU缓存">
+                LRU缓存 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#概况"><span class="nav-number">1.</span> <span class="nav-text">概况</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#组成"><span class="nav-number">2.</span> <span class="nav-text">组成</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sharedInformerFactory"><span class="nav-number">2.1.</span> <span class="nav-text">sharedInformerFactory</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sharedInformer"><span class="nav-number">2.2.</span> <span class="nav-text">sharedInformer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sharedProcessor"><span class="nav-number">2.3.</span> <span class="nav-text">sharedProcessor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#processorListener"><span class="nav-number">2.4.</span> <span class="nav-text">processorListener</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sharedInformerFactory-1"><span class="nav-number">3.1.</span> <span class="nav-text">sharedInformerFactory</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sharedInformer-1"><span class="nav-number">3.2.</span> <span class="nav-text">sharedInformer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sharedProcessor-1"><span class="nav-number">3.3.</span> <span class="nav-text">sharedProcessor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#processorListener-1"><span class="nav-number">3.4.</span> <span class="nav-text">processorListener</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

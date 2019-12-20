@@ -1,0 +1,645 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="go语言," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="字符串目标: go字符串内存布局了解go里面字符串的底层表示方式和内存布局">
+<meta name="keywords" content="go语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go里面的字符串">
+<meta property="og:url" content="http://www.sreguide.com/2018/10/16/go/go_string/index.html">
+<meta property="og:site_name" content="自以为是">
+<meta property="og:description" content="字符串目标: go字符串内存布局了解go里面字符串的底层表示方式和内存布局">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-10-15T21:56:46.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Go里面的字符串">
+<meta name="twitter:description" content="字符串目标: go字符串内存布局了解go里面字符串的底层表示方式和内存布局">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2018/10/16/go/go_string/"/>
+
+
+  <title> Go里面的字符串 | 自以为是 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">自以为是</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Go里面的字符串
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-16T05:56:46+08:00" content="2018-10-16 05:56">
+              2018-10-16 05:56
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h3><h4 id="目标-go字符串内存布局"><a href="#目标-go字符串内存布局" class="headerlink" title="目标: go字符串内存布局"></a>目标: go字符串内存布局</h4><p>了解go里面字符串的底层表示方式和内存布局</p>
+<a id="more"></a>
+<h4 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"strings"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">        str := strings.Repeat(<span class="string">"hello"</span>, <span class="number">2</span>)</span><br><span class="line">        <span class="built_in">println</span>(str)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go build -gcflags &quot;-N -l&quot; -o test strings.go</span><br></pre></td></tr></table></figure>
+<h4 id="查看汇编"><a href="#查看汇编" class="headerlink" title="查看汇编"></a>查看汇编</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">(gdb) l</span><br><span class="line">1       package main</span><br><span class="line">2</span><br><span class="line">3       import &quot;strings&quot;</span><br><span class="line">4</span><br><span class="line">5       func main() &#123;</span><br><span class="line">6               str := strings.Repeat(&quot;hello&quot;, 2)	//我们通过strings.Repeat生成一个字符串</span><br><span class="line">7               println(str)</span><br><span class="line">8       &#125;</span><br><span class="line">(gdb) l</span><br><span class="line">Line number 9 out of range; /home/devops/study/src/string/strings.go has 8 lines.</span><br><span class="line">(gdb) b 7 </span><br><span class="line">Breakpoint 1 at 0x454be3: file /home/devops/study/src/string/strings.go, line 7.</span><br><span class="line">(gdb) r</span><br><span class="line">Starting program: /home/devops/study/src/string/test </span><br><span class="line"></span><br><span class="line">Breakpoint 1, main.main () at /home/devops/study/src/string/strings.go:7</span><br><span class="line">7               println(str)</span><br><span class="line">(gdb) set disassembly-flavor intel</span><br><span class="line">(gdb) info locals</span><br><span class="line">str = 0xc4200140b0 &quot;hellohello&quot;</span><br><span class="line">(gdb) p/x &amp;str	#查看字符串变量的内存地址</span><br><span class="line">$1 = 0xc420045f68</span><br><span class="line">(gdb) x/2xg 0xc420045f68	# 查看该字符串变量的内存布局</span><br><span class="line">0xc420045f68:   0x000000c4200140b0      0x000000000000000a</span><br><span class="line">(gdb) x/2xg 0xc4200140b0	# 我们可以看到用ascii标识的字符串</span><br><span class="line">0xc4200140b0:   0x6c65686f6c6c6568      0x0000000000006f6c</span><br><span class="line">(gdb) info registers </span><br><span class="line">rax            0xc4200140b0     842350543024</span><br><span class="line">rbx            0xa      10</span><br><span class="line">rcx            0xa      10</span><br><span class="line">rdx            0xa      10</span><br><span class="line">rsi            0xc4200140a0     842350543008</span><br><span class="line">rdi            0xc4200140b0     842350543024</span><br><span class="line">rbp            0xc420045f78     0xc420045f78</span><br><span class="line">rsp            0xc420045f40     0xc420045f40</span><br><span class="line">r8             0x1      1</span><br><span class="line">r9             0x0      0</span><br><span class="line">r10            0xc4200140b0     842350543024</span><br><span class="line">r11            0x8      8</span><br><span class="line">r12            0xc      12</span><br><span class="line">r13            0xb      11</span><br><span class="line">r14            0x200    512</span><br><span class="line">r15            0xc      12</span><br><span class="line">rip            0x454be3 0x454be3 &lt;main.main+83&gt;</span><br><span class="line">eflags         0x202    [ IF ]</span><br><span class="line">cs             0x33     51</span><br><span class="line">ss             0x2b     43</span><br><span class="line">ds             0x0      0</span><br><span class="line">es             0x0      0</span><br><span class="line">fs             0x63     99</span><br><span class="line">gs             0x0      0</span><br><span class="line"># 通过查看寄存器发现我们的栈的位置是0xc420045f78 -0xc420045f40, 而我们的字符串的内存地址0x000000c4200140b0, 并没有在当前栈范围内</span><br></pre></td></tr></table></figure>
+<h4 id="目标-go字符串相加的实现"><a href="#目标-go字符串相加的实现" class="headerlink" title="目标:go字符串相加的实现"></a>目标:go字符串相加的实现</h4><p>go里面字符串的拼接是如何实现的 </p>
+<h4 id="测试代码-1"><a href="#测试代码-1" class="headerlink" title="测试代码"></a>测试代码</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">        s1 := <span class="string">"test"</span></span><br><span class="line">        s2 := <span class="string">"hello"</span></span><br><span class="line">        s3 := s2 + s1</span><br><span class="line">        <span class="built_in">println</span>(s1, s2, s3)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="gdb调试"><a href="#gdb调试" class="headerlink" title="gdb调试"></a>gdb调试</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">gdb) l</span><br><span class="line">1       package main</span><br><span class="line">2</span><br><span class="line">3       func main() &#123;</span><br><span class="line">4</span><br><span class="line">5               s1 := &quot;test&quot;</span><br><span class="line">6               s2 := &quot;hello&quot;</span><br><span class="line">7               s3 := s2 + s1</span><br><span class="line">8               println(s1, s2, s3)</span><br><span class="line">9       &#125;</span><br><span class="line">(gdb) l</span><br><span class="line">Line number 10 out of range; /home/devops/study/src/string/strings2.go has 9 lines.</span><br><span class="line">(gdb) b 7</span><br><span class="line">Breakpoint 1 at 0x44d9dc: file /home/devops/study/src/string/strings2.go, line 7.</span><br><span class="line">(gdb) set disassembly-flavor intel</span><br><span class="line">(gdb) disassemble </span><br><span class="line">Dump of assembler code for function main.main:</span><br><span class="line">   0x000000000044d980 &lt;+0&gt;:     mov    rcx,QWORD PTR fs:0xfffffffffffffff8</span><br><span class="line">   0x000000000044d989 &lt;+9&gt;:     lea    rax,[rsp-0x10]</span><br><span class="line">   0x000000000044d98e &lt;+14&gt;:    cmp    rax,QWORD PTR [rcx+0x10]</span><br><span class="line">   0x000000000044d992 &lt;+18&gt;:    jbe    0x44da9d &lt;main.main+285&gt;</span><br><span class="line">   0x000000000044d998 &lt;+24&gt;:    sub    rsp,0x90</span><br><span class="line">   0x000000000044d99f &lt;+31&gt;:    mov    QWORD PTR [rsp+0x88],rbp</span><br><span class="line">   0x000000000044d9a7 &lt;+39&gt;:    lea    rbp,[rsp+0x88]</span><br><span class="line">   0x000000000044d9af &lt;+47&gt;:    lea    rax,[rip+0x1d69c]        # 0x46b052</span><br><span class="line">   0x000000000044d9b6 &lt;+54&gt;:    mov    QWORD PTR [rsp+0x78],rax</span><br><span class="line">   0x000000000044d9bb &lt;+59&gt;:    mov    QWORD PTR [rsp+0x80],0x4</span><br><span class="line">   0x000000000044d9c7 &lt;+71&gt;:    lea    rax,[rip+0x1d718]        # 0x46b0e6</span><br><span class="line">   0x000000000044d9ce &lt;+78&gt;:    mov    QWORD PTR [rsp+0x68],rax</span><br><span class="line">   0x000000000044d9d3 &lt;+83&gt;:    mov    QWORD PTR [rsp+0x70],0x5</span><br><span class="line">=&gt; 0x000000000044d9dc &lt;+92&gt;:    lea    rax,[rsp+0x38]</span><br><span class="line">   0x000000000044d9e1 &lt;+97&gt;:    mov    QWORD PTR [rsp],rax</span><br><span class="line">   # 我们可以看到下面调用了一个runtie.concatstring2的函数,所以下面这部分汇编代码主要是为完成字符串对象的拷贝(字符串地址和长度)</span><br><span class="line">   0x000000000044d9e5 &lt;+101&gt;:   mov    rax,QWORD PTR [rsp+0x68]	</span><br><span class="line">   0x000000000044d9ea &lt;+106&gt;:   mov    rcx,QWORD PTR [rsp+0x70]</span><br><span class="line">   0x000000000044d9ef &lt;+111&gt;:   mov    QWORD PTR [rsp+0x8],rax</span><br><span class="line">   0x000000000044d9f4 &lt;+116&gt;:   mov    QWORD PTR [rsp+0x10],rcx</span><br><span class="line">   0x000000000044d9f9 &lt;+121&gt;:   mov    rax,QWORD PTR [rsp+0x78]</span><br><span class="line">   0x000000000044d9fe &lt;+126&gt;:   mov    rcx,QWORD PTR [rsp+0x80]</span><br><span class="line">   0x000000000044da06 &lt;+134&gt;:   mov    QWORD PTR [rsp+0x18],rax</span><br><span class="line">   0x000000000044da0b &lt;+139&gt;:   mov    QWORD PTR [rsp+0x20],rcx</span><br><span class="line">   0x000000000044da10 &lt;+144&gt;:   call   0x437c70 &lt;runtime.concatstring2&gt;</span><br><span class="line">   0x000000000044da15 &lt;+149&gt;:   mov    rax,QWORD PTR [rsp+0x28]</span><br><span class="line">   0x000000000044da1a &lt;+154&gt;:   mov    rcx,QWORD PTR [rsp+0x30]</span><br><span class="line">   0x000000000044da1f &lt;+159&gt;:   mov    QWORD PTR [rsp+0x58],rax</span><br><span class="line">   0x000000000044da24 &lt;+164&gt;:   mov    QWORD PTR [rsp+0x60],rcx</span><br><span class="line">   0x000000000044da29 &lt;+169&gt;:   call   0x422670 &lt;runtime.printlock&gt;</span><br><span class="line">   0x000000000044da2e &lt;+174&gt;:   mov    rax,QWORD PTR [rsp+0x78]</span><br><span class="line">   0x000000000044da33 &lt;+179&gt;:   mov    rcx,QWORD PTR [rsp+0x80]</span><br><span class="line">   0x000000000044da3b &lt;+187&gt;:   mov    QWORD PTR [rsp],ra</span><br></pre></td></tr></table></figure>
+<h4 id="runtime-concatstring2"><a href="#runtime-concatstring2" class="headerlink" title="runtime.concatstring2"></a>runtime.concatstring2</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">/ concatstrings implements a Go <span class="keyword">string</span> concatenation x+y+z+...</span><br><span class="line"><span class="comment">// The operands are passed in the slice a.</span></span><br><span class="line"><span class="comment">// If buf != nil, the compiler has determined that the result does not</span></span><br><span class="line"><span class="comment">// escape the calling function, so the string data can be stored in buf</span></span><br><span class="line"><span class="comment">// if small enough.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">concatstrings</span><span class="params">(buf *tmpBuf, a []<span class="keyword">string</span>)</span> <span class="title">string</span></span> &#123;</span><br><span class="line">        idx := <span class="number">0</span></span><br><span class="line">        l := <span class="number">0</span></span><br><span class="line">        count := <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> i, x := <span class="keyword">range</span> a &#123;</span><br><span class="line">                n := <span class="built_in">len</span>(x)</span><br><span class="line">                <span class="keyword">if</span> n == <span class="number">0</span> &#123;</span><br><span class="line">                        <span class="keyword">continue</span></span><br><span class="line">				&#125;</span><br><span class="line">				<span class="comment">//想想什么时候这个地方会成立？l := 0是声明一个int类型的整数,如果拼接字符串的长度超过了int类型，就会出现越界问题(江老师告诉的)</span></span><br><span class="line">                <span class="keyword">if</span> l+n &lt; l &#123;	</span><br><span class="line">                        throw(<span class="string">"string concatenation too long"</span>)</span><br><span class="line">                &#125;</span><br><span class="line">                l += n</span><br><span class="line">                count++</span><br><span class="line">                idx = i</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> count == <span class="number">0</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="string">""</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If there is just one string and either it is not on the stack</span></span><br><span class="line">        <span class="comment">// or our result does not escape the calling frame (buf != nil),</span></span><br><span class="line">        <span class="comment">// then we can return that string directly.</span></span><br><span class="line">        <span class="keyword">if</span> count == <span class="number">1</span> &amp;&amp; (buf != <span class="literal">nil</span> || !stringDataOnStack(a[idx])) &#123;</span><br><span class="line">                <span class="keyword">return</span> a[idx]</span><br><span class="line">        &#125;</span><br><span class="line">        s, b := rawstringtmp(buf, l)</span><br><span class="line">        <span class="keyword">for</span> _, x := <span class="keyword">range</span> a &#123;</span><br><span class="line">                <span class="built_in">copy</span>(b, x)</span><br><span class="line">                b = b[<span class="built_in">len</span>(x):]</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> s</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">concatstring2</span><span class="params">(buf *tmpBuf, a [2]<span class="keyword">string</span>)</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> concatstrings(buf, a[:])</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 可以看到go里面的字符串相加会首先计算要拼接的字符串的长度, 然后根据总长度申请一块内存完成拷贝</span></span><br></pre></td></tr></table></figure>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>字符串对象由两部分组成: 字符串指针和字符串长度<br>字符串的内存分配不在当前栈范围内，而是在<code>堆</code>上<br>字符串的相加操作并不存在python里面重复内存申请的问题</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/go语言/" rel="tag">#go语言</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/16/go/go_slice/" rel="next" title="Go里面的slice,切片,底层实现">
+                <i class="fa fa-chevron-left"></i> Go里面的slice,切片,底层实现
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/10/16/go/go_closure/" rel="prev" title="Go里面闭包的实现">
+                Go里面闭包的实现 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#字符串"><span class="nav-number">1.</span> <span class="nav-text">字符串</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#目标-go字符串内存布局"><span class="nav-number">1.1.</span> <span class="nav-text">目标: go字符串内存布局</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#测试代码"><span class="nav-number">1.2.</span> <span class="nav-text">测试代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#编译"><span class="nav-number">1.3.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看汇编"><span class="nav-number">1.4.</span> <span class="nav-text">查看汇编</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#目标-go字符串相加的实现"><span class="nav-number">1.5.</span> <span class="nav-text">目标:go字符串相加的实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#测试代码-1"><span class="nav-number">1.6.</span> <span class="nav-text">测试代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#gdb调试"><span class="nav-number">1.7.</span> <span class="nav-text">gdb调试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#runtime-concatstring2"><span class="nav-number">1.8.</span> <span class="nav-text">runtime.concatstring2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">1.9.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
