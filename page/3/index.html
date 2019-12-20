@@ -276,6 +276,129 @@
             
               
                 
+                <a class="post-title-link" href="/2018/10/27/k8s/watch_cache/" itemprop="url">
+                  k8s watchCache 缓存滑动窗口
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:14+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-12-14-43-16.png" alt></p>
+<ul>
+<li>通常在运维开发中, 为了避免后端存储的压力，都会增加一个缓存，缓存资源数据，避免每次都从后端获取</li>
+<li>今天介绍另外一个好玩的东西watchCache</li>
+<li>watchCache是一个固定大小的用于监测缓存数据变化的数组</li>
+</ul>
+<blockquote>
+<p> 主要作用是缓存固定大小的最新的数据, 因为有些情况下，我们并不一定需要一个全量的数据， 比如在k8s开始watch一个资源对象, 那其实只需要吧watch的对应的版本最新的数据，给你最近一批被修改的数据就可以了，并不需要全部的数据</p>
+</blockquote>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/10/27/k8s/watch_cache/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/10/27/k8s/wait_poll/" itemprop="url">
                   定时、周期调度、等待时间的工具函数实现
                 </a>
@@ -1416,123 +1539,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/10/27/cmdb/cmdb_design/" itemprop="url">
-                  CMDB的设计
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-27T14:42:35+08:00" content="2018-10-27 14:42">
-              2018-10-27 14:42
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/cmdb/" itemprop="url" rel="index">
-                    <span itemprop="name">cmdb</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h4 id="CMDB简介"><a href="#CMDB简介" class="headerlink" title="CMDB简介"></a>CMDB简介</h4><h5 id="CMDB是什么"><a href="#CMDB是什么" class="headerlink" title="CMDB是什么"></a>CMDB是什么</h5><p>Configuration Management Database(配置管理数据库)简称CMDB<br>CMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性</p>
-<h5 id="CMDB的作用"><a href="#CMDB的作用" class="headerlink" title="CMDB的作用"></a>CMDB的作用</h5><p>上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心</p>
-<p>存储设备的各种信息: CMDB要能存储各种的信息,包括底层的主机信息和上层业务信息<br>流程的流转,发挥配置信息的价值: CMDB里面的数据要提供一定的消费接口,供其它系统消费<br>流程,准确性: 跟其他系统打通,提供准确的数据消费,同时也获取最新的数据</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/cmdb/cmdb_design/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1578,7 +1584,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-count">45</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1586,7 +1592,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-count">41</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1595,7 +1601,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-count">45</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

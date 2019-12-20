@@ -276,6 +276,123 @@
             
               
                 
+                <a class="post-title-link" href="/2018/10/27/cmdb/cmdb_design/" itemprop="url">
+                  CMDB的设计
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:42:35+08:00" content="2018-10-27 14:42">
+              2018-10-27 14:42
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/cmdb/" itemprop="url" rel="index">
+                    <span itemprop="name">cmdb</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h4 id="CMDB简介"><a href="#CMDB简介" class="headerlink" title="CMDB简介"></a>CMDB简介</h4><h5 id="CMDB是什么"><a href="#CMDB是什么" class="headerlink" title="CMDB是什么"></a>CMDB是什么</h5><p>Configuration Management Database(配置管理数据库)简称CMDB<br>CMDB存储与管理企业IT架构中的设备的各种信息,它与所有的服务支持和服务交付流程都紧密相连,支持这些流程的流转丶发挥配置信息的价值,同时依赖于相关流程保证数据的准确性</p>
+<h5 id="CMDB的作用"><a href="#CMDB的作用" class="headerlink" title="CMDB的作用"></a>CMDB的作用</h5><p>上面是百度百科的解释,通过它的定义,我们可以关注下下面几个核心</p>
+<p>存储设备的各种信息: CMDB要能存储各种的信息,包括底层的主机信息和上层业务信息<br>流程的流转,发挥配置信息的价值: CMDB里面的数据要提供一定的消费接口,供其它系统消费<br>流程,准确性: 跟其他系统打通,提供准确的数据消费,同时也获取最新的数据</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/10/27/cmdb/cmdb_design/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/10/27/cmdb/bk_cmdb_source_01/" itemprop="url">
                   看蓝鲸学CMDB设计 API 网关与 API SERVER
                 </a>
@@ -1362,121 +1479,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/10/16/go/go_closure/" itemprop="url">
-                  Go里面闭包的实现
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-16T05:56:50+08:00" content="2018-10-16 05:56">
-              2018-10-16 05:56
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/" itemprop="url" rel="index">
-                    <span itemprop="name">go语言</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>闭包由匿名函数和其引用的上下文环境变量两部分组成, 其中变量信息会逃逸到堆(go里面并没有使用系统自带的堆栈空间,我们可以假定main函数栈针之外的空间都是所谓的堆)中, 会造成对应环境变量生命周期的延长</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/16/go/go_closure/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1522,7 +1524,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">44</span>
+              <span class="site-state-item-count">45</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1530,7 +1532,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-count">41</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1539,7 +1541,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-count">45</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
