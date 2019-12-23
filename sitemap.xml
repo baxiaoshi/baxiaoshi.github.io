@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://www.sreguide.com/2019/12/23/go/sync_mutex/</loc>
+    
+    <lastmod>2019-12-23T01:21:52.705Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://www.sreguide.com/2019/12/20/go/sync_reader_writer/</loc>
     
     <lastmod>2019-12-20T02:45:31.782Z</lastmod>

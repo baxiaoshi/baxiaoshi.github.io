@@ -1,3 +1,4 @@
+http://www.sreguide.com/2019/12/23/go/sync_mutex/
 http://www.sreguide.com/2019/12/20/go/sync_reader_writer/
 http://www.sreguide.com/2019/05/23/microservices/register_center_registery_hashcode/
 http://www.sreguide.com/2019/05/21/distributed/kafka_leader_follower_coordinator/
