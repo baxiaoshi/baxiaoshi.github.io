@@ -87,7 +87,7 @@
 <meta name="description" content="golang mutex实现锁实现基础概念CAS与轮询cas实现锁在锁的实现中现在越来越多的采用CAS来进行，通过利用处理器的CAS指令来实现对给定变量的值交换来进行锁的获取 轮询锁在多线程并发的情况下很有可能会有线程CAS失败，通常就会配合for循环采用轮询的方式去尝试重新获取锁 锁的公平性锁从公平性上通常会分为公平锁和非公平锁，主要取决于在锁获取的过程中，先进行锁获取的线程是否比后续的线程更先">
 <meta name="keywords" content="go语言,golang,sync,互斥锁锁,mutex">
 <meta property="og:type" content="article">
-<meta property="og:title" content="图解Go里面的互斥锁mutex实现与编程语言实现核心源码">
+<meta property="og:title" content="图解Go里面的互斥锁mutex了解编程语言核心实现源码">
 <meta property="og:url" content="http://www.sreguide.com/2019/12/23/go/sync_mutex/index.html">
 <meta property="og:site_name" content="自以为是">
 <meta property="og:description" content="golang mutex实现锁实现基础概念CAS与轮询cas实现锁在锁的实现中现在越来越多的采用CAS来进行，通过利用处理器的CAS指令来实现对给定变量的值交换来进行锁的获取 轮询锁在多线程并发的情况下很有可能会有线程CAS失败，通常就会配合for循环采用轮询的方式去尝试重新获取锁 锁的公平性锁从公平性上通常会分为公平锁和非公平锁，主要取决于在锁获取的过程中，先进行锁获取的线程是否比后续的线程更先">
@@ -102,9 +102,9 @@
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576051305568-06dee9d9-e7c2-4712-8bd8-add3c0c4af12.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576055731109-c5950e68-4f18-4445-9263-5a9975570b67.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576057552076-e45a9a4c-bf46-487a-a780-95dd90f931d2.png">
-<meta property="og:updated_time" content="2019-12-23T01:21:52.705Z">
+<meta property="og:updated_time" content="2019-12-23T01:35:01.245Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="图解Go里面的互斥锁mutex实现与编程语言实现核心源码">
+<meta name="twitter:title" content="图解Go里面的互斥锁mutex了解编程语言核心实现源码">
 <meta name="twitter:description" content="golang mutex实现锁实现基础概念CAS与轮询cas实现锁在锁的实现中现在越来越多的采用CAS来进行，通过利用处理器的CAS指令来实现对给定变量的值交换来进行锁的获取 轮询锁在多线程并发的情况下很有可能会有线程CAS失败，通常就会配合for循环采用轮询的方式去尝试重新获取锁 锁的公平性锁从公平性上通常会分为公平锁和非公平锁，主要取决于在锁获取的过程中，先进行锁获取的线程是否比后续的线程更先">
 <meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576042718149-fe88f410-4517-47f4-a0d1-81feba4c8148.png">
 
@@ -130,7 +130,7 @@
   <link rel="canonical" href="http://www.sreguide.com/2019/12/23/go/sync_mutex/"/>
 
 
-  <title> 图解Go里面的互斥锁mutex实现与编程语言实现核心源码 | 自以为是 </title>
+  <title> 图解Go里面的互斥锁mutex了解编程语言核心实现源码 | 自以为是 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -286,7 +286,7 @@
             
             
               
-                图解Go里面的互斥锁mutex实现与编程语言实现核心源码
+                图解Go里面的互斥锁mutex了解编程语言核心实现源码
               
             
           </h1>
@@ -398,7 +398,7 @@
 <h2 id="锁的公平性"><a href="#锁的公平性" class="headerlink" title="锁的公平性"></a>锁的公平性</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576043274819-238b773a-5659-44a0-a8c1-7bc7b5b3177d.png" alt="image.png"><br>锁从公平性上通常会分为公平锁和非公平锁，主要取决于在锁获取的过程中，先进行锁获取的线程是否比后续的线程更先获得锁，如果是则就是公平锁：多个线程按照获取锁的顺序依次获得锁，否则就是非公平性</p>
 <h2 id="饥饿与排队"><a href="#饥饿与排队" class="headerlink" title="饥饿与排队"></a>饥饿与排队</h2><h3 id="锁饥饿"><a href="#锁饥饿" class="headerlink" title="锁饥饿"></a>锁饥饿</h3><p>锁饥饿是指因为大量线程都同时进行获取锁，某些线程可能在锁的CAS过程中一直失败，从而长时间获取不到锁</p>
 <h3 id="排队机制"><a href="#排队机制" class="headerlink" title="排队机制"></a>排队机制</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576043327274-8a5fb342-8905-4869-9192-7e1784cd8c58.png" alt="image.png"><br>上面提到了CAS和轮询锁进行锁获取的方式，可以发现如果已经有线程获取了锁，但是在当前线程在多次轮询获取锁失败的时候，就没有必要再继续进行反复尝试浪费系统资源，通常就会采用一种排队机制，来进行排队等待</p>
-<h2 id="位计数"><a href="#位计数" class="headerlink" title="位计数"></a>位计数</h2><p>在大多数编程语言中针对实现基于CAS的锁的时候，通常都会采用一个32位的整数来进行锁状态的存储</p>
+<h2 id="位计数"><a href="#位计数" class="headerlink" title="位计数"></a>位计数</h2><p>在大多数编程语言中针对实现基于CAS的锁的时候，通常都会采用一个32位的整数来进行锁状态的存储<br><a id="more"></a></p>
 <h1 id="mutex实现"><a href="#mutex实现" class="headerlink" title="mutex实现"></a>mutex实现</h1><h2 id="成员变量与模式"><a href="#成员变量与模式" class="headerlink" title="成员变量与模式"></a>成员变量与模式</h2><h3 id="成员变量"><a href="#成员变量" class="headerlink" title="成员变量"></a>成员变量</h3><p>在go的mutex中核心成员变量只有两个state和sema,其通过state来进行锁的计数，而通过sema来实现排队<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Mutex <span class="keyword">struct</span> &#123;</span><br><span class="line">	state <span class="keyword">int32</span></span><br><span class="line">	sema  <span class="keyword">uint32</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h3 id="锁模式"><a href="#锁模式" class="headerlink" title="锁模式"></a>锁模式</h3><p>锁模式主要分为两种</p>
 <table>
