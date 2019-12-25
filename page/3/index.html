@@ -276,6 +276,103 @@
             
               
                 
+                <a class="post-title-link" href="/2018/10/27/cloudify_00/" itemprop="url">
+                  cloudify基本了解
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:43:20+08:00" content="2018-10-27 14:43">
+              2018-10-27 14:43
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
+<p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2018/10/27/cloudify_00/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2018/10/27/1. cloudify_system_event_bus_01/" itemprop="url">
                   cloudify的任务执行流程
                 </a>
@@ -1388,157 +1485,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/10/27/devops/devops_baidu_ark/" itemprop="url">
-                  智能运维ARK框架
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-10-27T14:42:43+08:00" content="2018-10-27 14:42">
-              2018-10-27 14:42
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/ark/" itemprop="url" rel="index">
-                    <span itemprop="name">ark</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/ark/百度/" itemprop="url" rel="index">
-                    <span itemprop="name">百度</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/ark/百度/智能运维/" itemprop="url" rel="index">
-                    <span itemprop="name">智能运维</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-09-12-12-10.png" alt><br><strong>图片来自官方</strong></p>
-<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>ARK系统是一个基于事件驱动的智能运维开发框架，主要解决下面两个问题</p>
-<ul>
-<li>部分组件自动化，代价是控制策略简单，风险较大。典型如使用报警回调方式自动故障发现和自动故障处理执行。</li>
-<li>固化完整运维操作的控制、处理流程，代价是可扩展性较差，业务变化需要大规模的调整流程。</li>
-</ul>
-<p>ARK 提供了以下功能用于解决上面的问题</p>
-<ul>
-<li>按照运维操作流程和操作模式抽象，而非提供原生的技术实现抽象</li>
-<li>实际的技术抽象隐藏在用户视野之外，避免将功能组件用于非预期的场合</li>
-<li>基于监听、决策、执行三个组件和graph图模型算法, 实现基于事件驱动的智能运维开发框架</li>
-<li>基于zk和es实现框架的高可用</li>
-</ul>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/devops/devops_baidu_ark/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1584,7 +1530,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">46</span>
+              <span class="site-state-item-count">47</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1592,7 +1538,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">43</span>
+                <span class="site-state-item-count">44</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1601,7 +1547,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">47</span>
+                <span class="site-state-item-count">48</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

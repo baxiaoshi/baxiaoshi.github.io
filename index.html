@@ -276,6 +276,175 @@
             
               
                 
+                <a class="post-title-link" href="/2019/12/25/go/go_sync_waitgroup/" itemprop="url">
+                  图解Go里面的WaitGroup了解编程语言核心实现源码
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-12-25T17:31:16+08:00" content="2019-12-25 17:31">
+              2019-12-25 17:31
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/" itemprop="url" rel="index">
+                    <span itemprop="name">golang</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/sync/" itemprop="url" rel="index">
+                    <span itemprop="name">sync</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/sync/WaitGroup/" itemprop="url" rel="index">
+                    <span itemprop="name">WaitGroup</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="golang-waitgroup"><a href="#golang-waitgroup" class="headerlink" title="golang waitgroup"></a>golang waitgroup</h1><h1 id="基础筑基"><a href="#基础筑基" class="headerlink" title="基础筑基"></a>基础筑基</h1><p>sync.WaitGroup里面的实现逻辑其实蛮简单的，在看过之前的sync.Mutex和synx.RWMutex之后，阅读起来应该非常简单，而唯一有差异的其实就是sync.WaitGroup里面的state1</p>
+<h2 id="等待机制"><a href="#等待机制" class="headerlink" title="等待机制"></a>等待机制</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577165753254-56f98baa-b807-4c59-8882-f44f5f27f901.png" alt="image.png"><br>sync.WaitGroup主要用于等待一组goroutine退出，本质上其实就是一个计数器，我们可以通过Add指定我们需要等待退出的goroutine的数量，然后通过Done来递减，如果为0,则可以退出</p>
+<h2 id="内存对齐"><a href="#内存对齐" class="headerlink" title="内存对齐"></a>内存对齐</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577243058273-98a2b96d-4991-4ed0-a418-fe63875fe69a.png" alt="image.png"><br>内存对齐是一个比较大的话题，其核心机制是编译器根据结构体内部元素的size结合平台和编译器自身的规则来进行补位， 而在sync.WaitGroup里面就有用到，也是我感觉可能在WaitGroup所有实现的核心特性里面最重要的一条了</p>
+<p>在WaitGroup里面只有state1 [3]uint32这一个元素，通过类型我们可以计算uint32是4个字节，长度3的数组总长度12，其实之前这个地方是[12]byte, 切换uint32是go语言里面为了让底层的编译器保证按照4个字节对齐而做的切换</p>
+<h2 id="8字节"><a href="#8字节" class="headerlink" title="8字节"></a>8字节</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577250140517-e1cab708-8e98-4a8a-a84b-ff273851b100.png" alt="image.png"><br>8字节即两个4字节，也就是两个uint32的长度，实际上也是一个uint64的长度，在sync.WaitGroup里面通过uint64来进行等待数量的计数</p>
+<p>这里有一个相对比较hack的问题，我翻阅过很多文章，都没有找到能让我完全信服的答案，接下来就是我自己的臆测了</p>
+<h2 id="8字节的臆测"><a href="#8字节的臆测" class="headerlink" title="8字节的臆测"></a>8字节的臆测</h2><p>首先go语言需要兼容32位和64位平台，但是在32位平台上对64字节的uint操作可能不是原子的，比如在读取一个字长度的时候，另外一个字的数据很有可能已经发生改变了(在32位操作系统上,字长是4，而uint64长度为8)， 所以在实际计数的时候，其实sync.WaitGroup也就使用了4个字节来进行</p>
+<p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577251025020-c2a6037f-15cd-4c94-9a5d-3a55139cc48c.png" alt="image.png"><br>在cpu内有一个cache line的缓存，这个缓存通常是8个字节的长度，在intel的cpu中，会保证针对一个cache line的操作是原子，如果只有8个字节很有可能会出现上面的这种情况，即垮了两个cache line, 这样不论是在原子操作还是性能上可能都会有问题</p>
+<h2 id="测试8字节指针"><a href="#测试8字节指针" class="headerlink" title="测试8字节指针"></a>测试8字节指针</h2><p>我这里简单构造了一个8字节的长度指针，来做演示，通过读取底层数组的指针和偏移指针(state1数组的第2个元素即index=1)的地址，可以验证猜想即在经过编译器进行内存分配对齐之后，如果当前元素的指针的地址不能为8整除，则其第地址+4的地址，可以被8整除(这里感觉更多的是在编译器层才能看到真正的东西，而我对编译器本身并不感兴趣，所以我只需要一个证明，可以验证结果即可)<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"unsafe"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> a <span class="keyword">struct</span> &#123;</span><br><span class="line">	b <span class="keyword">byte</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> w <span class="keyword">struct</span> &#123;</span><br><span class="line">	state1 [<span class="number">3</span>]<span class="keyword">uint32</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	b := a&#123;&#125;</span><br><span class="line">	<span class="built_in">println</span>(unsafe.Sizeof(b), <span class="keyword">uintptr</span>(unsafe.Pointer(&amp;b)), <span class="keyword">uintptr</span>(unsafe.Pointer(&amp;b))%<span class="number">8</span> == <span class="number">0</span>)</span><br><span class="line">	wg := w&#123;&#125;</span><br><span class="line">	<span class="built_in">println</span>(unsafe.Sizeof(wg), <span class="keyword">uintptr</span>(unsafe.Pointer(&amp;wg.state1)), <span class="keyword">uintptr</span>(unsafe.Pointer(&amp;wg.state1))%<span class="number">8</span> == <span class="number">0</span>)</span><br><span class="line">	<span class="built_in">println</span>(unsafe.Sizeof(wg), <span class="keyword">uintptr</span>(unsafe.Pointer(&amp;wg.state1[<span class="number">1</span>])), <span class="keyword">uintptr</span>(unsafe.Pointer(&amp;wg.state1[<span class="number">1</span>]))%<span class="number">8</span> == <span class="number">0</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>输出结果<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1 824633919343 <span class="literal">false</span></span><br><span class="line">12 824633919356 <span class="literal">false</span></span><br><span class="line">12 824633919360 <span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="分段计数"><a href="#分段计数" class="headerlink" title="分段计数"></a>分段计数</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577253067807-38897dac-3877-4587-baaa-5441d07a377a.png" alt="image.png"><br>在sync.WaitGroup中对上面的提到的8字节的uint64也是分段计数，即高位记录需要等待 Done的数量，而低位记录当前正在Wait等待结束的计数</p>
+<h1 id="源码速读"><a href="#源码速读" class="headerlink" title="源码速读"></a>源码速读</h1><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577254164471-10d73f39-da09-44a3-8abf-12fc8538067b.png" alt="image.png"><br>1.核心原理就是通过之前说的64位的uint64来进行计数，采用高位记录需要Done的数量，低位记录Wait的数量<br>2.如果发现当前count&gt;0则Wait的goroutine会进行排队<br>3.任务完成后的goroutine则进行Done操作，直到count==0,则完成，就唤醒所有因为wait操作睡眠的goroutine</p>
+<h2 id="计数与信号量"><a href="#计数与信号量" class="headerlink" title="计数与信号量"></a>计数与信号量</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577251292410-f6ca8282-bf96-4fd7-bf7a-d8a466d0b1d0.png" alt="image.png"><br>就像基础部分说的那样，针对12字节的[3]uint32会根据当前指针的地址来进行计算，确定采用哪个分段进行计数和做为信号量等待，详细的说明上面已经提过，这里只是根据采取的分段，然后将对应的分段转换为*uint64的指针和一个uint32的指针就可以了</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wg *WaitGroup)</span> <span class="title">state</span><span class="params">()</span> <span class="params">(statep *<span class="keyword">uint64</span>, semap *<span class="keyword">uint32</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">uintptr</span>(unsafe.Pointer(&amp;wg.state1))%<span class="number">8</span> == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> (*<span class="keyword">uint64</span>)(unsafe.Pointer(&amp;wg.state1)), &amp;wg.state1[<span class="number">2</span>]</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> (*<span class="keyword">uint64</span>)(unsafe.Pointer(&amp;wg.state1[<span class="number">1</span>])), &amp;wg.state1[<span class="number">0</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="添加等待计数"><a href="#添加等待计数" class="headerlink" title="添加等待计数"></a>添加等待计数</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wg *WaitGroup)</span> <span class="title">Add</span><span class="params">(delta <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 获取当前计数</span></span><br><span class="line">    statep, semap := wg.state()</span><br><span class="line">    <span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">        _ = *statep <span class="comment">// trigger nil deref early</span></span><br><span class="line">        <span class="keyword">if</span> delta &lt; <span class="number">0</span> &#123;</span><br><span class="line">            <span class="comment">// Synchronize decrements with Wait.</span></span><br><span class="line">            race.ReleaseMerge(unsafe.Pointer(wg))</span><br><span class="line">        &#125;</span><br><span class="line">        race.Disable()</span><br><span class="line">        <span class="keyword">defer</span> race.Enable()</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 使用高32位进行counter计数</span></span><br><span class="line">    state := atomic.AddUint64(statep, <span class="keyword">uint64</span>(delta)&lt;&lt;<span class="number">32</span>)</span><br><span class="line">    v := <span class="keyword">int32</span>(state &gt;&gt; <span class="number">32</span>) <span class="comment">// 获取当前需要等待done的数量</span></span><br><span class="line">    w := <span class="keyword">uint32</span>(state) <span class="comment">// 获取低32位即waiter等待计数</span></span><br><span class="line">    <span class="keyword">if</span> race.Enabled &amp;&amp; delta &gt; <span class="number">0</span> &amp;&amp; v == <span class="keyword">int32</span>(delta) &#123;</span><br><span class="line">        <span class="comment">// The first increment must be synchronized with Wait.</span></span><br><span class="line">        <span class="comment">// Need to model this as a read, because there can be</span></span><br><span class="line">        <span class="comment">// several concurrent wg.counter transitions from 0.</span></span><br><span class="line">        race.Read(unsafe.Pointer(semap))</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> v &lt; <span class="number">0</span> &#123;</span><br><span class="line">        <span class="built_in">panic</span>(<span class="string">"sync: negative WaitGroup counter"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> w != <span class="number">0</span> &amp;&amp; delta &gt; <span class="number">0</span> &amp;&amp; v == <span class="keyword">int32</span>(delta) &#123;</span><br><span class="line">        <span class="built_in">panic</span>(<span class="string">"sync: WaitGroup misuse: Add called concurrently with Wait"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果当前v&gt;0,则表示还需要继续未完成的goroutine进行Done操作</span></span><br><span class="line">    <span class="comment">// 如果w ==0,则表示当前并没有goroutine在wait等待结束</span></span><br><span class="line">    <span class="comment">// 以上两种情况直接返回即可</span></span><br><span class="line">    <span class="keyword">if</span> v &gt; <span class="number">0</span> || w == <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 当waiters &gt; 0 的时候，并且当前v==0，这个时候如果检查发现state状态前后发生改变，则</span></span><br><span class="line">    <span class="comment">// 证明当前有人修改过，则删除</span></span><br><span class="line">    <span class="comment">// 如果走到这个地方则证明经过之前的操作后，当前的v==0,w!=0,就证明之前一轮的Done已经全部完成，现在需要唤醒所有在wait的goroutine</span></span><br><span class="line">    <span class="comment">// 此时如果发现当前的*statep值又发生了改变，则证明有有人进行了Add操作</span></span><br><span class="line">    <span class="comment">// 也就是这里的WaitGroup滥用</span></span><br><span class="line">    <span class="keyword">if</span> *statep != state &#123;</span><br><span class="line">        <span class="built_in">panic</span>(<span class="string">"sync: WaitGroup misuse: Add called concurrently with Wait"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 将当前state的状态设置为0，就可以进行下次的重用了</span></span><br><span class="line">    *statep = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> ; w != <span class="number">0</span>; w-- &#123;</span><br><span class="line">        <span class="comment">// 释放所有排队的waiter</span></span><br><span class="line">        runtime_Semrelease(semap, <span class="literal">false</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Done完成一个等待事件"><a href="#Done完成一个等待事件" class="headerlink" title="Done完成一个等待事件"></a>Done完成一个等待事件</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wg *WaitGroup)</span> <span class="title">Done</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// 减去一个-1</span></span><br><span class="line">    wg.Add(<span class="number">-1</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="等待所有操作完成"><a href="#等待所有操作完成" class="headerlink" title="等待所有操作完成"></a>等待所有操作完成</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wg *WaitGroup)</span> <span class="title">Wait</span><span class="params">()</span></span> &#123;</span><br><span class="line">    statep, semap := wg.state()</span><br><span class="line">    <span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">        _ = *statep <span class="comment">// trigger nil deref early</span></span><br><span class="line">        race.Disable()</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">        <span class="comment">// 获取state的状态</span></span><br><span class="line">        state := atomic.LoadUint64(statep)</span><br><span class="line">        v := <span class="keyword">int32</span>(state &gt;&gt; <span class="number">32</span>) <span class="comment">// 获取高32位的count</span></span><br><span class="line">        w := <span class="keyword">uint32</span>(state) <span class="comment">// 获取当前正在Wait的数量</span></span><br><span class="line">        <span class="keyword">if</span> v == <span class="number">0</span> &#123; <span class="comment">// 如果当前v ==0就直接return， 表示当前不需要等待</span></span><br><span class="line">            <span class="comment">// Counter is 0, no need to wait.</span></span><br><span class="line">            <span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">                race.Enable()</span><br><span class="line">                race.Acquire(unsafe.Pointer(wg))</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 进行低位的waiter计数统计</span></span><br><span class="line">        <span class="keyword">if</span> atomic.CompareAndSwapUint64(statep, state, state+<span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> race.Enabled &amp;&amp; w == <span class="number">0</span> &#123;</span><br><span class="line">                <span class="comment">// Wait must be synchronized with the first Add.</span></span><br><span class="line">                <span class="comment">// Need to model this is as a write to race with the read in Add.</span></span><br><span class="line">                <span class="comment">// As a consequence, can do the write only for the first waiter,</span></span><br><span class="line">                <span class="comment">// otherwise concurrent Waits will race with each other.</span></span><br><span class="line">                race.Write(unsafe.Pointer(semap))</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 如果成功则进行排队休眠等待唤醒</span></span><br><span class="line">            runtime_Semacquire(semap)</span><br><span class="line">            <span class="comment">// 如果唤醒后发现state的状态不为0，则证明在唤醒的过程中WaitGroup又被重用，则panic</span></span><br><span class="line">            <span class="keyword">if</span> *statep != <span class="number">0</span> &#123;</span><br><span class="line">                <span class="built_in">panic</span>(<span class="string">"sync: WaitGroup is reused before previous Wait has returned"</span>)</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">                race.Enable()</span><br><span class="line">                race.Acquire(unsafe.Pointer(wg))</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="https://www.cnblogs.com/diegodu/p/9340303.html" target="_blank" rel="noopener">关于cpu cache line大小</a><br><a href="https://www.zhihu.com/question/27026846" target="_blank" rel="noopener">原子操作</a></p>
+<blockquote>
+<p>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"><br>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2019/12/23/go/sync_mutex/" itemprop="url">
                   图解Go里面的互斥锁mutex了解编程语言核心实现源码
                 </a>
@@ -1690,121 +1859,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2019/05/14/go/go_restful_01/" itemprop="url">
-                  go-restful框架学习
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-05-14T21:48:33+08:00" content="2019-05-14 21:48">
-              2019-05-14 21:48
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/" itemprop="url" rel="index">
-                    <span itemprop="name">go语言</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h3 id="go-restful初步了解"><a href="#go-restful初步了解" class="headerlink" title="go-restful初步了解"></a>go-restful初步了解</h3><h4 id="go-restful介绍"><a href="#go-restful介绍" class="headerlink" title="go-restful介绍"></a>go-restful介绍</h4><p>go-restful是一个基于go里面net/http构建的一个rest风格的包，这个库并没有做过多的封装， 再kubernets和蓝鲸的cmdb里面都有使用</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2019/05/14/go/go_restful_01/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1850,7 +1904,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">46</span>
+              <span class="site-state-item-count">47</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1858,7 +1912,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">43</span>
+                <span class="site-state-item-count">44</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1867,7 +1921,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">47</span>
+                <span class="site-state-item-count">48</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
