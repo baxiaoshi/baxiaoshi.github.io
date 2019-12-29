@@ -89,7 +89,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cron Controller 源码实现">
 <meta property="og:url" content="http://www.sreguide.com/2018/10/27/k8s/cron_job_controller/index.html">
-<meta property="og:site_name" content="自以为是">
+<meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析">
 <meta property="og:description" content="CronJobController主要负责周期性任务的调度, 就跟linux中的crontab程序类似, 当达到时间就根据策略调用apiserver进行任务的创建或者状态的修改 当前CronJobController的问题  CronJobController并没有使用informer来进行时间监听apiserver, 而是直接进行周期循环 单groutine进行调度">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-10-12-11-47-31.png">
@@ -125,7 +125,7 @@
   <link rel="canonical" href="http://www.sreguide.com/2018/10/27/k8s/cron_job_controller/"/>
 
 
-  <title> Cron Controller 源码实现 | 自以为是 </title>
+  <title> Cron Controller 源码实现 | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -172,7 +172,7 @@
   <div class="custom-logo-site-title">
     <a href="/"  class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <span class="site-title">自以为是</span>
+      <span class="site-title">专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析</span>
       <span class="logo-line-after"><i></i></span>
     </a>
   </div>
@@ -527,7 +527,7 @@
                src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
                alt="布衣" />
           <p class="site-author-name" itemprop="name">布衣</p>
-          <p class="site-description motion-element" itemprop="description">非业余菜鸟运维开发工程师</p>
+          <p class="site-description motion-element" itemprop="description">分享后端go语言开发的各种架构设计源码分析与核心数据结构算法设计与云计算相关实践</p>
         </div>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
