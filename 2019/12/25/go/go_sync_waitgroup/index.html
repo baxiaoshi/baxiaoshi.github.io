@@ -100,7 +100,7 @@
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577254164471-10d73f39-da09-44a3-8abf-12fc8538067b.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577251292410-f6ca8282-bf96-4fd7-bf7a-d8a466d0b1d0.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg">
-<meta property="og:updated_time" content="2019-12-25T09:31:59.597Z">
+<meta property="og:updated_time" content="2019-12-30T13:59:10.501Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="图解Go里面的WaitGroup了解编程语言核心实现源码">
 <meta name="twitter:description" content="golang waitgroup基础筑基sync.WaitGroup里面的实现逻辑其实蛮简单的，在看过之前的sync.Mutex和synx.RWMutex之后，阅读起来应该非常简单，而唯一有差异的其实就是sync.WaitGroup里面的state1 等待机制sync.WaitGroup主要用于等待一组goroutine退出，本质上其实就是一个计数器，我们可以通过Add指定我们需要等待退出的gor">
@@ -248,9 +248,32 @@
       
 
       
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
   
 </nav>
 
@@ -380,7 +403,7 @@
 
       
         <h1 id="golang-waitgroup"><a href="#golang-waitgroup" class="headerlink" title="golang waitgroup"></a>golang waitgroup</h1><h1 id="基础筑基"><a href="#基础筑基" class="headerlink" title="基础筑基"></a>基础筑基</h1><p>sync.WaitGroup里面的实现逻辑其实蛮简单的，在看过之前的sync.Mutex和synx.RWMutex之后，阅读起来应该非常简单，而唯一有差异的其实就是sync.WaitGroup里面的state1</p>
-<h2 id="等待机制"><a href="#等待机制" class="headerlink" title="等待机制"></a>等待机制</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577165753254-56f98baa-b807-4c59-8882-f44f5f27f901.png" alt="image.png"><br>sync.WaitGroup主要用于等待一组goroutine退出，本质上其实就是一个计数器，我们可以通过Add指定我们需要等待退出的goroutine的数量，然后通过Done来递减，如果为0,则可以退出</p>
+<h2 id="等待机制"><a href="#等待机制" class="headerlink" title="等待机制"></a>等待机制</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577165753254-56f98baa-b807-4c59-8882-f44f5f27f901.png" alt="image.png"><br>sync.WaitGroup主要用于等待一组goroutine退出，本质上其实就是一个计数器，我们可以通过Add指定我们需要等待退出的goroutine的数量，然后通过Done来递减，如果为0,则可以退出<br><a id="more"></a></p>
 <h2 id="内存对齐"><a href="#内存对齐" class="headerlink" title="内存对齐"></a>内存对齐</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577243058273-98a2b96d-4991-4ed0-a418-fe63875fe69a.png" alt="image.png"><br>内存对齐是一个比较大的话题，其核心机制是编译器根据结构体内部元素的size结合平台和编译器自身的规则来进行补位， 而在sync.WaitGroup里面就有用到，也是我感觉可能在WaitGroup所有实现的核心特性里面最重要的一条了</p>
 <p>在WaitGroup里面只有state1 [3]uint32这一个元素，通过类型我们可以计算uint32是4个字节，长度3的数组总长度12，其实之前这个地方是[12]byte, 切换uint32是go语言里面为了让底层的编译器保证按照4个字节对齐而做的切换</p>
 <h2 id="8字节"><a href="#8字节" class="headerlink" title="8字节"></a>8字节</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577250140517-e1cab708-8e98-4a8a-a84b-ff273851b100.png" alt="image.png"><br>8字节即两个4字节，也就是两个uint32的长度，实际上也是一个uint64的长度，在sync.WaitGroup里面通过uint64来进行等待数量的计数</p>
@@ -449,6 +472,10 @@
           </div>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/12/30/go/go_sync_map/" rel="prev" title="图解Go里面的sync.map了解编程语言核心实现源码">
+                图解Go里面的sync.map了解编程语言核心实现源码 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -539,7 +566,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">47</span>
+              <span class="site-state-item-count">48</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -547,7 +574,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">44</span>
+                <span class="site-state-item-count">45</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -556,7 +583,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">48</span>
+                <span class="site-state-item-count">49</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -715,6 +742,132 @@
 
   
   
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
 
   
 

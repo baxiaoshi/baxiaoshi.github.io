@@ -1,0 +1,920 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="go语言,golang,sync,map," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="基础筑基在大多数语言中原始map都不是一个线程安全的数据结构，那如果要在多个线程或者goroutine中对线程进行更改就需要加锁，除了加1个大锁，不同的语言还有不同的优化方式, 像在java和go这种语言其实都采用的是链表法来进行map的实现，本文也主要分析这种场景 并发安全的map实现的三种方式在go语言中实现多个goroutine并发安全访问修改的map的方式，主要有如下三种：    实现方式">
+<meta name="keywords" content="go语言,golang,sync,map">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图解Go里面的sync.map了解编程语言核心实现源码">
+<meta property="og:url" content="http://www.sreguide.com/2019/12/30/go/go_sync_map/index.html">
+<meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析">
+<meta property="og:description" content="基础筑基在大多数语言中原始map都不是一个线程安全的数据结构，那如果要在多个线程或者goroutine中对线程进行更改就需要加锁，除了加1个大锁，不同的语言还有不同的优化方式, 像在java和go这种语言其实都采用的是链表法来进行map的实现，本文也主要分析这种场景 并发安全的map实现的三种方式在go语言中实现多个goroutine并发安全访问修改的map的方式，主要有如下三种：    实现方式">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577635778402-bbd745d9-4fb7-45b2-b208-a975ccc2b4c0.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577636079260-5c19a565-8ad2-48bd-9ec2-06b08d6402b7.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577636176087-bc1359b6-6c87-4aab-911b-a88d2036a575.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577636409743-092ad6da-703d-4e2b-b3a6-24a4bff1d366.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637211272-1ebedb82-4417-4989-bfc6-c1b50b75bfe3.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637299074-ad41d962-2180-476f-85aa-9d7abcfdfd6c.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637387072-5f7046c9-12a1-459c-8464-9776e3636618.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637646847-9b0c566f-7ee9-4688-a0aa-b9142a8bf651.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637779199-311bde67-acbc-4f23-a86e-9493fbac23b8.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg">
+<meta property="og:updated_time" content="2019-12-30T13:59:14.449Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="图解Go里面的sync.map了解编程语言核心实现源码">
+<meta name="twitter:description" content="基础筑基在大多数语言中原始map都不是一个线程安全的数据结构，那如果要在多个线程或者goroutine中对线程进行更改就需要加锁，除了加1个大锁，不同的语言还有不同的优化方式, 像在java和go这种语言其实都采用的是链表法来进行map的实现，本文也主要分析这种场景 并发安全的map实现的三种方式在go语言中实现多个goroutine并发安全访问修改的map的方式，主要有如下三种：    实现方式">
+<meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577635778402-bbd745d9-4fb7-45b2-b208-a975ccc2b4c0.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/2019/12/30/go/go_sync_map/"/>
+
+
+  <title> 图解Go里面的sync.map了解编程语言核心实现源码 | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1277694210&web_id=1277694210" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title"></span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                图解Go里面的sync.map了解编程语言核心实现源码
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-12-30T01:04:02+08:00" content="2019-12-30 01:04">
+              2019-12-30 01:04
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/" itemprop="url" rel="index">
+                    <span itemprop="name">golang</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/sync/" itemprop="url" rel="index">
+                    <span itemprop="name">sync</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/sync/map/" itemprop="url" rel="index">
+                    <span itemprop="name">map</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="基础筑基"><a href="#基础筑基" class="headerlink" title="基础筑基"></a>基础筑基</h1><p>在大多数语言中原始map都不是一个线程安全的数据结构，那如果要在多个线程或者goroutine中对线程进行更改就需要加锁，除了加1个大锁，不同的语言还有不同的优化方式, 像在java和go这种语言其实都采用的是链表法来进行map的实现，本文也主要分析这种场景</p>
+<h2 id="并发安全的map实现的三种方式"><a href="#并发安全的map实现的三种方式" class="headerlink" title="并发安全的map实现的三种方式"></a>并发安全的map实现的三种方式</h2><p>在go语言中实现多个goroutine并发安全访问修改的map的方式，主要有如下三种：</p>
+<table>
+<thead>
+<tr>
+<th>实现方式</th>
+<th>原理</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>map+Mutex</td>
+<td>通过Mutex互斥锁来实现多个goroutine对map的串行化访问</td>
+<td>读写都需要通过Mutex加锁和释放锁，适用于读写比接近的场景</td>
+</tr>
+<tr>
+<td>map+RWMutex</td>
+<td>通过RWMutex来实现对map的读写进行读写锁分离加锁，从而实现读的并发性能提高</td>
+<td>同Mutex相比适用于读多写少的场景</td>
+</tr>
+<tr>
+<td>sync.Map</td>
+<td>底层通分离读写map和原子指令来实现读的近似无锁，并通过延迟更新的方式来保证读的无锁化</td>
+<td>读多修改少，元素增加删除频率不高的情况，在大多数情况下替代上述两种实现</td>
+</tr>
+</tbody>
+</table>
+<p>上面三种实现具体的性能差异可能还要针对不同的具体的业务场景和平台、数据量等因此来进行综合的测试，源码的学习更多的是了解其实现细节，以便在出现性能瓶颈的时候可以进行分析，找出解决解决方案<br><a id="more"></a></p>
+<h2 id="map的容量问题"><a href="#map的容量问题" class="headerlink" title="map的容量问题"></a>map的容量问题</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577635778402-bbd745d9-4fb7-45b2-b208-a975ccc2b4c0.png" alt="image.png"><br>在Mutex和RWMutex实现的并发安全的map中map随着时间和元素数量的增加、删除，容量会不断的递增，在某些情况下比如在某个时间点频繁的进行大量数据的增加，然后又大量的删除，其map的容量并不会随着元素的删除而缩小，而在sync.Map中，当进行元素从dirty进行提升到read map的时候会进行重建，可能会缩容</p>
+<h2 id="无锁读与读写分离"><a href="#无锁读与读写分离" class="headerlink" title="无锁读与读写分离"></a>无锁读与读写分离</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577636079260-5c19a565-8ad2-48bd-9ec2-06b08d6402b7.png" alt="image.png"></p>
+<h3 id="读写分离"><a href="#读写分离" class="headerlink" title="读写分离"></a>读写分离</h3><p>并发访问map读的主要问题其实是在扩容的时候，可能会导致元素被hash到其他的地址，那如果我的读的map不会进行扩容操作，就可以进行并发安全的访问了，而sync.map里面正是采用了这种方式，对增加元素通过dirty来进行保存</p>
+<h3 id="无锁读"><a href="#无锁读" class="headerlink" title="无锁读"></a>无锁读</h3><p>通过read只读和dirty写map将操作分离，其实就只需要通过原子指令对read map来进行读操作而不需要加锁了，从而提高读的性能</p>
+<h2 id="写加锁与延迟提升"><a href="#写加锁与延迟提升" class="headerlink" title="写加锁与延迟提升"></a>写加锁与延迟提升</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577636176087-bc1359b6-6c87-4aab-911b-a88d2036a575.png" alt="image.png"></p>
+<h3 id="写加锁"><a href="#写加锁" class="headerlink" title="写加锁"></a>写加锁</h3><p>上面提到增加元素操作可能会先增加大dirty写map中，那针对多个goroutine同时写，其实就需要进行Mutex加锁了</p>
+<h3 id="延迟提升"><a href="#延迟提升" class="headerlink" title="延迟提升"></a>延迟提升</h3><p>上面提到了read只读map和dirty写map, 那就会有个问题，默认增加元素都放在dirty中，那后续访问新的元素如果都通过 mutex加锁，那read只读map就失去意义，sync.Map中采用一直延迟提升的策略，进行批量将当前map中的所有元素都提升到read只读map中从而为后续的读访问提供无锁支持</p>
+<h2 id="指针与惰性删除"><a href="#指针与惰性删除" class="headerlink" title="指针与惰性删除"></a>指针与惰性删除</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577636409743-092ad6da-703d-4e2b-b3a6-24a4bff1d366.png" alt="image.png"></p>
+<h3 id="map里面的指针"><a href="#map里面的指针" class="headerlink" title="map里面的指针"></a>map里面的指针</h3><p>map里面存储数据都会涉及到一个问题就是存储值还是指针，存储值可以让 map作为一个大的的对象，减轻垃圾回收的压力(避免扫描所有小对象)，而存储指针可以减少内存利用，而sync.Map中其实采用了指针结合惰性删除的方式，来进行 map的value的存储</p>
+<h3 id="惰性删除"><a href="#惰性删除" class="headerlink" title="惰性删除"></a>惰性删除</h3><p>惰性删除是并发设计中一中常见的设计，比如删除某个个链表元素，如果要删除则需要修改前后元素的指针，而采用惰性删除，则通常只需要给某个标志位设定为删除，然后在后续修改中再进行操作，sync.Map中也采用这种方式，通过给指针指向某个标识删除的指针，从而实现惰性删除</p>
+<h1 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h1><h2 id="数据结构分析"><a href="#数据结构分析" class="headerlink" title="数据结构分析"></a>数据结构分析</h2><h3 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Map <span class="keyword">struct</span> &#123;</span><br><span class="line">    mu Mutex</span><br><span class="line">    <span class="comment">// read是一个readOnly的指针，里面包含了一个map结构，就是我们说的只读map对该map的元素的访问</span></span><br><span class="line">    <span class="comment">// 不需要加锁，只需要通过atomic加载最新的指针即可</span></span><br><span class="line">    read atomic.Value <span class="comment">// readOnly</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// dirty包含部分map的键值对，如果要访问需要进行mutex获取</span></span><br><span class="line">    <span class="comment">// 最终dirty中的元素会被全部提升到read里面的map中</span></span><br><span class="line">    dirty <span class="keyword">map</span>[<span class="keyword">interface</span>&#123;&#125;]*entry</span><br><span class="line"></span><br><span class="line">   <span class="comment">// misses是一个计数器用于记录从read中没有加载到数据</span></span><br><span class="line">    <span class="comment">// 尝试从dirty中进行获取的次数，从而决定将数据从dirty迁移到read的时机</span></span><br><span class="line">    misses <span class="keyword">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="readOnly"><a href="#readOnly" class="headerlink" title="readOnly"></a>readOnly</h3><p> 只读map,对该map元素的访问不需要加锁，但是该map也不会进行元素的增加，元素会被先添加到dirty中然后后续再转移到read只读map中，通过atomic原子操作不需要进行锁操作<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> readOnly <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// m包含所有只读数据，不会进行任何的数据增加和删除操作</span></span><br><span class="line">    <span class="comment">// 但是可以修改entry的指针因为这个不会导致map的元素移动</span></span><br><span class="line">    m       <span class="keyword">map</span>[<span class="keyword">interface</span>&#123;&#125;]*entry</span><br><span class="line">    <span class="comment">// 标志位，如果为true则表明当前read只读map的数据不完整，dirty map中包含部分数据</span></span><br><span class="line">    amended <span class="keyword">bool</span> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="entry"><a href="#entry" class="headerlink" title="entry"></a>entry</h3><p>entry是sync.Map中值得指针，如果当p指针指向expunged这个指针的时候，则表明该元素被删除，但不会立即从map中删除，如果在未删除之前又重新赋值则会重用该元素<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> entry <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// 指向元素实际值得指针</span></span><br><span class="line">    p unsafe.Pointer <span class="comment">// *interface&#123;&#125;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="数据的存储"><a href="#数据的存储" class="headerlink" title="数据的存储"></a>数据的存储</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637211272-1ebedb82-4417-4989-bfc6-c1b50b75bfe3.png" alt="image.png"></p>
+<h3 id="2-2-1-元素存在只读map"><a href="#2-2-1-元素存在只读map" class="headerlink" title="2.2.1 元素存在只读map"></a>2.2.1 元素存在只读map</h3><p>元素如果存储在只读map中，则只需要获取entry元素，然后修改其p的指针指向新的元素就可以了，因为是原地操作所以map不会发生变化<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">read, _ := m.read.Load().(readOnly)</span><br><span class="line"><span class="keyword">if</span> e, ok := read.m[key]; ok &amp;&amp; e.tryStore(&amp;value) &#123;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="元素存在进行变更后的只读map中"><a href="#元素存在进行变更后的只读map中" class="headerlink" title="元素存在进行变更后的只读map中"></a>元素存在进行变更后的只读map中</h3><p>如果此时发现元素存在只读 map中，则证明之前有操作触发了从dirty到read map的迁移，如果此时发现存在则修改指针即可<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">read, _ = m.read.Load().(readOnly)</span><br><span class="line"><span class="keyword">if</span> e, ok := read.m[key]; ok &#123;</span><br><span class="line">    <span class="keyword">if</span> e.unexpungeLocked() &#123;</span><br><span class="line">        <span class="comment">// The entry was previously expunged, which implies that there is a</span></span><br><span class="line">        <span class="comment">// non-nil dirty map and this entry is not in it.</span></span><br><span class="line">        <span class="comment">// 如果key之前已经被删除，则这个地方会将key从进行nil覆盖之前已经删除的指针</span></span><br><span class="line">        <span class="comment">// 然后将它加入到dirty中</span></span><br><span class="line">        m.dirty[key] = e</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 调用atomic进行value存储</span></span><br><span class="line">    e.storeLocked(&amp;value)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="元素存在dirty-map中"><a href="#元素存在dirty-map中" class="headerlink" title="元素存在dirty map中"></a>元素存在dirty map中</h3><p>如果元素存在dirty中其实同read map逻辑一样，只需要修改对应元素的指针即可<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> e, ok := m.dirty[key]; ok &#123;</span><br><span class="line">    <span class="comment">// 如果已经在dirty中就会直接存储</span></span><br><span class="line">    e.storeLocked(&amp;value)</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br></pre></td></tr></table></figure></p>
+<h3 id="元素之前不存在"><a href="#元素之前不存在" class="headerlink" title="元素之前不存在"></a>元素之前不存在</h3><p>如果元素之前不存在当前Map中则需要先将其存储在dirty map中，同时将amended标识为true,即当前read中的数据不全，有一部分数据存储在dirty中<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 如果当前不是在修正状态</span></span><br><span class="line"><span class="keyword">if</span> !read.amended &#123;               </span><br><span class="line">    <span class="comment">// 新加入的key会先被添加到dirty map中， 并进行read标记为不完整</span></span><br><span class="line">    <span class="comment">// 如果dirty为空则将read中的所有没有被删除的数据都迁移到dirty中</span></span><br><span class="line">    m.dirtyLocked()</span><br><span class="line">    m.read.Store(readOnly&#123;m: read.m, amended: <span class="literal">true</span>&#125;)</span><br><span class="line">&#125;</span><br><span class="line">m.dirty[key] = newEntry(value)</span><br></pre></td></tr></table></figure></p>
+<h2 id="数据迁移"><a href="#数据迁移" class="headerlink" title="数据迁移"></a>数据迁移</h2><h3 id="read-map到dirty-map的迁移"><a href="#read-map到dirty-map的迁移" class="headerlink" title="read map到dirty map的迁移"></a>read map到dirty map的迁移</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637299074-ad41d962-2180-476f-85aa-9d7abcfdfd6c.png" alt="image.png"><br>在刚初始化和将所有元素迁移到read中后，dirty默认都是nil元素，而此时如果有新的元素增加，则需要先将read map中的所有未删除数据先迁移到dirty中<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Map)</span> <span class="title">dirtyLocked</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> m.dirty != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    read, _ := m.read.Load().(readOnly)</span><br><span class="line">    m.dirty = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">interface</span>&#123;&#125;]*entry, <span class="built_in">len</span>(read.m))</span><br><span class="line">    <span class="keyword">for</span> k, e := <span class="keyword">range</span> read.m &#123;</span><br><span class="line">        <span class="keyword">if</span> !e.tryExpungeLocked() &#123;</span><br><span class="line">            m.dirty[k] = e</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="dirty到read-map的迁移"><a href="#dirty到read-map的迁移" class="headerlink" title="dirty到read map的迁移"></a>dirty到read map的迁移</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637387072-5f7046c9-12a1-459c-8464-9776e3636618.png" alt="image.png"><br>当持续的从read访问穿透到dirty中后，就会触发一次从dirty到read的迁移，这也意味着如果我们的元素读写比差比较小，其实就会导致频繁的迁移操作，性能其实可能并不如rwmutex等实现<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Map)</span> <span class="title">missLocked</span><span class="params">()</span></span> &#123;</span><br><span class="line">    m.misses++</span><br><span class="line">    <span class="keyword">if</span> m.misses &lt; <span class="built_in">len</span>(m.dirty) &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    m.read.Store(readOnly&#123;m: m.dirty&#125;)</span><br><span class="line">    m.dirty = <span class="literal">nil</span></span><br><span class="line">    m.misses = <span class="number">0</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="数据加载"><a href="#数据加载" class="headerlink" title="数据加载"></a>数据加载</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637646847-9b0c566f-7ee9-4688-a0aa-b9142a8bf651.png" alt="image.png"></p>
+<h3 id="只读无锁"><a href="#只读无锁" class="headerlink" title="只读无锁"></a>只读无锁</h3><p>Load数据的时候回先从read中获取，如果此时发现元素，则直接返回即可<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">read, _ := m.read.Load().(readOnly)</span><br><span class="line"> e, ok := read.m[key]</span><br></pre></td></tr></table></figure></p>
+<h3 id="加锁读取read和dirty"><a href="#加锁读取read和dirty" class="headerlink" title="加锁读取read和dirty"></a>加锁读取read和dirty</h3><p>加锁后会尝试从read和dirty中读取，同时进行misses计数器的递增，如果满足迁移条件则会进行数据迁移<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">read, _ = m.read.Load().(readOnly)</span><br><span class="line"> e, ok = read.m[key]</span><br><span class="line"> <span class="keyword">if</span> !ok &amp;&amp; read.amended &#123;</span><br><span class="line">     e, ok = m.dirty[key]</span><br><span class="line">     <span class="comment">// 这里将采取缓慢迁移的策略</span></span><br><span class="line">     <span class="comment">// 只有当misses计数==len(m.dirty)的时候，才会将dirty里面的数据全部晋升到read中</span></span><br><span class="line">     m.missLocked()</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="数据删除"><a href="#数据删除" class="headerlink" title="数据删除"></a>数据删除</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577637779199-311bde67-acbc-4f23-a86e-9493fbac23b8.png" alt="image.png"><br>数据删除则分为两个过程，如果数据在read中，则就直接修改entry的标志位指向删除的指针即可，如果当前read中数据不全，则需要进行dirty里面的元素删除尝试，如果存在就直接从dirty中删除即可<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Map)</span> <span class="title">Delete</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    read, _ := m.read.Load().(readOnly)</span><br><span class="line">    e, ok := read.m[key]</span><br><span class="line">    <span class="keyword">if</span> !ok &amp;&amp; read.amended &#123;</span><br><span class="line">        m.mu.Lock()</span><br><span class="line">        read, _ = m.read.Load().(readOnly)</span><br><span class="line">        e, ok = read.m[key]</span><br><span class="line">        <span class="keyword">if</span> !ok &amp;&amp; read.amended &#123;</span><br><span class="line">            <span class="built_in">delete</span>(m.dirty, key)</span><br><span class="line">        &#125;</span><br><span class="line">        m.mu.Unlock()</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ok &#123;</span><br><span class="line">        e.<span class="built_in">delete</span>()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="mutex与加锁后的read-map重复读"><a href="#mutex与加锁后的read-map重复读" class="headerlink" title="mutex与加锁后的read map重复读"></a>mutex与加锁后的read map重复读</h1><p>因为mutex互斥的是所有操作，包括dirty map的修改、数据的迁移、删除，如果在进行m.lock的时候，已经有一个提升dirty到read操作在进行，则执行完成后dirty实际上是没有数据的，所以此时要再次进行read的重复读</p>
+<blockquote>
+<p>微信号：baxiaoshi2020<br><img src="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png" alt></p>
+</blockquote>
+<blockquote>
+<p>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"></p>
+</blockquote>
+<blockquote>
+<p>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/go语言/" rel="tag">#go语言</a>
+          
+            <a href="/tags/golang/" rel="tag">#golang</a>
+          
+            <a href="/tags/sync/" rel="tag">#sync</a>
+          
+            <a href="/tags/map/" rel="tag">#map</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/12/25/go/go_sync_waitgroup/" rel="next" title="图解Go里面的WaitGroup了解编程语言核心实现源码">
+                <i class="fa fa-chevron-left"></i> 图解Go里面的WaitGroup了解编程语言核心实现源码
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg"
+               alt="布衣" />
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">分享后端go语言开发的各种架构设计源码分析与核心数据结构算法设计与云计算相关实践,涉及到kubernetes,云计算,微服务,系统设计,系统架构,设计模式,数据结构与算法,还有底层的操作系统实现,深度解读各种源码细节与精彩设计,加深对各种中间件系统的了解</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">48</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">45</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">49</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#基础筑基"><span class="nav-number">1.</span> <span class="nav-text">基础筑基</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#并发安全的map实现的三种方式"><span class="nav-number">1.1.</span> <span class="nav-text">并发安全的map实现的三种方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#map的容量问题"><span class="nav-number">1.2.</span> <span class="nav-text">map的容量问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#无锁读与读写分离"><span class="nav-number">1.3.</span> <span class="nav-text">无锁读与读写分离</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#读写分离"><span class="nav-number">1.3.1.</span> <span class="nav-text">读写分离</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#无锁读"><span class="nav-number">1.3.2.</span> <span class="nav-text">无锁读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#写加锁与延迟提升"><span class="nav-number">1.4.</span> <span class="nav-text">写加锁与延迟提升</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#写加锁"><span class="nav-number">1.4.1.</span> <span class="nav-text">写加锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延迟提升"><span class="nav-number">1.4.2.</span> <span class="nav-text">延迟提升</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指针与惰性删除"><span class="nav-number">1.5.</span> <span class="nav-text">指针与惰性删除</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#map里面的指针"><span class="nav-number">1.5.1.</span> <span class="nav-text">map里面的指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#惰性删除"><span class="nav-number">1.5.2.</span> <span class="nav-text">惰性删除</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码分析"><span class="nav-number">2.</span> <span class="nav-text">源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#数据结构分析"><span class="nav-number">2.1.</span> <span class="nav-text">数据结构分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Map"><span class="nav-number">2.1.1.</span> <span class="nav-text">Map</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#readOnly"><span class="nav-number">2.1.2.</span> <span class="nav-text">readOnly</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#entry"><span class="nav-number">2.1.3.</span> <span class="nav-text">entry</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据的存储"><span class="nav-number">2.2.</span> <span class="nav-text">数据的存储</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-1-元素存在只读map"><span class="nav-number">2.2.1.</span> <span class="nav-text">2.2.1 元素存在只读map</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#元素存在进行变更后的只读map中"><span class="nav-number">2.2.2.</span> <span class="nav-text">元素存在进行变更后的只读map中</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#元素存在dirty-map中"><span class="nav-number">2.2.3.</span> <span class="nav-text">元素存在dirty map中</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#元素之前不存在"><span class="nav-number">2.2.4.</span> <span class="nav-text">元素之前不存在</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据迁移"><span class="nav-number">2.3.</span> <span class="nav-text">数据迁移</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#read-map到dirty-map的迁移"><span class="nav-number">2.3.1.</span> <span class="nav-text">read map到dirty map的迁移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dirty到read-map的迁移"><span class="nav-number">2.3.2.</span> <span class="nav-text">dirty到read map的迁移</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据加载"><span class="nav-number">2.4.</span> <span class="nav-text">数据加载</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#只读无锁"><span class="nav-number">2.4.1.</span> <span class="nav-text">只读无锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#加锁读取read和dirty"><span class="nav-number">2.4.2.</span> <span class="nav-text">加锁读取read和dirty</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据删除"><span class="nav-number">2.5.</span> <span class="nav-text">数据删除</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#mutex与加锁后的read-map重复读"><span class="nav-number">3.</span> <span class="nav-text">mutex与加锁后的read map重复读</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
