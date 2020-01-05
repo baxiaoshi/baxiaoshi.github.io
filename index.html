@@ -306,7 +306,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/12/30/go/go_sync_map/" itemprop="url">
+                <a class="post-title-link" href="/go/go_sync_map.html" itemprop="url">
                   图解Go里面的sync.map了解编程语言核心实现源码
                 </a>
               
@@ -434,7 +434,7 @@
 </table>
 <p>上面三种实现具体的性能差异可能还要针对不同的具体的业务场景和平台、数据量等因此来进行综合的测试，源码的学习更多的是了解其实现细节，以便在出现性能瓶颈的时候可以进行分析，找出解决解决方案<br>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/12/30/go/go_sync_map/#more" rel="contents">
+            <a class="btn" href="/go/go_sync_map.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -485,7 +485,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/12/25/go/go_sync_waitgroup/" itemprop="url">
+                <a class="post-title-link" href="/go/go_sync_waitgroup.html" itemprop="url">
                   图解Go里面的WaitGroup了解编程语言核心实现源码
                 </a>
               
@@ -586,7 +586,7 @@
           <h1 id="golang-waitgroup"><a href="#golang-waitgroup" class="headerlink" title="golang waitgroup"></a>golang waitgroup</h1><h1 id="基础筑基"><a href="#基础筑基" class="headerlink" title="基础筑基"></a>基础筑基</h1><p>sync.WaitGroup里面的实现逻辑其实蛮简单的，在看过之前的sync.Mutex和synx.RWMutex之后，阅读起来应该非常简单，而唯一有差异的其实就是sync.WaitGroup里面的state1</p>
 <h2 id="等待机制"><a href="#等待机制" class="headerlink" title="等待机制"></a>等待机制</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1577165753254-56f98baa-b807-4c59-8882-f44f5f27f901.png" alt="image.png"><br>sync.WaitGroup主要用于等待一组goroutine退出，本质上其实就是一个计数器，我们可以通过Add指定我们需要等待退出的goroutine的数量，然后通过Done来递减，如果为0,则可以退出<br>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/12/25/go/go_sync_waitgroup/#more" rel="contents">
+            <a class="btn" href="/go/go_sync_waitgroup.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -637,7 +637,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/12/23/go/sync_mutex/" itemprop="url">
+                <a class="post-title-link" href="/go/sync_mutex.html" itemprop="url">
                   图解Go里面的互斥锁mutex了解编程语言核心实现源码
                 </a>
               
@@ -752,7 +752,7 @@
 <h2 id="锁的公平性"><a href="#锁的公平性" class="headerlink" title="锁的公平性"></a>锁的公平性</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576043274819-238b773a-5659-44a0-a8c1-7bc7b5b3177d.png" alt="image.png"><br>锁从公平性上通常会分为公平锁和非公平锁，主要取决于在锁获取的过程中，先进行锁获取的线程是否比后续的线程更先获得锁，如果是则就是公平锁：多个线程按照获取锁的顺序依次获得锁，否则就是非公平性</p>
 <h2 id="饥饿与排队"><a href="#饥饿与排队" class="headerlink" title="饥饿与排队"></a>饥饿与排队</h2>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/12/23/go/sync_mutex/#more" rel="contents">
+            <a class="btn" href="/go/sync_mutex.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -803,7 +803,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/12/20/go/sync_reader_writer/" itemprop="url">
+                <a class="post-title-link" href="/go/sync_reader_writer.html" itemprop="url">
                   Go里面的读写锁与源码实现
                 </a>
               
@@ -917,7 +917,7 @@
 <h2 id="写锁饥饿问题"><a href="#写锁饥饿问题" class="headerlink" title="写锁饥饿问题"></a>写锁饥饿问题</h2><p>因为读锁是共享的，所以如果当前已经有读锁，那后续goroutine继续加读锁正常情况下是可以加锁成功，但是如果一直有读锁进行加锁，那尝试加写锁的goroutine则可能会长期获取不到锁，这就是因为读锁而导致的写锁饥饿问题</p>
 <h2 id="基于高低位与等待队列的实现"><a href="#基于高低位与等待队列的实现" class="headerlink" title="基于高低位与等待队列的实现"></a>基于高低位与等待队列的实现</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/lock_count_queue.png" alt="image.png"><br>在说golang之前介绍一种JAVA里面的实现，在JAVA中ReentrantReadWriteLock实现采用一个state的高低位来进行读写锁的计数，其中高16位存储读的计数，低16位存储写的计数，并配合一个AQS来实现排队等待机制，同时AQS中的每个waiter都会有一个status，用来标识自己的状态</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/12/20/go/sync_reader_writer/#more" rel="contents">
+            <a class="btn" href="/go/sync_reader_writer.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -968,7 +968,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/23/microservices/register_center_registery_hashcode/" itemprop="url">
+                <a class="post-title-link" href="/microservices/register_center_registery_hashcode.html" itemprop="url">
                   微服务注册中心注册表与hashcode实现golang版
                 </a>
               
@@ -1083,7 +1083,7 @@
 <p>当然也有很多好处，比如可以做一些负载均衡、长链接维护、分布式跟踪等，这不是本文重点</p>
 <h2 id="基于注册中心的服务调用"><a href="#基于注册中心的服务调用" class="headerlink" title="基于注册中心的服务调用"></a>基于注册中心的服务调用</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-52-30.png" alt><br>所有的服务都启动后都通过注册中心来注册自己，同时把注册中心里面的服务信息拉回本地，后续调用，就直接检查本地的服务和节点信息来进行服务节点的调用</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/05/23/microservices/register_center_registery_hashcode/#more" rel="contents">
+            <a class="btn" href="/microservices/register_center_registery_hashcode.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1134,7 +1134,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/21/distributed/kafka_leader_follower_coordinator/" itemprop="url">
+                <a class="post-title-link" href="/distributed/kafka_leader_follower_coordinator.html" itemprop="url">
                   基于Kafka协调器实现分布式主节点选举及任务分配
                 </a>
               
@@ -1311,7 +1311,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/17/data_struct/2pc_msg_queue_conf/" itemprop="url">
+                <a class="post-title-link" href="/data_struct/2pc_msg_queue_conf.html" itemprop="url">
                   基于2PC和延迟更新完成分布式消息队列多条事务
                 </a>
               
@@ -1481,7 +1481,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/14/k8s/k8s_service_controller/" itemprop="url">
+                <a class="post-title-link" href="/k8s/k8s_service_controller.html" itemprop="url">
                   Service Controller 源码实现
                 </a>
               
@@ -1575,7 +1575,7 @@
 </ul>
 <p>由于访问策略由kube-proxy控制，所以service Controller实际上只负责根据cloud.LoadBalancer的交互,  负责更新那些服务类型为LoadBalancer的service</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/05/14/k8s/k8s_service_controller/#more" rel="contents">
+            <a class="btn" href="/k8s/k8s_service_controller.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1626,7 +1626,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/14/go/go_channel/" itemprop="url">
+                <a class="post-title-link" href="/go/go_channel.html" itemprop="url">
                   Go里面Channel的实现
                 </a>
               
@@ -1727,7 +1727,7 @@
           <h1 id="管道介绍"><a href="#管道介绍" class="headerlink" title="管道介绍"></a>管道介绍</h1><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-20.png" alt><br>Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步</p>
 <p>channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/05/14/go/go_channel/#more" rel="contents">
+            <a class="btn" href="/go/go_channel.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1778,7 +1778,7 @@
             
               
                 
-                <a class="post-title-link" href="/2019/05/14/data_struct/circular_queue_rr/" itemprop="url">
+                <a class="post-title-link" href="/data_struct/circular_queue_rr.html" itemprop="url">
                   基于环状队列和迭代器实现分布式任务RR分配策略
                 </a>
               
@@ -1879,7 +1879,7 @@
           <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="分布式任务分配"><a href="#分布式任务分配" class="headerlink" title="分布式任务分配"></a>分布式任务分配</h2><p>在很多运维场景下，我们都会执行一些长时间的任务，比如装机、部署环境、打包镜像等长时间任务， 而通常我们的任务节点数量通常是有限的(排除基于k8s的hpa、或者knative等自动伸缩场景)。</p>
 <p>那么当我们有一个任务如何根据当前的worker和corrdinator和任务来进行合理的分配，分配其实也比较复杂，往复杂里面做，可以根据当前系统的负载、每个任务的执行资源消耗、当前集群的任务数量等， 这里我们就搞一个最简单的，基于任务和当前worker的RR算法</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2019/05/14/data_struct/circular_queue_rr/#more" rel="contents">
+            <a class="btn" href="/data_struct/circular_queue_rr.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>

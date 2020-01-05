@@ -1,0 +1,854 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="cmdb,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2">
+
+
+
+
+
+
+<meta name="description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它">
+<meta name="keywords" content="cmdb">
+<meta property="og:type" content="article">
+<meta property="og:title" content="看蓝鲸学CMDB设计 API 网关与 API SERVER">
+<meta property="og:url" content="http://www.sreguide.com/cmdb/bk_cmdb_source_01.html">
+<meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析">
+<meta property="og:description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/micro_service.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/bk_cmdb_topo_service.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/chanpin_sikao.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:33.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="看蓝鲸学CMDB设计 API 网关与 API SERVER">
+<meta name="twitter:description" content="背景 现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它! 但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&amp;gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/micro_service.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/cmdb/bk_cmdb_source_01.html">
+
+
+  <title> 看蓝鲸学CMDB设计 API 网关与 API SERVER | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    (function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title"></span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                看蓝鲸学CMDB设计 API 网关与 API SERVER
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:42:33+08:00" content="2018-10-27 14:42">
+              2018-10-27 14:42
+            </time>
+          </span>
+
+          
+            <span class="post-category">
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/cmdb/" itemprop="url" rel="index">
+                    <span itemprop="name">cmdb</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/micro_service.png" alt></p>
+<p>现在大家都在说微服务、领域驱动设计，其实如果理解的简单点似乎又回到了最早期的Unix哲学上了: 做一件事, 做好它!</p>
+<p>但如果写过Web API的大家都知道, 总是有一些基础的非业务逻辑的功能要处理，比如缓存、限速、鉴权等等, 但在微服务里面，如果让每个服务都只做一件事，剩下的活，总的有个人做吧–&gt; API Gateway, 当然它能做的事可能更多，但还是那句话，做一件事，做好它</p>
+<a id="more"></a>
+<h3 id="API-SERVER-Gateway"><a href="#API-SERVER-Gateway" class="headerlink" title="API SERVER(Gateway)"></a>API SERVER(Gateway)</h3><h4 id="思考实现"><a href="#思考实现" class="headerlink" title="思考实现"></a>思考实现</h4><p>从上面的图我们可以看到API Server其实更类似一个Proxy的功能, 在将前端的各种请求转发到具体的服务， 同时在这个基础上加入一些辅助功能, 那我们就可以归纳出下面最基础的几个功能点</p>
+<ul>
+<li><p>请求转发: 负责将前端的各种请求转发到后端(因为大家都同在一个屋檐下通常大家的请求响应数据结构都是类似的,所以一些脏数据可能在请求转发之前就被干掉了)</p>
+</li>
+<li><p>链式调用: 针对一个http request我们可能有很多验证的规则(鉴权、过滤等等), 这些操作可能嗨是动态绑定到对应的url上的, 所以我们要有一个能把这些操作串起来的对象</p>
+</li>
+<li><p>请求响应：既然我们是一个大家家庭，呐大家的请求和响应肯定是类似的， 通常都会在默认的http.Request和Response上面再抽象出一个自己的Request和Response, 这样我们可以封装一些通用的请求处理和响应方法, 同时大家使用的同一套，交互起来页比较方便</p>
+</li>
+<li><p>服务发现: 发现后端可以提供服务的节点来实现高可用，也可以实现一些类似Nginx里面重定向的功能</p>
+</li>
+<li><p>路由服务注册： 对应路由和后端服务的绑定关系</p>
+</li>
+</ul>
+<h4 id="蓝鲸里面的实现"><a href="#蓝鲸里面的实现" class="headerlink" title="蓝鲸里面的实现"></a>蓝鲸里面的实现</h4><blockquote>
+<p>api.APIResource</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// API Resource是对go-restful里面对象的近一步封装，加入了一些业务信息</span></span><br><span class="line"><span class="keyword">type</span> APIResource <span class="keyword">struct</span> &#123;</span><br><span class="line">	ConfigData   []<span class="keyword">byte</span></span><br><span class="line">	Config       <span class="keyword">string</span></span><br><span class="line">	URL          <span class="keyword">string</span></span><br><span class="line">	IsCliSSL     <span class="keyword">bool</span></span><br><span class="line">	CliTLS       *tls.Config</span><br><span class="line">	Actions      []*httpserver.Action</span><br><span class="line">	GlobalFilter <span class="function"><span class="keyword">func</span><span class="params">(req *restful.Request, resp *restful.Response, fchain *restful.FilterChain)</span></span></span><br><span class="line">	Wactions     []*webserver.Action</span><br><span class="line">	MetaCli      storage.DI</span><br><span class="line">	InstCli      storage.DI</span><br><span class="line">	CacheCli     storage.DI</span><br><span class="line">    Error        errors.CCErrorIf</span><br><span class="line">    <span class="comment">// 下面几个都是蓝鲸里面对应的控制器, 在每个服务启动的时候, 都会去获取对应的资源的控制器, 主要是童通过上面写的ZK来实现的</span></span><br><span class="line">	HostCtrl     <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	ObjCtrl      <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	ProcCtrl     <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	EventCtrl    <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	AuditCtrl    <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	HostAPI      <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	TopoAPI      <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	ProcAPI      <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	EventAPI     <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	APIAddr      <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">string</span></span></span><br><span class="line">	AddrSrv      AddrSrv</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>base.BaseAction<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// BaseAction 所有Action 的基类, Action主要功能是负责将http请求转发到后端具体的服务. 同时提供了一些错误处理和请求头的处理</span></span><br><span class="line"><span class="keyword">type</span> BaseAction <span class="keyword">struct</span> &#123;</span><br><span class="line">	CC *api.APIResource</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<blockquote>
+<p>CCAPIServer</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 每个微服务都会是一个API Server,主要是启动一个http服务同时吧路由注册进来</span></span><br><span class="line"><span class="keyword">type</span> CCAPIServer <span class="keyword">struct</span> &#123;</span><br><span class="line">	conf     *config.CCAPIConfig</span><br><span class="line">	httpServ *httpserver.HttpServer</span><br><span class="line">	rd       *rdiscover.RegDiscover</span><br><span class="line">	cfCenter *confCenter.ConfCenter</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>路由注册</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//创建一个APISERVER </span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewCCAPIServer</span><span class="params">(conf *config.CCAPIConfig)</span> <span class="params">(*CCAPIServer, error)</span></span> &#123;</span><br><span class="line">	s := &amp;CCAPIServer&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//config</span></span><br><span class="line">	s.conf = conf</span><br><span class="line">	addr, _ := s.conf.GetAddress()</span><br><span class="line">	port, _ := s.conf.GetPort()</span><br><span class="line"></span><br><span class="line">	<span class="comment">//http server</span></span><br><span class="line">	s.httpServ = httpserver.NewHttpServer(port, addr, <span class="string">""</span>)</span><br><span class="line"></span><br><span class="line">	a := api.NewAPIResource()   <span class="comment">// 我们注意下这个地方, 我们看到这个地方并没有注册什么资源</span></span><br><span class="line">	a.SetConfig(s.conf)</span><br><span class="line">	a.InitAction()              <span class="comment">// 在这个地方会将所有的Action都获取到</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">//RDiscover</span></span><br><span class="line">	s.rd = rdiscover.NewRegDiscover(s.conf.RegDiscover, addr, port, <span class="literal">false</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">//Configure Center</span></span><br><span class="line">	s.cfCenter = confCenter.NewConfCenter(s.conf.RegDiscover)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> s, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//api_server.ccapi.actions.v3.host.favorrite 这里主要是利用go里面的init()方法来进行路由注册的, 该方法会在该模块被加载的时候执行</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;</span><br><span class="line">	actions.RegisterNewAction(actions.Action&#123;Verb: common.HTTPSelectPost, Path: <span class="string">"/hosts/favorites/search"</span>, Params: <span class="literal">nil</span>, Handler: GetHostFavourites, FilterHandler: <span class="literal">nil</span>, Version: v3.APIVersion&#125;)</span><br><span class="line">	actions.RegisterNewAction(actions.Action&#123;Verb: common.HTTPCreate, Path: <span class="string">"/hosts/favorites"</span>, Params: <span class="literal">nil</span>, Handler: AddHostFavourite, FilterHandler: <span class="literal">nil</span>, Version: v3.APIVersion&#125;)</span><br><span class="line">	actions.RegisterNewAction(actions.Action&#123;Verb: common.HTTPUpdate, Path: <span class="string">"/hosts/favorites/&#123;id&#125;"</span>, Params: <span class="literal">nil</span>, Handler: EditHostFavourite, FilterHandler: <span class="literal">nil</span>, Version: v3.APIVersion&#125;)</span><br><span class="line">	actions.RegisterNewAction(actions.Action&#123;Verb: common.HTTPDelete, Path: <span class="string">"/hosts/favorites/&#123;id&#125;"</span>, Params: <span class="literal">nil</span>, Handler: DeleteHostFavourite, FilterHandler: <span class="literal">nil</span>, Version: v3.APIVersion&#125;)</span><br><span class="line">	actions.RegisterNewAction(actions.Action&#123;Verb: common.HTTPUpdate, Path: <span class="string">"/hosts/favorites/&#123;id&#125;/incr"</span>, Params: <span class="literal">nil</span>, Handler: IncrHostFavouritesCount, FilterHandler: <span class="literal">nil</span>, Version: v3.APIVersion&#125;)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>服务发现的实现<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// api-server.ccapi.rdiscorver.rdiscover</span></span><br><span class="line"><span class="comment">// Start the register and discover</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *RegDiscover)</span> <span class="title">Start</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">//create root context</span></span><br><span class="line">	r.rootCtx, r.cancel = context.WithCancel(context.Background())</span><br><span class="line"></span><br><span class="line">	<span class="comment">//start regdiscover</span></span><br><span class="line">	<span class="keyword">if</span> err := r.rd.Start(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		blog.Error(<span class="string">"fail to start register and discover serv. err:%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// register apiserver server 首先注册自身</span></span><br><span class="line">	<span class="keyword">if</span> err := r.registerAPIServer(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		blog.Error(<span class="string">"fail to register apiserver(%s), err:%s"</span>, r.ip, err.Error())</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// here: discover other services， 这下面会获取到所有自己会使用的微服务, 然后Watch ZK 里面的路径数据的变化</span></span><br><span class="line">	<span class="comment">/// host server</span></span><br><span class="line">	hostPath := types.CC_SERV_BASEPATH + <span class="string">"/"</span> + types.CC_MODULE_HOST</span><br><span class="line">	hostEvent, err := r.rd.DiscoverService(hostPath)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		blog.Errorf(<span class="string">"fail to register discover for host_server. err:%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// topo server</span></span><br><span class="line">	topoPath := types.CC_SERV_BASEPATH + <span class="string">"/"</span> + types.CC_MODULE_TOPO</span><br><span class="line">	topoEvent, err := r.rd.DiscoverService(topoPath)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		blog.Errorf(<span class="string">"fail to register discover for topo_server. err:%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// proc_server</span></span><br><span class="line">	procPath := types.CC_SERV_BASEPATH + <span class="string">"/"</span> + types.CC_MODULE_PROC</span><br><span class="line">	procEvent, err := r.rd.DiscoverService(procPath)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		blog.Errorf(<span class="string">"fail to register discover for proc_server. err:%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// event_server</span></span><br><span class="line">	eventPath := types.CC_SERV_BASEPATH + <span class="string">"/"</span> + types.CC_MODULE_EVENTSERVER</span><br><span class="line">	eventEvent, err := r.rd.DiscoverService(eventPath)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		blog.Errorf(<span class="string">"fail to register discover for proc_server. err:%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> hostEnv := &lt;-hostEvent:</span><br><span class="line">			r.discoverHostServ(hostEnv.Server)</span><br><span class="line">		<span class="keyword">case</span> topoEnv := &lt;-topoEvent:</span><br><span class="line">			r.discoverTopoServ(topoEnv.Server)</span><br><span class="line">		<span class="keyword">case</span> procEnv := &lt;-procEvent:</span><br><span class="line">			r.discoverProcServ(procEnv.Server)</span><br><span class="line">		<span class="keyword">case</span> eventEnv := &lt;-eventEvent:</span><br><span class="line">			r.discoverEventServ(eventEnv.Server)</span><br><span class="line">		<span class="keyword">case</span> &lt;-r.rootCtx.Done():</span><br><span class="line">			blog.Warn(<span class="string">"register and discover serv done"</span>)</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// GetHostServ fetch host server, 当我们检测到对应zk里面数据的变化就变更自己本地的服务主机节点信息，就实现了服务发现的功能</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *RegDiscover)</span> <span class="title">GetHostServ</span><span class="params">()</span> <span class="params">(<span class="keyword">string</span>, error)</span></span> &#123;</span><br><span class="line">	r.hostLock.RLock()</span><br><span class="line">	<span class="keyword">defer</span> r.hostLock.RUnlock()</span><br><span class="line"></span><br><span class="line">	lServ := <span class="built_in">len</span>(r.hostServs)</span><br><span class="line">	<span class="keyword">if</span> lServ &lt;= <span class="number">0</span> &#123;</span><br><span class="line">		err := fmt.Errorf(<span class="string">"there is no host servers"</span>)</span><br><span class="line">		blog.Errorf(<span class="string">"%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> <span class="string">""</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//rand</span></span><br><span class="line">	rand.Seed(<span class="keyword">int64</span>(time.Now().Nanosecond()))</span><br><span class="line">	servInfo := r.hostServs[rand.Intn(lServ)]</span><br><span class="line"></span><br><span class="line">	host := servInfo.Scheme + <span class="string">"://"</span> + servInfo.IP + <span class="string">":"</span> + strconv.Itoa(<span class="keyword">int</span>(servInfo.Port))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> host, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<h4 id="下面是TOPO服务做的一些分析"><a href="#下面是TOPO服务做的一些分析" class="headerlink" title="下面是TOPO服务做的一些分析"></a>下面是TOPO服务做的一些分析</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/bk_cmdb_topo_service.png" alt></p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>今天部署了下蓝鲸的CMDB，发现竟然有12个微服务，依赖zk、mongo、redis三个数据存储，跟之前川哥的思想不态一样，川哥是深受Unix思想的影响，每个系统都只做一件事，简单通用，从蓝鲸的CMDB系统里面去学习，其实大部分人做的CMDB都只做一个服务，资产数据的存储， 而蓝鲸设计了几个自己的场景，然后基于场景又做了几个微服务，所以做CMDB，俩字很重要：场景、场景、场景！数据的流动要有价值，而不是随意的功能累加</p>
+<p>赠图一张, 多思考</p>
+<p><img src="http://baxiaoshi.cdn.bcebos.com/blog/chanpin_sikao.png" alt></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;">
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/cmdb/" rel="tag">#cmdb</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/ansible/ansible_api.html" rel="next" title="Ansible Playbook Api测试">
+                <i class="fa fa-chevron-left"></i> Ansible Playbook Api测试
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/cmdb/cmdb_design.html" rel="prev" title="CMDB的设计">
+                CMDB的设计 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg" alt="布衣">
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">分享后端go语言开发的各种架构设计源码分析与核心数据结构算法设计与云计算相关实践,涉及到kubernetes,云计算,微服务,系统设计,系统架构,设计模式,数据结构与算法,还有底层的操作系统实现,深度解读各种源码细节与精彩设计,加深对各种中间件系统的了解</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">48</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">45</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">49</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#API-SERVER-Gateway"><span class="nav-number">2.</span> <span class="nav-text">API SERVER(Gateway)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#思考实现"><span class="nav-number">2.1.</span> <span class="nav-text">思考实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#蓝鲸里面的实现"><span class="nav-number">2.2.</span> <span class="nav-text">蓝鲸里面的实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#下面是TOPO服务做的一些分析"><span class="nav-number">2.3.</span> <span class="nav-text">下面是TOPO服务做的一些分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小结"><span class="nav-number">3.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

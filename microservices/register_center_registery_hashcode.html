@@ -1,0 +1,918 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="微服务,golang,注册中心,注册表,hash,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2">
+
+
+
+
+
+
+<meta name="description" content="背景基于负载均衡的服务调用基于负载均衡的服务相互调用指的是通过基于Lvs、Haproxy、Nginx等负载均衡软件来构建一个负载均衡服务，所有的服务调用都通过负载均衡器 从负载均衡的这种模式下其实有两个主要的问题： 一是中心化，整个系统都基于负载均衡器，负载均衡就相当于整个业务的中心，虽然我们可以通过一些高可用手段来保证，但其实内部流量通常是巨大的，很容易出现性能瓶颈二是增加了一次TCP交互 当然">
+<meta name="keywords" content="微服务,golang,注册中心,注册表,hash">
+<meta property="og:type" content="article">
+<meta property="og:title" content="微服务注册中心注册表与hashcode实现golang版">
+<meta property="og:url" content="http://www.sreguide.com/microservices/register_center_registery_hashcode.html">
+<meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析">
+<meta property="og:description" content="背景基于负载均衡的服务调用基于负载均衡的服务相互调用指的是通过基于Lvs、Haproxy、Nginx等负载均衡软件来构建一个负载均衡服务，所有的服务调用都通过负载均衡器 从负载均衡的这种模式下其实有两个主要的问题： 一是中心化，整个系统都基于负载均衡器，负载均衡就相当于整个业务的中心，虽然我们可以通过一些高可用手段来保证，但其实内部流量通常是巨大的，很容易出现性能瓶颈二是增加了一次TCP交互 当然">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-43-21.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-52-30.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-51-30.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-01-46.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-11-49.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-49-31.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-35-25.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-46-45.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-10-17-32.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg">
+<meta property="og:updated_time" content="2019-05-23T02:47:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="微服务注册中心注册表与hashcode实现golang版">
+<meta name="twitter:description" content="背景基于负载均衡的服务调用基于负载均衡的服务相互调用指的是通过基于Lvs、Haproxy、Nginx等负载均衡软件来构建一个负载均衡服务，所有的服务调用都通过负载均衡器 从负载均衡的这种模式下其实有两个主要的问题： 一是中心化，整个系统都基于负载均衡器，负载均衡就相当于整个业务的中心，虽然我们可以通过一些高可用手段来保证，但其实内部流量通常是巨大的，很容易出现性能瓶颈二是增加了一次TCP交互 当然">
+<meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-43-21.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/microservices/register_center_registery_hashcode.html">
+
+
+  <title> 微服务注册中心注册表与hashcode实现golang版 | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    (function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title"></span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                微服务注册中心注册表与hashcode实现golang版
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-23T10:47:17+08:00" content="2019-05-23 10:47">
+              2019-05-23 10:47
+            </time>
+          </span>
+
+          
+            <span class="post-category">
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/" itemprop="url" rel="index">
+                    <span itemprop="name">微服务</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/注册中心/" itemprop="url" rel="index">
+                    <span itemprop="name">注册中心</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/注册中心/注册表/" itemprop="url" rel="index">
+                    <span itemprop="name">注册表</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/注册中心/注册表/hash/" itemprop="url" rel="index">
+                    <span itemprop="name">hash</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/微服务/注册中心/注册表/hash/golang/" itemprop="url" rel="index">
+                    <span itemprop="name">golang</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="基于负载均衡的服务调用"><a href="#基于负载均衡的服务调用" class="headerlink" title="基于负载均衡的服务调用"></a>基于负载均衡的服务调用</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-43-21.png" alt><br>基于负载均衡的服务相互调用指的是通过基于Lvs、Haproxy、Nginx等负载均衡软件来构建一个负载均衡服务，所有的服务调用都通过负载均衡器</p>
+<p>从负载均衡的这种模式下其实有两个主要的问题：<br> 一是中心化，整个系统都基于负载均衡器，负载均衡就相当于整个业务的中心，虽然我们可以通过一些高可用手段来保证，但其实内部流量通常是巨大的，很容易出现性能瓶颈<br>二是增加了一次TCP交互</p>
+<p>当然也有很多好处，比如可以做一些负载均衡、长链接维护、分布式跟踪等，这不是本文重点</p>
+<h2 id="基于注册中心的服务调用"><a href="#基于注册中心的服务调用" class="headerlink" title="基于注册中心的服务调用"></a>基于注册中心的服务调用</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-52-30.png" alt><br>所有的服务都启动后都通过注册中心来注册自己，同时把注册中心里面的服务信息拉回本地，后续调用，就直接检查本地的服务和节点信息来进行服务节点的调用</p>
+<a id="more"></a>
+<h2 id="注册中心中的注册表"><a href="#注册中心中的注册表" class="headerlink" title="注册中心中的注册表"></a>注册中心中的注册表</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-22-23-51-30.png" alt><br>每个服务节点都会来注册中心进行服务注册，那数据如何在服务端进行保存呢，其实就是注册表，其实等同于windows 里面的注册表，每个服务都来注册，把自己的信息上报上来，然后注册中心吧注册表，返回给client端，那服务之间就知道要调用服务的节点啦</p>
+<h2 id="注册中心事件队列"><a href="#注册中心事件队列" class="headerlink" title="注册中心事件队列"></a>注册中心事件队列</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-01-46.png" alt><br>微服务注册注册中心通常会大量的服务注册， 那不能每次客户端来请求的时候，服务端都返回全量的数据，在数据传输的设计中，通常会有一种增量同步，其实在注册中心中也类似<br>注册中心通过将最近的服务变更事件保存在一个<code>事件队列</code>中，后续每次客户端拉取只返回增量数据，这样服务端的忘了压力就会小很多</p>
+<h2 id="注册中心hashcode"><a href="#注册中心hashcode" class="headerlink" title="注册中心hashcode"></a>注册中心hashcode</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-11-49.png" alt><br>增量数据有一个问题就是，如果客户端错过啦某些事件，比如事件队列满了，则客户端与注册中心的注册表就会不一致， 所以eureka里面引入了一个hashcode的概念，通过比对hashcode是否相同， 如果不同则客户端需要重新全量拉取</p>
+<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-49-31.png" alt><br>系统整体上分为两个端：客户端(Client)和注册中心(Server)<br>Server: 提供服务注册和获取注册表的接口, 同时本地把保存服务和节点的对应信息，变更事件写入eventQueue<br>Client: 调用server接口进行服务注册， 同时调用注册表拉取接口进行注册表拉取，保存懂啊LocalRegistry</p>
+<h2 id="应用与节点信息"><a href="#应用与节点信息" class="headerlink" title="应用与节点信息"></a>应用与节点信息</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-35-25.png" alt><br>Server端的服务注册表里面的服务和节点的信息，我通过Application和lease来维护<br>Application: 代表一个应用，里面会包含服务对应的节点信息<br>Lease: 维护一个节点的信息，比如心跳信息</p>
+<h2 id="服务端注册表"><a href="#服务端注册表" class="headerlink" title="服务端注册表"></a>服务端注册表</h2><h3 id="注册表结构体"><a href="#注册表结构体" class="headerlink" title="注册表结构体"></a>注册表结构体</h3><p>服务端注册表结构体Registry主要包含三部分信息： lock(读写锁)、apps(应用对应信息)、eventQueue(事件队列)<br>Lock: 注册中心是典型的读多写少的应用，server端注册表可能同时提供给N个服务进行读取，所以这里采用读写锁<br>apps: 保存应用对应的信息， 其实后面写完发现，没必要使用，只使用基础的map就可以搞定<br>eventQueue: 每次注册表变更都写入事件到里面<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Registry 注册表</span></span><br><span class="line"><span class="keyword">type</span> Registry <span class="keyword">struct</span> &#123;</span><br><span class="line">	lock       sync.RWMutex</span><br><span class="line">	apps       sync.Map</span><br><span class="line">	duration   time.Duration</span><br><span class="line">	eventQueue *EventQueue</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="注册表服务注册"><a href="#注册表服务注册" class="headerlink" title="注册表服务注册"></a>注册表服务注册</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-09-46-45.png" alt><br>注册流程主要分为下面几部分：</p>
+<ol>
+<li>从注册表获取对应的应用Application</li>
+<li>调用Application的add接口添加节点</li>
+<li>为节点创建一个Lease</li>
+<li>保存节点信息到Application.Node里</li>
+<li>将事件写入到eventQueue<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Registr 注册服务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Registry)</span> <span class="title">Registr</span><span class="params">(name, node <span class="keyword">string</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	r.lock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> r.lock.Unlock()</span><br><span class="line">	app := r.getApp(name)</span><br><span class="line">	<span class="keyword">if</span> app == <span class="literal">nil</span> &#123;</span><br><span class="line">		app = NewApplication(name)</span><br><span class="line">		r.apps.Store(name, app)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> lease, ok := app.add(node, r.duration); ok &#123;</span><br><span class="line">		r.eventQueue.Push(&amp;Event&#123;lease: lease, action: ADD&#125;)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="注册表拉取"><a href="#注册表拉取" class="headerlink" title="注册表拉取"></a>注册表拉取</h3><p>全量拉取通过all接口拉取全量的返回的是服务对应的节点切片<br>增量拉取通过details接口返回增量的变更事件和服务端注册表的hashcode<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// all 全量拉取</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Registry)</span> <span class="title">all</span><span class="params">()</span> <span class="title">map</span>[<span class="title">string</span>][]<span class="title">string</span></span> &#123;</span><br><span class="line">	r.lock.RLock()</span><br><span class="line">	<span class="keyword">defer</span> r.lock.RUnlock()</span><br><span class="line">	apps := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>][]<span class="keyword">string</span>)</span><br><span class="line">	r.apps.Range(<span class="function"><span class="keyword">func</span><span class="params">(k, v <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">		name, app := k.(<span class="keyword">string</span>), v.(*Application)</span><br><span class="line">		nodes := []<span class="keyword">string</span>&#123;&#125;</span><br><span class="line">		<span class="keyword">for</span> key := <span class="keyword">range</span> app.Node &#123;</span><br><span class="line">			nodes = <span class="built_in">append</span>(nodes, key)</span><br><span class="line">		&#125;</span><br><span class="line">		apps[name] = nodes</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">return</span> apps</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// details 增量拉取</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Registry)</span> <span class="title">details</span><span class="params">()</span> []*<span class="title">Event</span></span> &#123;</span><br><span class="line">	r.lock.RLock()</span><br><span class="line">	<span class="keyword">defer</span> r.lock.RUnlock()</span><br><span class="line">	events := []*Event&#123;&#125;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		event := r.eventQueue.Pop()</span><br><span class="line">		<span class="keyword">if</span> event == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">		events = <span class="built_in">append</span>(events, event)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> events</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="hashcode"><a href="#hashcode" class="headerlink" title="hashcode"></a>hashcode</h3><p>hashcode是一个一致性的保证，eureka里面主要是通过拼接所有的服务名称和节点的个数来生成的一个字符串，这里我们也采用这种方式，<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Registry)</span> <span class="title">hashCode</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	r.lock.RLock()</span><br><span class="line">	<span class="keyword">defer</span> r.lock.RUnlock()</span><br><span class="line">	hashCodes := []<span class="keyword">string</span>&#123;&#125;</span><br><span class="line">	r.apps.Range(<span class="function"><span class="keyword">func</span><span class="params">(_, value <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">		app := value.(*Application)</span><br><span class="line">		hashCodes = <span class="built_in">append</span>(hashCodes, app.HashCode())</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;)</span><br><span class="line">	sort.Sort(sort.StringSlice(hashCodes))</span><br><span class="line">	<span class="keyword">return</span> strings.Join(hashCodes, <span class="string">"|"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="客户端注册表"><a href="#客户端注册表" class="headerlink" title="客户端注册表"></a>客户端注册表</h2><h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><p>客户端本地注册表其实就比较简单了，只需要存储服务和节点的对应信息即可<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LocalRegistry 本地注册表</span></span><br><span class="line"><span class="keyword">type</span> LocalRegistry <span class="keyword">struct</span> &#123;</span><br><span class="line">	lock sync.RWMutex</span><br><span class="line">	apps <span class="keyword">map</span>[<span class="keyword">string</span>][]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="客户端逻辑架构"><a href="#客户端逻辑架构" class="headerlink" title="客户端逻辑架构"></a>客户端逻辑架构</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-05-23-10-17-32.png" alt></p>
+<ul>
+<li><p>启动流程: 启动时客户端首先调用注册接口进行自我注册，然后调用poll拉取全量注册表</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Client)</span> <span class="title">start</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c.wg.Add(<span class="number">1</span>)</span><br><span class="line">	c.registr()</span><br><span class="line">	c.poll()</span><br><span class="line">	<span class="keyword">go</span> c.loop()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>主循环</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Client)</span> <span class="title">loop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	timer := time.NewTimer(time.Second)</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">            <span class="comment">// 从服务的拉取增量事件，details内部会直接应用，然后返回服务端返回的注册表的hashcode</span></span><br><span class="line">		respHashCode := c.details()</span><br><span class="line">		localHashCode := c.registry.hashCode()</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果发现本地和服务的的注册表的hashcode不同，则全量拉取</span></span><br><span class="line">		<span class="keyword">if</span> respHashCode != localHashCode &#123;</span><br><span class="line">			fmt.Printf(<span class="string">"client app %s node %s poll hashcode: %s\n"</span>, c.App, c.Name, respHashCode)</span><br><span class="line">			c.poll()</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-timer.C:</span><br><span class="line">			timer.Reset(time.Second)</span><br><span class="line">		<span class="keyword">case</span> &lt;-c.done:</span><br><span class="line">			c.wg.Done()</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="验证逻辑"><a href="#验证逻辑" class="headerlink" title="验证逻辑"></a>验证逻辑</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">// 生成服务端</span></span><br><span class="line">	server := NewServer(<span class="string">"aliyun"</span>, time.Second)</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 注册两个test服务的节点</span></span><br><span class="line">	clientOne := NewClient(<span class="string">"test"</span>, <span class="string">"1.1.1.1:9090"</span>, server)</span><br><span class="line">	clientOne.start()</span><br><span class="line">	clientTwo := NewClient(<span class="string">"test"</span>, <span class="string">"1.1.1.2:9090"</span>, server)</span><br><span class="line">	clientTwo.start()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 注册两个hello服务的节点</span></span><br><span class="line">	clientThree := NewClient(<span class="string">"hello"</span>, <span class="string">"1.1.1.3:9090"</span>, server)</span><br><span class="line">	clientThree.start()</span><br><span class="line">	clientFour := NewClient(<span class="string">"hello"</span>, <span class="string">"1.1.1.4:9090"</span>, server)</span><br><span class="line">	clientFour.start()</span><br><span class="line"></span><br><span class="line">	time.Sleep(time.Second * <span class="number">3</span>)</span><br><span class="line">        <span class="comment">// 验证每个服务节点的注册表的hashcode是否一致</span></span><br><span class="line">	<span class="built_in">println</span>(clientOne.details())</span><br><span class="line">	<span class="built_in">println</span>(clientTwo.details())</span><br><span class="line">	<span class="built_in">println</span>(clientThree.details())</span><br><span class="line">	<span class="built_in">println</span>(clientFour.details())</span><br><span class="line">	<span class="built_in">println</span>(clientTwo.details() == clientOne.details())</span><br><span class="line">	<span class="built_in">println</span>(clientThree.details() == clientFour.details())</span><br><span class="line">	<span class="built_in">println</span>(clientOne.details() == clientFour.details())</span><br><span class="line"></span><br><span class="line">	clientOne.stop()</span><br><span class="line">	clientTwo.stop()</span><br><span class="line">	clientThree.stop()</span><br><span class="line">	clientFour.stop()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过结果我们可以看出，节点增量拉取了注册表，同时如果发现与本地的hashcode不同就进行全量拉取，并最终达成一致<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">lr event add 1.1.1.3:9090 hello</span><br><span class="line">lr event add 1.1.1.4:9090 hello</span><br><span class="line">lr event add client app hello node 1.1.1.4:9090 poll hashcode: hello_2|test_2</span><br><span class="line">1.1.1.1:9090 <span class="built_in">test</span></span><br><span class="line">lr event add 1.1.1.2:9090 <span class="built_in">test</span></span><br><span class="line">client app <span class="built_in">test</span> node 1.1.1.1:9090 poll hashcode: hello_2|test_2</span><br><span class="line">client app <span class="built_in">test</span> node 1.1.1.2:9090 poll hashcode: hello_2|test_2</span><br><span class="line">client app hello node 1.1.1.3:9090 poll hashcode: hello_2|test_2</span><br><span class="line">hello_2|test_2</span><br><span class="line">hello_2|test_2</span><br><span class="line">hello_2|test_2</span><br><span class="line">hello_2|test_2</span><br><span class="line"><span class="literal">true</span></span><br><span class="line"><span class="literal">true</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>微服务注册中心注册表的这种实现机制，到这基本上就明白了，注册中心 通过增量、全量、hashcode三种机制来保证客户端与注册中心的注册表的同步</p>
+<p>其实一个工业级的注册中心还是很麻烦的，比如注册表中那个事件队列，我现在的实现只有一个节点能获取增量，其他的都会通过hashcode来触发全量拉取，后续文章里面会相信介绍下，这块缓存和定时器来实现增量数据的打包</p>
+<p>其实在go里面大家注册中心都是基于etcd、consul直接watch去做的，基本上可以完成eureka服务的8/9十的功能，但是当需要与公司现有的java做集成，可能就需要eureaka这种注册中心了</p>
+<p>未完待续<br>关注公共号: 布衣码农 </p>
+<p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg" alt></p>
+<p>更多精彩内容可以查看<a href="http://www.sreguide.com">www.sreguide.com</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;">
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/微服务/" rel="tag">#微服务</a>
+          
+            <a href="/tags/golang/" rel="tag">#golang</a>
+          
+            <a href="/tags/注册中心/" rel="tag">#注册中心</a>
+          
+            <a href="/tags/注册表/" rel="tag">#注册表</a>
+          
+            <a href="/tags/hash/" rel="tag">#hash</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/distributed/kafka_leader_follower_coordinator.html" rel="next" title="基于Kafka协调器实现分布式主节点选举及任务分配">
+                <i class="fa fa-chevron-left"></i> 基于Kafka协调器实现分布式主节点选举及任务分配
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/go/sync_reader_writer.html" rel="prev" title="Go里面的读写锁与源码实现">
+                Go里面的读写锁与源码实现 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg" alt="布衣">
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">分享后端go语言开发的各种架构设计源码分析与核心数据结构算法设计与云计算相关实践,涉及到kubernetes,云计算,微服务,系统设计,系统架构,设计模式,数据结构与算法,还有底层的操作系统实现,深度解读各种源码细节与精彩设计,加深对各种中间件系统的了解</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">48</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">45</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">49</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基于负载均衡的服务调用"><span class="nav-number">1.1.</span> <span class="nav-text">基于负载均衡的服务调用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于注册中心的服务调用"><span class="nav-number">1.2.</span> <span class="nav-text">基于注册中心的服务调用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#注册中心中的注册表"><span class="nav-number">1.3.</span> <span class="nav-text">注册中心中的注册表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#注册中心事件队列"><span class="nav-number">1.4.</span> <span class="nav-text">注册中心事件队列</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#注册中心hashcode"><span class="nav-number">1.5.</span> <span class="nav-text">注册中心hashcode</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#代码实现"><span class="nav-number">2.</span> <span class="nav-text">代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#系统架构"><span class="nav-number">2.1.</span> <span class="nav-text">系统架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用与节点信息"><span class="nav-number">2.2.</span> <span class="nav-text">应用与节点信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务端注册表"><span class="nav-number">2.3.</span> <span class="nav-text">服务端注册表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#注册表结构体"><span class="nav-number">2.3.1.</span> <span class="nav-text">注册表结构体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#注册表服务注册"><span class="nav-number">2.3.2.</span> <span class="nav-text">注册表服务注册</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#注册表拉取"><span class="nav-number">2.3.3.</span> <span class="nav-text">注册表拉取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hashcode"><span class="nav-number">2.3.4.</span> <span class="nav-text">hashcode</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#客户端注册表"><span class="nav-number">2.4.</span> <span class="nav-text">客户端注册表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#数据结构"><span class="nav-number">2.4.1.</span> <span class="nav-text">数据结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端逻辑架构"><span class="nav-number">2.4.2.</span> <span class="nav-text">客户端逻辑架构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#验证逻辑"><span class="nav-number">2.5.</span> <span class="nav-text">验证逻辑</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

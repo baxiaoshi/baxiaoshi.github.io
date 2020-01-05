@@ -1,0 +1,881 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="2PC,两阶段,延迟更新,分布式事务,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2">
+
+
+
+
+
+
+<meta name="description" content="背景分布式多消息事务问题在消息队列使用场景中，有时需要同时下发多条消息，但现在的消息队列比如kafka只支持单条消息的事务保证，不能保证多条消息，今天说的这个方案就时kafka内部的一个子项目中基于2PC和延迟更新来实现分布式事务 2PC2PC俗称两阶段提交，通过将一个操作分为两个阶段：准备阶段和提交阶段来尽可能保证操作的原子执行(实际上不可能，大家有个概念先) 延迟更新延迟更新其实是一个很常用的">
+<meta name="keywords" content="2PC,两阶段,延迟更新,分布式事务">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于2PC和延迟更新完成分布式消息队列多条事务">
+<meta property="og:url" content="http://www.sreguide.com/data_struct/2pc_msg_queue_conf.html">
+<meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析">
+<meta property="og:description" content="背景分布式多消息事务问题在消息队列使用场景中，有时需要同时下发多条消息，但现在的消息队列比如kafka只支持单条消息的事务保证，不能保证多条消息，今天说的这个方案就时kafka内部的一个子项目中基于2PC和延迟更新来实现分布式事务 2PC2PC俗称两阶段提交，通过将一个操作分为两个阶段：准备阶段和提交阶段来尽可能保证操作的原子执行(实际上不可能，大家有个概念先) 延迟更新延迟更新其实是一个很常用的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-34.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-44.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-57.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-11.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-24.png">
+<meta property="og:updated_time" content="2019-05-17T02:45:36.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于2PC和延迟更新完成分布式消息队列多条事务">
+<meta name="twitter:description" content="背景分布式多消息事务问题在消息队列使用场景中，有时需要同时下发多条消息，但现在的消息队列比如kafka只支持单条消息的事务保证，不能保证多条消息，今天说的这个方案就时kafka内部的一个子项目中基于2PC和延迟更新来实现分布式事务 2PC2PC俗称两阶段提交，通过将一个操作分为两个阶段：准备阶段和提交阶段来尽可能保证操作的原子执行(实际上不可能，大家有个概念先) 延迟更新延迟更新其实是一个很常用的">
+<meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-34.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/data_struct/2pc_msg_queue_conf.html">
+
+
+  <title> 基于2PC和延迟更新完成分布式消息队列多条事务 | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    (function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title"></span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                基于2PC和延迟更新完成分布式消息队列多条事务
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-05-17T10:45:36+08:00" content="2019-05-17 10:45">
+              2019-05-17 10:45
+            </time>
+          </span>
+
+          
+            <span class="post-category">
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/2PC/" itemprop="url" rel="index">
+                    <span itemprop="name">2PC</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/2PC/两阶段/" itemprop="url" rel="index">
+                    <span itemprop="name">两阶段</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/2PC/两阶段/延迟更新/" itemprop="url" rel="index">
+                    <span itemprop="name">延迟更新</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/2PC/两阶段/延迟更新/分布式事务/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式事务</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><h2 id="分布式多消息事务问题"><a href="#分布式多消息事务问题" class="headerlink" title="分布式多消息事务问题"></a>分布式多消息事务问题</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-34.png" alt><br>在消息队列使用场景中，有时需要同时下发多条消息，但现在的消息队列比如kafka只支持单条消息的事务保证，不能保证多条消息，今天说的这个方案就时kafka内部的一个子项目中基于2PC和延迟更新来实现分布式事务</p>
+<h2 id="2PC"><a href="#2PC" class="headerlink" title="2PC"></a>2PC</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-44.png" alt><br>2PC俗称两阶段提交，通过将一个操作分为两个阶段：准备阶段和提交阶段来尽可能保证操作的原子执行(实际上不可能，大家有个概念先)</p>
+<h2 id="延迟更新"><a href="#延迟更新" class="headerlink" title="延迟更新"></a>延迟更新</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-38-57.png" alt><br>延迟更新其实是一个很常用的技术手段，简单来说，当某个操作条件不满足时，通过一定手段将数据暂存，等条件满足时在进行执行</p>
+<h1 id="基于2PC和延迟队列的分布式事务实现"><a href="#基于2PC和延迟队列的分布式事务实现" class="headerlink" title="基于2PC和延迟队列的分布式事务实现"></a>基于2PC和延迟队列的分布式事务实现</h1><h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-11.png" alt><br>实现也蛮简单的， 在原来的业务消息之后再添加一条事务消息(事务消息可以通过类似唯一ID来关联到之前提交的消息)， worker未消费到事物提交的消息，就会一直将消息放在本地延迟存储中，只有当接收到事物提交消息，才会进行业务逻辑处理</p>
+<h2 id="业务流程"><a href="#业务流程" class="headerlink" title="业务流程"></a>业务流程</h2><h3 id="生产者"><a href="#生产者" class="headerlink" title="生产者"></a>生产者</h3><ol>
+<li>逐条发送业务消息组</li>
+<li>发送事务提交消息<h3 id="消费者"><a href="#消费者" class="headerlink" title="消费者"></a>消费者</h3></li>
+<li>消费消息队列，将业务消息存放本地延迟存储</li>
+<li>接收提交事务消息，从本地延迟存储获取所有数据，然后从延迟存储中删除该消息</li>
+</ol>
+<h1 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h1><h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F/2019-05-17-10-39-24.png" alt><br>MemoryQuue: 用于模拟消息队列，接收事件分发事件<br>Worker: 模拟具体业务服务，接收消息，存入本地延迟更新存储，或者提交事务触发业务回调</p>
+<h2 id="Event与EventListener"><a href="#Event与EventListener" class="headerlink" title="Event与EventListener"></a>Event与EventListener</h2><p>Event: 用于标识事件，用户将业务数据封装成事件存入到MemoryQueue中<br>EventListener: 事件回调接口，用于MemoryQueue接收到数据后的回调<br>事件在发送的时候，需要通过一个前缀来进行事件类型标识，这里有三种TaskPrefix、CommitTaskPrefix、ClearTaskPrefix<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	<span class="comment">// TaskPrefix 任务key前缀</span></span><br><span class="line">	TaskPrefix <span class="keyword">string</span> = <span class="string">"task-"</span></span><br><span class="line">	<span class="comment">// CommitTaskPrefix 提交任务key前缀</span></span><br><span class="line">	CommitTaskPrefix <span class="keyword">string</span> = <span class="string">"commit-"</span></span><br><span class="line">	<span class="comment">// ClearTaskPrefix 清除任务</span></span><br><span class="line">	ClearTaskPrefix <span class="keyword">string</span> = <span class="string">"clear-"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Event 事件类型</span></span><br><span class="line"><span class="keyword">type</span> Event <span class="keyword">struct</span> &#123;</span><br><span class="line">	Key   <span class="keyword">string</span></span><br><span class="line">	Name  <span class="keyword">string</span></span><br><span class="line">	Value <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// EventListener 用于接收消息回调</span></span><br><span class="line"><span class="keyword">type</span> EventListener <span class="keyword">interface</span> &#123;</span><br><span class="line">	onEvent(event *Event)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="MemoryQueue"><a href="#MemoryQueue" class="headerlink" title="MemoryQueue"></a>MemoryQueue</h2><p>MemoryQueue内存消息队列，通过Push接口接收用户数据，通过AddListener来注册EventListener, 同时内部通过poll来从chan event取出数据分发给所有的Listener<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MemoryQueue 内存消息队列</span></span><br><span class="line"><span class="keyword">type</span> MemoryQueue <span class="keyword">struct</span> &#123;</span><br><span class="line">	done      <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	queue     <span class="keyword">chan</span> Event</span><br><span class="line">	listeners []EventListener</span><br><span class="line">	wg        sync.WaitGroup</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Push 添加数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Push</span><span class="params">(eventType, name <span class="keyword">string</span>, value <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	mq.queue &lt;- Event&#123;Key: eventType + name, Name: name, Value: value&#125;</span><br><span class="line">	mq.wg.Add(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AddListener 添加监听器</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">AddListener</span><span class="params">(listener EventListener)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> mq.listeners &#123;</span><br><span class="line">		<span class="keyword">if</span> item == listener &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	mq.listeners = <span class="built_in">append</span>(mq.listeners, listener)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Notify 分发消息</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Notify</span><span class="params">(event *Event)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> mq.wg.Done()</span><br><span class="line">	<span class="keyword">for</span> _, listener := <span class="keyword">range</span> mq.listeners &#123;</span><br><span class="line">		listener.onEvent(event)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">poll</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-mq.done:</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		<span class="keyword">case</span> event := &lt;-mq.queue:</span><br><span class="line">			mq.Notify(&amp;event)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Start 启动内存队列</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Start</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">go</span> mq.poll()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Stop 停止内存队列</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mq *MemoryQueue)</span> <span class="title">Stop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	mq.wg.Wait()</span><br><span class="line">	<span class="built_in">close</span>(mq.done)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="Worker"><a href="#Worker" class="headerlink" title="Worker"></a>Worker</h2><p>Worker接收MemoryQueue里面的数据，然后在本地根据不同类型来进行对应事件事件类型处理， 主要是通过事件的前缀来进行对应事件回调函数的选择<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// Worker 工作进程</span></span><br><span class="line"><span class="keyword">type</span> Worker <span class="keyword">struct</span> &#123;</span><br><span class="line">	name                <span class="keyword">string</span></span><br><span class="line">	deferredTaskUpdates <span class="keyword">map</span>[<span class="keyword">string</span>][]Task</span><br><span class="line">	onCommit            ConfigUpdateCallback</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onEvent</span><span class="params">(event *Event)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> &#123;</span><br><span class="line">	<span class="comment">// 获取任务事件</span></span><br><span class="line">	<span class="keyword">case</span> strings.Contains(event.Key, TaskPrefix):</span><br><span class="line">		w.onTaskEvent(event)</span><br><span class="line">		<span class="comment">// 清除本地延迟队列里面的任务</span></span><br><span class="line">	<span class="keyword">case</span> strings.Contains(event.Key, ClearTaskPrefix):</span><br><span class="line">		w.onTaskClear(event)</span><br><span class="line">		<span class="comment">// 获取commit事件</span></span><br><span class="line">	<span class="keyword">case</span> strings.Contains(event.Key, CommitTaskPrefix):</span><br><span class="line">		w.onTaskCommit(event)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="事件处理任务"><a href="#事件处理任务" class="headerlink" title="事件处理任务"></a>事件处理任务</h2><p>事件处理任务主要分为：onTaskClear(从本地清楚该数据)、onTaskEvent(数据存储本地延迟存储进行暂存)、onTaskCommit(事务提交)<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onTaskClear</span><span class="params">(event *Event)</span></span> &#123;</span><br><span class="line">	task, err := event.Value.(Task)</span><br><span class="line">	<span class="keyword">if</span> !err &#123;</span><br><span class="line">		<span class="comment">// log</span></span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	_, found := w.deferredTaskUpdates[task.Group]</span><br><span class="line">	<span class="keyword">if</span> !found &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">delete</span>(w.deferredTaskUpdates, task.Group)</span><br><span class="line">	<span class="comment">// 还可以继续停止本地已经启动的任务</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// onTaskCommit 接收任务提交, 从延迟队列中取出数据然后进行业务逻辑处理</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onTaskCommit</span><span class="params">(event *Event)</span></span> &#123;</span><br><span class="line">	<span class="comment">// 获取之前本地接收的所有任务</span></span><br><span class="line">	tasks, found := w.deferredTaskUpdates[event.Name]</span><br><span class="line">	<span class="keyword">if</span> !found &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取配置</span></span><br><span class="line">	config := w.getTasksConfig(tasks)</span><br><span class="line">	<span class="keyword">if</span> w.onCommit != <span class="literal">nil</span> &#123;</span><br><span class="line">		w.onCommit(config)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">delete</span>(w.deferredTaskUpdates, event.Name)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// onTaskEvent 接收任务数据，此时需要丢到本地暂存不能进行应用</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">onTaskEvent</span><span class="params">(event *Event)</span></span> &#123;</span><br><span class="line">	task, err := event.Value.(Task)</span><br><span class="line">	<span class="keyword">if</span> !err &#123;</span><br><span class="line">		<span class="comment">// log</span></span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 保存任务到延迟更新map</span></span><br><span class="line">	configs, found := w.deferredTaskUpdates[task.Group]</span><br><span class="line">	<span class="keyword">if</span> !found &#123;</span><br><span class="line">		configs = <span class="built_in">make</span>([]Task, <span class="number">0</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	configs = <span class="built_in">append</span>(configs, task)</span><br><span class="line">	w.deferredTaskUpdates[task.Group] = configs</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// getTasksConfig 获取task任务列表</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(w *Worker)</span> <span class="title">getTasksConfig</span><span class="params">(tasks []Task)</span> <span class="title">map</span>[<span class="title">string</span>]<span class="title">string</span></span> &#123;</span><br><span class="line">	config := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>)</span><br><span class="line">	<span class="keyword">for</span> _, t := <span class="keyword">range</span> tasks &#123;</span><br><span class="line">		config = t.updateConfig(config)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> config</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="主流程"><a href="#主流程" class="headerlink" title="主流程"></a>主流程</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">unc main() &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 生成一个内存队列启动</span></span><br><span class="line">	queue := NewMemoryQueue(<span class="number">10</span>)</span><br><span class="line">	queue.Start()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 生成一个worker</span></span><br><span class="line">	name := <span class="string">"test"</span></span><br><span class="line">	worker := NewWorker(name, <span class="function"><span class="keyword">func</span><span class="params">(data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> key, value := <span class="keyword">range</span> data &#123;</span><br><span class="line">			<span class="built_in">println</span>(<span class="string">"worker get task key: "</span> + key + <span class="string">" value: "</span> + value)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="comment">// 注册到队列中</span></span><br><span class="line">	queue.AddListener(worker)</span><br><span class="line"></span><br><span class="line">	taskName := <span class="string">"test"</span></span><br><span class="line">	<span class="comment">// events 发送的任务事件</span></span><br><span class="line">	configs := []<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;</span><br><span class="line">		<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;<span class="string">"task1"</span>: <span class="string">"SendEmail"</span>, <span class="string">"params1"</span>: <span class="string">"Hello world"</span>&#125;,</span><br><span class="line">		<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;<span class="string">"task2"</span>: <span class="string">"SendMQ"</span>, <span class="string">"params2"</span>: <span class="string">"Hello world"</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 分发任务</span></span><br><span class="line">	queue.Push(ClearTaskPrefix, taskName, <span class="literal">nil</span>)</span><br><span class="line">	<span class="keyword">for</span> _, conf := <span class="keyword">range</span> configs &#123;</span><br><span class="line">		queue.Push(TaskPrefix, taskName, Task&#123;Name: taskName, Group: taskName, Config: conf&#125;)</span><br><span class="line">	&#125;</span><br><span class="line">	queue.Push(CommitTaskPrefix, taskName, <span class="literal">nil</span>)</span><br><span class="line">	<span class="comment">// 停止队列</span></span><br><span class="line">	queue.Stop()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># go run main.go</span></span><br><span class="line">worker get task key: params1 value: Hello world</span><br><span class="line">worker get task key: task1 value: SendEmail</span><br><span class="line">worker get task key: params2 value: Hello world</span><br><span class="line">worker get task key: task2 value: SendMQ</span><br></pre></td></tr></table></figure></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>在分布式环境中，很多时候并不需要使用CP模型，更多时候是满足最终一致性即可</p>
+<p>基于2PC和延迟队列的这种设计，主要是依赖于事件驱动的架构</p>
+<p>在kafka connect中, 每次节点变化都会触发一次任务的重分配，所以延迟存储直接用的就是内存中的HashMap, 因为即使分配消息的主节点挂了，那就再触发一次事件，直接将HashMap里面的数据清掉，进行下一次事务即可，并不需要保证延迟存储里面的数据不丢， </p>
+<p>所以方案因环境、需求不同，可以做一些取舍，没必要什么东西都去加一个CP模型的中间件进来，当然其实那样更简单</p>
+<p>未完待续！</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;">
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/2PC/" rel="tag">#2PC</a>
+          
+            <a href="/tags/两阶段/" rel="tag">#两阶段</a>
+          
+            <a href="/tags/延迟更新/" rel="tag">#延迟更新</a>
+          
+            <a href="/tags/分布式事务/" rel="tag">#分布式事务</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/k8s/k8s_service_controller.html" rel="next" title="Service Controller 源码实现">
+                <i class="fa fa-chevron-left"></i> Service Controller 源码实现
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/distributed/kafka_leader_follower_coordinator.html" rel="prev" title="基于Kafka协调器实现分布式主节点选举及任务分配">
+                基于Kafka协调器实现分布式主节点选举及任务分配 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg" alt="布衣">
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">分享后端go语言开发的各种架构设计源码分析与核心数据结构算法设计与云计算相关实践,涉及到kubernetes,云计算,微服务,系统设计,系统架构,设计模式,数据结构与算法,还有底层的操作系统实现,深度解读各种源码细节与精彩设计,加深对各种中间件系统的了解</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">48</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">45</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">49</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#分布式多消息事务问题"><span class="nav-number">1.1.</span> <span class="nav-text">分布式多消息事务问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2PC"><span class="nav-number">1.2.</span> <span class="nav-text">2PC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#延迟更新"><span class="nav-number">1.3.</span> <span class="nav-text">延迟更新</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#基于2PC和延迟队列的分布式事务实现"><span class="nav-number">2.</span> <span class="nav-text">基于2PC和延迟队列的分布式事务实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#系统架构"><span class="nav-number">2.1.</span> <span class="nav-text">系统架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#业务流程"><span class="nav-number">2.2.</span> <span class="nav-text">业务流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#生产者"><span class="nav-number">2.2.1.</span> <span class="nav-text">生产者</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#消费者"><span class="nav-number">2.2.2.</span> <span class="nav-text">消费者</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#代码实现"><span class="nav-number">3.</span> <span class="nav-text">代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#核心组件"><span class="nav-number">3.1.</span> <span class="nav-text">核心组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Event与EventListener"><span class="nav-number">3.2.</span> <span class="nav-text">Event与EventListener</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MemoryQueue"><span class="nav-number">3.3.</span> <span class="nav-text">MemoryQueue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Worker"><span class="nav-number">3.4.</span> <span class="nav-text">Worker</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件处理任务"><span class="nav-number">3.5.</span> <span class="nav-text">事件处理任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主流程"><span class="nav-number">3.6.</span> <span class="nav-text">主流程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

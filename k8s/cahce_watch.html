@@ -1,0 +1,852 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="k8s,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2">
+
+
+
+
+
+
+<meta name="description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
+<meta name="keywords" content="k8s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cache Watcher ListWatch">
+<meta property="og:url" content="http://www.sreguide.com/k8s/cahce_watch.html">
+<meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析">
+<meta property="og:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-07-02.png">
+<meta property="og:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-12-38.png">
+<meta property="og:updated_time" content="2018-10-27T06:42:49.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Cache Watcher ListWatch">
+<meta name="twitter:description" content="背景 主要功能K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享">
+<meta name="twitter:image" content="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/k8s/cahce_watch.html">
+
+
+  <title> Cache Watcher ListWatch | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    (function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title"></span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Cache Watcher ListWatch
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-10-27T14:42:49+08:00" content="2018-10-27 14:42">
+              2018-10-27 14:42
+            </time>
+          </span>
+
+          
+            <span class="post-category">
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index">
+                    <span itemprop="name">k8s</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png" alt></p>
+<h4 id="主要功能"><a href="#主要功能" class="headerlink" title="主要功能"></a>主要功能</h4><p>K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享</p>
+<a id="more"></a>
+<h4 id="功能拆解"><a href="#功能拆解" class="headerlink" title="功能拆解"></a>功能拆解</h4><ul>
+<li>store: 提供对数据的操作接口，比如增删改查和watch</li>
+<li>watcher: 监听store里面数据的变化, 同时做一些处理</li>
+</ul>
+<p><em>注意, watcher和store是一个通用的数据操作抽象, 比如对etcd的操作有一套store和watcher, 上面的缓存也有一套store和watcher, rest那层还有一套store和watch</em></p>
+<h4 id="模式理解"><a href="#模式理解" class="headerlink" title="模式理解"></a>模式理解</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-07-02.png" alt></p>
+<ul>
+<li>store: 提供统一接口，屏蔽对底层 <em>数据存储</em> 的操作 </li>
+<li>watcher: watcher用于从store获取事件变化，以便进行一些自定义操作的处理</li>
+<li>client: client如果要进行新功能开发，只要起一个新的watcher管住自己关心的数据变化, 完成自定义逻辑处理就可以<br>如果再说大一点可能就是 <em>数据存储层</em> 、 <em>框架(store)</em> 、 <em>业务逻辑</em> 桑层的解耦了</li>
+</ul>
+<h4 id="详细的调用图"><a href="#详细的调用图" class="headerlink" title="详细的调用图"></a>详细的调用图</h4><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-23-12-38.png" alt></p>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><h4 id="关键数据结构"><a href="#关键数据结构" class="headerlink" title="关键数据结构"></a>关键数据结构</h4><ul>
+<li><p>Cacher 负责与后端etcd store进行交互, 分发事件给所有的watcher</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Cacher <span class="keyword">struct</span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当前incoming队列中的长度性能指标</span></span><br><span class="line">	incomingHWM HighWateMark</span><br><span class="line">	<span class="comment">// incoming 事件管道, 回被分发给所有的watchers</span></span><br><span class="line">	incoming <span class="keyword">chan</span> watchCacheEvent</span><br><span class="line"></span><br><span class="line">	sync.RWMutex</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当前cache ready状态必须为ok才可以被访问</span></span><br><span class="line">	ready *ready</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 后端存储数据接口</span></span><br><span class="line">	storage Store</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 对象类型</span></span><br><span class="line">	objectType reflect.Type</span><br><span class="line"></span><br><span class="line">	watchCache watchCache</span><br><span class="line">	reflector  *Reflector</span><br><span class="line"></span><br><span class="line">	versioner Versioner</span><br><span class="line"></span><br><span class="line">	triggerFunc TriggerPublisherFunc</span><br><span class="line">	watcherIdx  <span class="keyword">int</span></span><br><span class="line">	watchers    indexedWatchers</span><br><span class="line"></span><br><span class="line">	dispatchTimeoutBudge *timeBudget</span><br><span class="line"></span><br><span class="line">	stopLock sync.RWMutex</span><br><span class="line">	stopped  <span class="keyword">bool</span></span><br><span class="line">	stopCh   <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	stopWg   sync.WaitGroup</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>cacherWatcher 接收上面Cacher发送事件同时分发给rest websocket接口</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// cacheWatcher 实现了watch接口</span></span><br><span class="line"><span class="keyword">type</span> cacheWatcher <span class="keyword">struct</span> &#123;</span><br><span class="line">	sync.Mutex</span><br><span class="line">	input     <span class="keyword">chan</span> *watchCacheEvent</span><br><span class="line">	result    <span class="keyword">chan</span> Event</span><br><span class="line">	done      <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	filter    filterWithAttrsFunc</span><br><span class="line">	stopped   <span class="keyword">bool</span></span><br><span class="line">	forget     <span class="function"><span class="keyword">func</span><span class="params">(<span class="keyword">bool</span>)</span></span></span><br><span class="line">	versioner Versioner</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Reflector watch后端数据变换同时把事件发送到watchCache(watch是以store的身份传递到Reflector中)</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Reflector 反射</span></span><br><span class="line"><span class="keyword">type</span> Reflector <span class="keyword">struct</span> &#123;</span><br><span class="line">	name <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	expectedType reflect.Type</span><br><span class="line"></span><br><span class="line">	store Store</span><br><span class="line"></span><br><span class="line">	listerWatcher ListerWatcher</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="关键方法实现"><a href="#关键方法实现" class="headerlink" title="关键方法实现"></a>关键方法实现</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewCacherFromConfig</span><span class="params">(config Config)</span> *<span class="title">Cacher</span></span> &#123;</span><br><span class="line">    <span class="comment">// 首先生成一个watchCache</span></span><br><span class="line">	watchCache := newWatchCache(config.CacheCapacity, config.KeyFunc, config.GetAttrsFunc, config.Versioner)</span><br><span class="line">	listerWatcher := newCacherListerWatcher(config.Storage, config.ResourcePrefix, config.NewListFunc)</span><br><span class="line">	reflectorName := <span class="string">"storage/cacher.go:"</span> + config.ResourcePrefix</span><br><span class="line"></span><br><span class="line">	stopCh := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line">	cacher := &amp;Cacher&#123;</span><br><span class="line">		ready:       newReady(),</span><br><span class="line">		storage:     config.Storage,</span><br><span class="line">		objectType:  reflect.TypeOf(config.Type),</span><br><span class="line">		watchCache:  watchCache,</span><br><span class="line">            <span class="comment">// watchCache 会被党委store传递到后端的reflector中, 用于reflector获取数据后将etcd中的数据转换成event事件</span></span><br><span class="line">		reflector:   cache.NewNamedReflector(reflectorName, listerWatcher, config.Type, watchCache, <span class="number">0</span>),</span><br><span class="line">		versioner:   config.Versioner,</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">        <span class="comment">// watchCache会设置SetOnEvent方法为cacher的processEvent, 在watchCache的所有事件类型处理的时候都会被改方法进行处理</span></span><br><span class="line">	watchCache.SetOnEvent(cacher.processEvent)</span><br><span class="line">	<span class="keyword">go</span> cacher.dispatchEvents()</span><br><span class="line"></span><br><span class="line">	cacher.stopWg.Add(<span class="number">1</span>)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> cacher.stopWg.Done()</span><br><span class="line">		wait.Until(</span><br><span class="line">			<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">				<span class="keyword">if</span> !cacher.isStopped() &#123;</span><br><span class="line">					cacher.startCaching(stopCh)</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;, time.Second, stopCh,</span><br><span class="line">		)</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> cacher</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>processEvent 将事件存放到自己的incoming队列中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">processEvent</span><span class="params">(event *watchCacheEvent)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> curLen := <span class="keyword">int64</span>(<span class="built_in">len</span>(c.incoming)); c.incomingHWM.Update(curLen) &#123;</span><br><span class="line">		fmt.Println(<span class="string">"cacher %v: %v objects queued in comming channel"</span>, c.objectType.String(), curLen)</span><br><span class="line">	&#125;</span><br><span class="line">	c.incoming &lt;- *event</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事件传递给前端watcher</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">dispatchEvents</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> event, ok := &lt;-c.incoming:</span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			c.dispatchEvent(&amp;event)</span><br><span class="line">		<span class="keyword">case</span> &lt;-c.stopCh:</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">dispatchEvent</span><span class="params">(event *watchCacheEvent)</span></span> &#123;</span><br><span class="line">	triggerValues, supported := c.triggerValues(event)</span><br><span class="line"></span><br><span class="line">	c.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.Unlock()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> _, watcher := <span class="keyword">range</span> c.watchers.allWatchers &#123;</span><br><span class="line">		watcher.add(event, d.dispatchTimeoutBudge)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> supported &#123;</span><br><span class="line">		<span class="keyword">for</span> _, triggerValue := <span class="keyword">range</span> triggerValues &#123;</span><br><span class="line">			<span class="keyword">for</span> _, watcher := <span class="keyword">range</span> c.watchers.valueWatchers[triggerValue] &#123;</span><br><span class="line">				watcher.add(event, d.dispatchTimeoutBudge)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">for</span> _, watchers := <span class="keyword">range</span> c.watchers.valueWatchers &#123;</span><br><span class="line">			<span class="keyword">for</span> _, watcher := <span class="keyword">range</span> watchers &#123;</span><br><span class="line">				watcher.add(event, c.dispatchTimeoutBudge)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br><span class="line">462</span><br><span class="line">463</span><br><span class="line">464</span><br><span class="line">465</span><br><span class="line">466</span><br><span class="line">467</span><br><span class="line">468</span><br><span class="line">469</span><br><span class="line">470</span><br><span class="line">471</span><br><span class="line">472</span><br><span class="line">473</span><br><span class="line">474</span><br><span class="line">475</span><br><span class="line">476</span><br><span class="line">477</span><br><span class="line">478</span><br><span class="line">479</span><br><span class="line">480</span><br><span class="line">481</span><br><span class="line">482</span><br><span class="line">483</span><br><span class="line">484</span><br><span class="line">485</span><br><span class="line">486</span><br><span class="line">487</span><br><span class="line">488</span><br><span class="line">489</span><br><span class="line">490</span><br><span class="line">491</span><br><span class="line">492</span><br><span class="line">493</span><br><span class="line">494</span><br><span class="line">495</span><br><span class="line">496</span><br><span class="line">497</span><br><span class="line">498</span><br><span class="line">499</span><br><span class="line">500</span><br><span class="line">501</span><br><span class="line">502</span><br><span class="line">503</span><br><span class="line">504</span><br><span class="line">505</span><br><span class="line">506</span><br><span class="line">507</span><br><span class="line">508</span><br><span class="line">509</span><br><span class="line">510</span><br><span class="line">511</span><br><span class="line">512</span><br><span class="line">513</span><br><span class="line">514</span><br><span class="line">515</span><br><span class="line">516</span><br><span class="line">517</span><br><span class="line">518</span><br><span class="line">519</span><br><span class="line">520</span><br><span class="line">521</span><br><span class="line">522</span><br><span class="line">523</span><br><span class="line">524</span><br><span class="line">525</span><br><span class="line">526</span><br><span class="line">527</span><br><span class="line">528</span><br><span class="line">529</span><br><span class="line">530</span><br><span class="line">531</span><br><span class="line">532</span><br><span class="line">533</span><br><span class="line">534</span><br><span class="line">535</span><br><span class="line">536</span><br><span class="line">537</span><br><span class="line">538</span><br><span class="line">539</span><br><span class="line">540</span><br><span class="line">541</span><br><span class="line">542</span><br><span class="line">543</span><br><span class="line">544</span><br><span class="line">545</span><br><span class="line">546</span><br><span class="line">547</span><br><span class="line">548</span><br><span class="line">549</span><br><span class="line">550</span><br><span class="line">551</span><br><span class="line">552</span><br><span class="line">553</span><br><span class="line">554</span><br><span class="line">555</span><br><span class="line">556</span><br><span class="line">557</span><br><span class="line">558</span><br><span class="line">559</span><br><span class="line">560</span><br><span class="line">561</span><br><span class="line">562</span><br><span class="line">563</span><br><span class="line">564</span><br><span class="line">565</span><br><span class="line">566</span><br><span class="line">567</span><br><span class="line">568</span><br><span class="line">569</span><br><span class="line">570</span><br><span class="line">571</span><br><span class="line">572</span><br><span class="line">573</span><br><span class="line">574</span><br><span class="line">575</span><br><span class="line">576</span><br><span class="line">577</span><br><span class="line">578</span><br><span class="line">579</span><br><span class="line">580</span><br><span class="line">581</span><br><span class="line">582</span><br><span class="line">583</span><br><span class="line">584</span><br><span class="line">585</span><br><span class="line">586</span><br><span class="line">587</span><br><span class="line">588</span><br><span class="line">589</span><br><span class="line">590</span><br><span class="line">591</span><br><span class="line">592</span><br><span class="line">593</span><br><span class="line">594</span><br><span class="line">595</span><br><span class="line">596</span><br><span class="line">597</span><br><span class="line">598</span><br><span class="line">599</span><br><span class="line">600</span><br><span class="line">601</span><br><span class="line">602</span><br><span class="line">603</span><br><span class="line">604</span><br><span class="line">605</span><br><span class="line">606</span><br><span class="line">607</span><br><span class="line">608</span><br><span class="line">609</span><br><span class="line">610</span><br><span class="line">611</span><br><span class="line">612</span><br><span class="line">613</span><br><span class="line">614</span><br><span class="line">615</span><br><span class="line">616</span><br><span class="line">617</span><br><span class="line">618</span><br><span class="line">619</span><br><span class="line">620</span><br><span class="line">621</span><br><span class="line">622</span><br><span class="line">623</span><br><span class="line">624</span><br><span class="line">625</span><br><span class="line">626</span><br><span class="line">627</span><br><span class="line">628</span><br><span class="line">629</span><br><span class="line">630</span><br><span class="line">631</span><br><span class="line">632</span><br><span class="line">633</span><br><span class="line">634</span><br><span class="line">635</span><br><span class="line">636</span><br><span class="line">637</span><br><span class="line">638</span><br><span class="line">639</span><br><span class="line">640</span><br><span class="line">641</span><br><span class="line">642</span><br><span class="line">643</span><br><span class="line">644</span><br><span class="line">645</span><br><span class="line">646</span><br><span class="line">647</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cacher</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"reflect"</span></span><br><span class="line">	<span class="string">"sync"</span></span><br><span class="line">	<span class="string">"sync/atomic"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"k8s.io/apimachinery/pkg/api/meta"</span></span><br><span class="line">	<span class="string">"k8s.io/apimachinery/pkg/conversion"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// HighWateMark 性能</span></span><br><span class="line"><span class="keyword">type</span> HighWateMark <span class="keyword">int64</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Update 原子更新</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(hwm *HighWateMark)</span> <span class="title">Update</span><span class="params">(current <span class="keyword">int64</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		old := atomic.LoadInt64((*<span class="keyword">int64</span>)(hwm))</span><br><span class="line">		<span class="keyword">if</span> current &lt;= old &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> atomic.CompareAndSwapInt64((*<span class="keyword">int64</span>)(hwm), old, current) &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ready</span></span><br><span class="line"><span class="keyword">type</span> ready <span class="keyword">struct</span> &#123;</span><br><span class="line">	ok <span class="keyword">bool</span></span><br><span class="line">	c  *sync.Cond</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// newReady 新建</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newReady</span><span class="params">()</span> *<span class="title">ready</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;ready&#123;c: sync.NewCond(&amp;sync.Mutex&#123;&#125;)&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// wait</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ready)</span> <span class="title">wait</span><span class="params">()</span></span> &#123;</span><br><span class="line">	r.c.L.Lock()</span><br><span class="line">	<span class="keyword">for</span> !r.ok &#123;</span><br><span class="line">		r.c.Wait()</span><br><span class="line">	&#125;</span><br><span class="line">	r.c.L.Unlock()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// check 返回当前的状态</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ready)</span> <span class="title">check</span><span class="params">()</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	r.c.L.Lock()</span><br><span class="line">	<span class="keyword">defer</span> r.c.L.Unlock()</span><br><span class="line">	<span class="keyword">return</span> r.ok</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// set 修改状态</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *ready)</span> <span class="title">set</span><span class="params">(ok <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	r.c.L.Lock()</span><br><span class="line">	<span class="keyword">defer</span> r.c.L.Unlock()</span><br><span class="line">	r.ok = ok</span><br><span class="line">	r.c.Broadcast()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// TypeMeta API请求元数据</span></span><br><span class="line"><span class="keyword">type</span> TypeMeta <span class="keyword">struct</span> &#123;</span><br><span class="line">	Kind       <span class="keyword">string</span> <span class="string">`json:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`</span></span><br><span class="line">	APIVersion <span class="keyword">string</span> <span class="string">`json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ListOption 请求的参数</span></span><br><span class="line"><span class="keyword">type</span> ListOption <span class="keyword">struct</span> &#123;</span><br><span class="line">	TypeMeta <span class="string">`json: ",inline"`</span></span><br><span class="line"></span><br><span class="line">	LabelSelector <span class="keyword">string</span></span><br><span class="line">	FieldSelector <span class="keyword">string</span></span><br><span class="line">	<span class="comment">// 是否包含初始化的资源</span></span><br><span class="line">	IncludeUninitialized <span class="keyword">bool</span></span><br><span class="line">	<span class="comment">// 使用websocket反馈资源的Add、update、and remove事件通知</span></span><br><span class="line">	Watch           <span class="keyword">bool</span></span><br><span class="line">	ResourceVersion <span class="keyword">string</span></span><br><span class="line">	TimeoutSecond   *<span class="keyword">int64</span></span><br><span class="line">	Limit           <span class="keyword">int64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ListerWatcher 抽象接口</span></span><br><span class="line"><span class="keyword">type</span> ListerWatcher <span class="keyword">interface</span> &#123;</span><br><span class="line">	List(option ListOption) (Object, error)</span><br><span class="line">	Watch(option ListOption) (Interface, error)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Reflector 反射</span></span><br><span class="line"><span class="keyword">type</span> Reflector <span class="keyword">struct</span> &#123;</span><br><span class="line">	name <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	expectedType reflect.Type</span><br><span class="line"></span><br><span class="line">	store Store</span><br><span class="line"></span><br><span class="line">	listerWatcher ListerWatcher</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ListAndWatch 获取最新版本并且watch数据变化</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *Reflector)</span> <span class="title">ListAndWatch</span><span class="params">(stopCh &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// MatchValue 批判</span></span><br><span class="line"><span class="keyword">type</span> MatchValue <span class="keyword">struct</span> &#123;</span><br><span class="line">	IndexName <span class="keyword">string</span></span><br><span class="line">	Value     <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// TriggerPublisherFunc 获取匹配的数据</span></span><br><span class="line"><span class="keyword">type</span> TriggerPublisherFunc <span class="function"><span class="keyword">func</span><span class="params">(obj Object)</span> []<span class="title">MatchValue</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="keyword">type</span> filterWithAttrsFunc <span class="function"><span class="keyword">func</span><span class="params">(key <span class="keyword">string</span>, l Set, f Set, uninitializer <span class="keyword">bool</span>)</span> <span class="title">bool</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// cacheWatcher 实现了watch接口</span></span><br><span class="line"><span class="keyword">type</span> cacheWatcher <span class="keyword">struct</span> &#123;</span><br><span class="line">	sync.Mutex</span><br><span class="line">	input     <span class="keyword">chan</span> *watchCacheEvent</span><br><span class="line">	result    <span class="keyword">chan</span> Event</span><br><span class="line">	done      <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	filter    filterWithAttrsFunc</span><br><span class="line">	stopped   <span class="keyword">bool</span></span><br><span class="line">	forget     <span class="function"><span class="keyword">func</span><span class="params">(<span class="keyword">bool</span>)</span></span></span><br><span class="line">	versioner Versioner</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *cacheWatcher)</span> <span class="title">Stop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c.forget(<span class="literal">true</span>)</span><br><span class="line">	c.stop()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *cacheWatcher)</span> <span class="title">stop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.Unlock()</span><br><span class="line">	<span class="keyword">if</span> c.stopped &#123;</span><br><span class="line">		c.stopped = <span class="literal">true</span></span><br><span class="line">		<span class="built_in">close</span>(c.done)</span><br><span class="line">		<span class="built_in">close</span>(c.input)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newCacheWatcher</span><span class="params">(resourceVersion <span class="keyword">uint64</span>, chanSize <span class="keyword">int</span>, initEvents []*watchCacheEvent, filter filterWithAttrsFunc, forget <span class="keyword">func</span>(<span class="keyword">bool</span>)</span>, <span class="title">versioner</span> <span class="title">Versioner</span>) *<span class="title">cacheWatcher</span></span> &#123;</span><br><span class="line">	watcher := &amp;cacheWatcher&#123;</span><br><span class="line">		input: 		<span class="built_in">make</span>(<span class="keyword">chan</span> *watchCacheEvent, chanSize),</span><br><span class="line">		result: 	<span class="built_in">make</span>(<span class="keyword">chan</span> Event, chanSize),</span><br><span class="line">		done: 		<span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;),</span><br><span class="line">		filter: 	filter,</span><br><span class="line">		stopped: 	<span class="literal">false</span>,</span><br><span class="line">		forget: 	forget</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">go</span> watcher.process(initEvents, resourceVersion)</span><br><span class="line">	<span class="keyword">return</span> watcher</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> watchersMap <span class="keyword">map</span>[<span class="keyword">int</span>]*cacheWatcher</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(wm watchersMap)</span> <span class="title">terminateAll</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> key, watcher := <span class="keyword">range</span> wm &#123;</span><br><span class="line">		<span class="built_in">delete</span>(wm, key)</span><br><span class="line">		watcher.Stop()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> indexedWatchers <span class="keyword">struct</span> &#123;</span><br><span class="line">	allWatchers   watchersMap</span><br><span class="line">	valueWatchers <span class="keyword">map</span>[<span class="keyword">string</span>]watchersMap</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(i *indexedWatchers)</span> <span class="title">terminateAll</span><span class="params">(objectType reflect.Type)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(i.allWatchers) &gt; <span class="number">0</span> || <span class="built_in">len</span>(i.valueWatchers) &gt; <span class="number">0</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">"Terminating all watchers from cacher %v"</span>, objectType)</span><br><span class="line">	&#125;</span><br><span class="line">	i.allWatchers.terminateAll()</span><br><span class="line">	<span class="keyword">for</span> index, watchers := <span class="keyword">range</span> i.valueWatchers &#123;</span><br><span class="line">		watchers.terminateAll()</span><br><span class="line">		<span class="built_in">delete</span>(i.valueWatchers, index)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(i *indexedWatchers)</span> <span class="title">deleteWatcher</span><span class="params">(number <span class="keyword">int</span>, value <span class="keyword">string</span>, supported <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> supported &#123;</span><br><span class="line">		i.valueWatchers[value].deleteWatcher(number)</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(i.valueWatchers[value]) == <span class="number">0</span> &#123;</span><br><span class="line">			<span class="built_in">delete</span>(i.valueWatchers, value)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		i.allWatchers.deleteWatcher(number)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(i *indexedWatchers)</span> <span class="title">addWatcher</span><span class="params">(w *cacheWatcher, number <span class="keyword">int</span>, value <span class="keyword">string</span>, supported <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> supported &#123;</span><br><span class="line">		<span class="keyword">if</span> _, ok := i.valueWatchers[value]; !&#123;</span><br><span class="line">			i.valueWatchers[value] = watchersMap&#123;&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		i.valueWatchers[value].addWatcher(w, number)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		i.allWatchers.addWatcher(w, number)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> timeBudget <span class="keyword">struct</span> &#123;</span><br><span class="line">	sync.Mutex</span><br><span class="line">	budget time.Duration</span><br><span class="line"></span><br><span class="line">	refresh   time.Duration</span><br><span class="line">	maxBudget time.Duration</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Labels <span class="keyword">interface</span> &#123;</span><br><span class="line">	Hash(label <span class="keyword">string</span>) (exists <span class="keyword">bool</span>)</span><br><span class="line">	Get(label <span class="keyword">string</span>) (value <span class="keyword">string</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Selector <span class="keyword">interface</span> &#123;</span><br><span class="line">	Matchs(Labels) <span class="keyword">bool</span></span><br><span class="line">	Empty() <span class="keyword">bool</span></span><br><span class="line">	String() <span class="keyword">string</span></span><br><span class="line">	RequiresExactMatch(field <span class="keyword">string</span>) (value <span class="keyword">string</span>, found <span class="keyword">bool</span>)</span><br><span class="line">	DeepCopySelector() Selector</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AttrFunc 获取对象的Label和Field集合</span></span><br><span class="line"><span class="keyword">type</span> AttrFunc <span class="function"><span class="keyword">func</span><span class="params">(obj Object)</span> <span class="params">(Set, Set, <span class="keyword">bool</span>, error)</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// SelectPredicate  对象的表现形式</span></span><br><span class="line"><span class="keyword">type</span> SelectionPredicate <span class="keyword">struct</span> &#123;</span><br><span class="line">	Label                Selector</span><br><span class="line">	Fielld               Selector</span><br><span class="line">	IncludeUninitialized <span class="keyword">bool</span></span><br><span class="line">	GetAttrs             AttrFunc</span><br><span class="line">	InedxFields          []<span class="keyword">string</span></span><br><span class="line">	Limit                <span class="keyword">int64</span></span><br><span class="line">	Continue             <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *SelectionPredicate)</span> <span class="title">MatcherIndex</span><span class="params">()</span> []<span class="title">MatchValue</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> result []MatchValue</span><br><span class="line">	<span class="keyword">for</span> , field := <span class="keyword">range</span> s.InedxFields &#123;</span><br><span class="line">		<span class="keyword">if</span> value, ok := s.Fielld.RequiresExactMatch(field); ok &#123;</span><br><span class="line">			result = <span class="built_in">append</span>(result, MatchValue&#123;IndexName: field, Value: value&#125;)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Feature <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> FeatureGate <span class="keyword">interface</span> &#123;</span><br><span class="line">	Enabled(key Feature) <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> UID <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Preconditions <span class="keyword">struct</span> &#123;</span><br><span class="line">	UID *UID</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> StatusError <span class="keyword">struct</span> &#123;</span><br><span class="line">	ErrStatus metav1.Status</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> errWatcher <span class="keyword">struct</span> &#123;</span><br><span class="line">	result <span class="keyword">chan</span> Event</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newErrWatcher</span><span class="params">(err error)</span> *<span class="title">errWatcher</span></span> &#123;</span><br><span class="line">	errEvent := Event&#123;Type: Error&#125;</span><br><span class="line">	<span class="keyword">switch</span> err := err.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> Object:</span><br><span class="line">		errEvent.Object = err</span><br><span class="line">	<span class="keyword">case</span> StatusError:</span><br><span class="line">		errEvent.Object = &amp;err.ErrStatus</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		errEvent.Object = &amp;metav1.Status&#123;</span><br><span class="line">			Status:  metav1.StatusFailure,</span><br><span class="line">			Message: err.Error(),</span><br><span class="line">			Reason:  metav1.StatusReasonInternalError,</span><br><span class="line">			Code:    http.StatusInternalServerError,</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> UpdateFunc <span class="function"><span class="keyword">func</span><span class="params">(input runtime.Object, res ResponseMeta)</span> <span class="params">(output runtime.Object, ttl *<span class="keyword">uint64</span>, err error)</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// Cacher 缓存</span></span><br><span class="line"><span class="keyword">type</span> Cacher <span class="keyword">struct</span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当前incoming队列中的长度性能指标</span></span><br><span class="line">	incomingHWM HighWateMark</span><br><span class="line">	<span class="comment">// incoming 事件管道, 回被分发给所有的watchers</span></span><br><span class="line">	incoming <span class="keyword">chan</span> watchCacheEvent</span><br><span class="line"></span><br><span class="line">	sync.RWMutex</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 当前cache ready状态必须为ok才可以被访问</span></span><br><span class="line">	ready *ready</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 后端存储数据接口</span></span><br><span class="line">	storage Store</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 对象类型</span></span><br><span class="line">	objectType reflect.Type</span><br><span class="line"></span><br><span class="line">	watchCache watchCache</span><br><span class="line">	reflector  *Reflector</span><br><span class="line"></span><br><span class="line">	versioner Versioner</span><br><span class="line"></span><br><span class="line">	triggerFunc TriggerPublisherFunc</span><br><span class="line">	watcherIdx  <span class="keyword">int</span></span><br><span class="line">	watchers    indexedWatchers</span><br><span class="line"></span><br><span class="line">	dispatchTimeoutBudge *timeBudget</span><br><span class="line"></span><br><span class="line">	stopLock sync.RWMutex</span><br><span class="line">	stopped  <span class="keyword">bool</span></span><br><span class="line">	stopCh   <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line">	stopWg   sync.WaitGroup</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">Versioner</span><span class="params">()</span> <span class="title">Versioner</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> c.storage.Versioner()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">Create</span><span class="params">(ctx context.Context, ket <span class="keyword">string</span>, out Object preconditions *Preconditions)</span></span> &#123;</span><br><span class="line">	c.storage.Create(ctx, key, out, preconditions)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">Delete</span><span class="params">(ctx context.Context, key <span class="keyword">string</span>, out Object, preconditions *Preconditions)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	c.storage.Delete(ctx, key, out, preconditions)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">Watch</span><span class="params">(ctx context.Context, key <span class="keyword">string</span>, resourceVersion <span class="keyword">string</span>, pred SelectionPredicate)</span> <span class="params">(Interface, error)</span></span> &#123;</span><br><span class="line">	watchRV,, err := c.versioner.ParseResourceVersion(resourceVersion)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	c.ready.wait()</span><br><span class="line"></span><br><span class="line">	c.watchCache.RLock()</span><br><span class="line">	<span class="keyword">defer</span> c.watchCache.RUnlock()</span><br><span class="line">	initEvents, err := c.watchCache.GetAllEventsSinceThreadUnsafe(watchRV)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> newErrWatcher(err), <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	triggerValue, triggerSupported := <span class="string">""</span>, <span class="literal">false</span></span><br><span class="line">	<span class="keyword">if</span> matchValues := pred.MatchIndex(); <span class="built_in">len</span>(matchValues) &gt; <span class="number">0</span> &#123;</span><br><span class="line">		triggerValue, triggerSupported = matchValues[<span class="number">0</span>].Value, <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	chanSize := <span class="number">10</span></span><br><span class="line">	<span class="keyword">if</span> c.triggerFunc != <span class="literal">nil</span> &amp;&amp; !triggerSupported &#123;</span><br><span class="line">		chanSize = <span class="number">100</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.Unlock()</span><br><span class="line">	forget := forgetWatcher(c, c.watcherIdx, triggerValue, triggerSupported)</span><br><span class="line">	watcher := newCacheWatcher(watchRv, chanSize, initEvents, filterWithAttrsFunc(key, pred), forget, c.versioner)</span><br><span class="line"></span><br><span class="line">	c.watchers.addWatcher(watcher, c.watcherIdx, triggerValue, triggerSupported)</span><br><span class="line">	c.watcherIdx++</span><br><span class="line">	<span class="keyword">return</span> watcher, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">WatchList</span><span class="params">(ctx context.Context, key, <span class="keyword">string</span>, resourceVersion <span class="keyword">string</span>, pred SelectionPredicate)</span> <span class="params">(Interface, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> c.Watch(ctx, key, resourceVersion, pred)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">Get</span><span class="params">(ctx context.Context, key <span class="keyword">string</span>, resourceVersion <span class="keyword">string</span>, objPtr Object, ignoreNotFound <span class="keyword">bool</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> resourceVersion == <span class="string">""</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> c.storage.Get(ctx, key, resourceVersion, objPtr, ignoreNotFound)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	getRv, err := c.versioner.ParseResourceVersion(resourceVersion)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> getRv == <span class="number">0</span> &amp;&amp; !c.ready.check() &#123;</span><br><span class="line">		<span class="keyword">return</span> c.storage.Get(ctx, key, resourceVersion, objPtr, ignoreNotFound)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.ready.wait()</span><br><span class="line"></span><br><span class="line">	objValue, err := conversion.EnforcePtr(objPtr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	obj, exists, resourceVersion, err := c.watchCache.WaitUntilFreshAndGet(getRv, key, <span class="literal">nil</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> exists &#123;</span><br><span class="line">		elem, ok := obj.(*storeElement)</span><br><span class="line">		<span class="keyword">if</span> !ok &#123;</span><br><span class="line">			<span class="keyword">return</span> fmt.Errorf(<span class="string">"non *storeElement returned form storage : %v"</span>, obj)</span><br><span class="line">		&#125;</span><br><span class="line">		objValue.Set(reflect.ValueOf(elem.Object).Elem())</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		objValue.Set(reflect.Zero(objValue.Type()))</span><br><span class="line">		<span class="keyword">if</span> !ignoreNotFound &#123;</span><br><span class="line">			<span class="keyword">return</span> fmt.Errorf(<span class="string">"key: %v resourversion: %v"</span>, objValue, getRv)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">List</span><span class="params">(ctx context.Context, ket <span class="keyword">string</span>, resourceVersion <span class="keyword">string</span>, pred SelectionPredicate, listObj Object)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> resourceVersion == <span class="string">""</span> &#123;</span><br><span class="line">		<span class="comment">// 实际上这个地方嗨会有判断分页等信息目前胜率 </span></span><br><span class="line">		<span class="keyword">return</span> c.storage.list(ctx, key, resourceVersion, pred, listObj)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	listRV, err := c.versioner.ParseResourceVersion(resourceVersion)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> listRV ==<span class="number">0</span> &amp;&amp; !c.ready.check() &#123;</span><br><span class="line">		<span class="keyword">return</span> c.storage.List(ctx, key, resourceVersion, pred, listObj)</span><br><span class="line">	&#125; </span><br><span class="line"></span><br><span class="line">	c.ready.wait()</span><br><span class="line"></span><br><span class="line">	listPtr, err := conversion.EnforcePtr(listPtr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	listVal, err := conversion.EnforcePtr(listPtr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> || listVal.Kind() != reflect.Slice &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"need a pointer to slice got %v"</span>, listVal.Kind())</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	filter := filterWithAttrsFunc(key, pred)</span><br><span class="line"></span><br><span class="line">	objs, resourceVersion, err := c.watchCache.WaitUntilFreshAndGet(listRV)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(objs) &gt; listVal.Cap() &amp;&amp; pred.Label.Empty() &amp;&amp; pred.Fielld.Empty() &#123;</span><br><span class="line">		<span class="comment">// 如果发现对象超过切片的容量就重新生成一个</span></span><br><span class="line">		listVal.Set(reflect.MakeSlice(reflect.SliceOf(c.objectType.Elem()), <span class="number">0</span>, <span class="built_in">len</span>(objs)))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, obj := <span class="keyword">range</span> objs &#123;</span><br><span class="line">		elem, ok := obj.(*storeElement)</span><br><span class="line">		<span class="keyword">if</span> !ok &#123;</span><br><span class="line">			<span class="keyword">return</span> fmt.Errorf(<span class="string">"non *storeElement returned from storage: %v"</span>, obj)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> filter(elem.Key, elem.Fields, elem.Labels, elem.Uninitialized) &#123;</span><br><span class="line">			<span class="comment">// 反射后续需要学习</span></span><br><span class="line">			listVal.Set(reflect.Append(listVal, reflect.ValueOf(elem.Object).Elem()))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> c.versioner != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> err := c.versioner.UpdateList(listObj, resourceVersion, <span class="string">""</span>); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">GuaranteedUpdate</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	ctx context.Context, key <span class="keyword">string</span>, ptrToType Object, ignoreNotFound <span class="keyword">bool</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">	preconditions * Preconditions, tryUpdate UpdateFunc, _...Object)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> elem, exists, err := c.watchCache.GetByKey(key); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Printf(<span class="string">"GetByKey returned error: %v"</span>, err)</span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> exists &#123;</span><br><span class="line">			currObj := elem.(*storeElement).Object.DeepCopyObject()</span><br><span class="line">			<span class="keyword">return</span> c.storage.GuaranteedUpdate(ctx, key, ptrToType, ignoreNotFound, preconditions, tryUpdate, currObj)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> c.storage.GuaranteedUpdate(ctx, key, ptrToType, ignoreNotFound, preconditions, tryUpdate)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">Count</span><span class="params">(pathPrefix <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">int64</span>, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> c.storage.Count(pathPrefix)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">triggerValues</span><span class="params">(event *watchCacheEvent)</span>)<span class="params">([]<span class="keyword">string</span>, <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> c.triggerFunc == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	result := <span class="built_in">make</span>([]<span class="keyword">string</span>, <span class="number">2</span>)</span><br><span class="line">	matchValues := c.triggerFunc(event.Object)</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(matchValues) &gt; <span class="number">0</span> &#123;</span><br><span class="line">		result = <span class="built_in">append</span>(result, matchValues[<span class="number">0</span>].Value)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> event.PrevObject == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> result, <span class="built_in">len</span>(result) &gt; <span class="number">0</span></span><br><span class="line">	&#125;</span><br><span class="line">	prevMatchValues := c.triggerFunc(event.PrevObject)</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(prevMatchValues) &gt; <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(result) == <span class="number">0</span> || result[<span class="number">0</span>] != prevMatchValues[<span class="number">0</span>].Value &#123;</span><br><span class="line">			result = <span class="built_in">append</span>(result, prevMatchValues[<span class="number">0</span>].Value)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> result, <span class="built_in">len</span>(result) &gt; <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">processEvent</span><span class="params">(event *watchCacheEvent)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> curLen := <span class="keyword">int64</span>(<span class="built_in">len</span>(c.incoming)); c.incomingHWM.Update(curLen) &#123;</span><br><span class="line">		fmt.Println(<span class="string">"cacher %v: %v objects queued in comming channel"</span>, c.objectType.String(), curLen)</span><br><span class="line">	&#125;</span><br><span class="line">	c.incoming &lt;- *event</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">dispatchEvents</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> event, ok := &lt;-c.incoming:</span><br><span class="line">			<span class="keyword">if</span> !ok &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			c.dispatchEvent(&amp;event)</span><br><span class="line">		<span class="keyword">case</span> &lt;-c.stopCh:</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">dispatchEvent</span><span class="params">(event *watchCacheEvent)</span></span> &#123;</span><br><span class="line">	triggerValues, supported := c.triggerValues(event)</span><br><span class="line"></span><br><span class="line">	c.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.Unlock()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> _, watcher := <span class="keyword">range</span> c.watchers.allWatchers &#123;</span><br><span class="line">		watcher.add(event, d.dispatchTimeoutBudge)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> supported &#123;</span><br><span class="line">		<span class="keyword">for</span> _, triggerValue := <span class="keyword">range</span> triggerValues &#123;</span><br><span class="line">			<span class="keyword">for</span> _, watcher := <span class="keyword">range</span> c.watchers.valueWatchers[triggerValue] &#123;</span><br><span class="line">				watcher.add(event, d.dispatchTimeoutBudge)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">for</span> _, watchers := <span class="keyword">range</span> c.watchers.valueWatchers &#123;</span><br><span class="line">			<span class="keyword">for</span> _, watcher := <span class="keyword">range</span> watchers &#123;</span><br><span class="line">				watcher.add(event, c.dispatchTimeoutBudge)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">GetToList</span><span class="params">(ctx context.Context, key <span class="keyword">string</span>, resourceVersion <span class="keyword">string</span>, pred SelectionPredicate, listObj Object)</span> <span class="title">error</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> resourceVersion == <span class="string">""</span> || (<span class="built_in">len</span>(pred.Continue) &gt; <span class="number">0</span> || pred.Limit &gt; <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="comment">// 如果resourceVersion是空就直接从storage里面获取对应的数据</span></span><br><span class="line">		<span class="keyword">return</span> c.storage.GetToList(ctx, key, resourceVersion, pred, listObj)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 调用versioner解析出list版本</span></span><br><span class="line">	listRv, err := c.versioner.ParseResourceVersion(resourceVersion)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// listRv为0并且未完成更新缓存, 从后端直接获取</span></span><br><span class="line">	<span class="keyword">if</span> listRv == <span class="number">0</span> &amp;&amp; !c.ready.check() &#123;</span><br><span class="line">		<span class="keyword">return</span> c.storage.GetToList(ctx, key, resourceVersion, pred, listObj)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.ready.wait()</span><br><span class="line"></span><br><span class="line">	listPtr, err := meta.GetItemsPtr(listObj)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	listVal, err := conversion.EnforcePtr(listObj)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> || listVal.Kind() != reflect.Slice &#123;</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">"need a prointer to slice got %v"</span>, listVal.Kind())</span><br><span class="line">	&#125;</span><br><span class="line">	filter := filterWithAttrsFunc(key, pred)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 根据上面转换的resource version从后端获取对应的额objs</span></span><br><span class="line">	obj, exists, resourceVersion, err := c.watchCache.WaitUntilFreshAndGet(listRv, key)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> exits &#123;</span><br><span class="line">		elem, ok := obj.(*storeElement)</span><br><span class="line">		<span class="keyword">if</span> !ok &#123;</span><br><span class="line">			<span class="keyword">return</span> fmt.Errorf(<span class="string">"non *storeElement returned from storage: %v"</span>, obj)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> filter(elem.Key, elem.Labels, elem.Fields, elem.Uninitialized) &#123;</span><br><span class="line">			listVal.Set(reflect.Append(listVal, reflect.ValueOf(elem.Object).Elem())</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> c.versioner != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err := c.versioner.UpdateList(listObj, resourceVersion, <span class="string">""</span>); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">startCaching</span><span class="params">(stopChannel &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	successfulList := <span class="literal">false</span></span><br><span class="line">	c.watchCache.SetOnReplace(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		successfulList = <span class="literal">true</span></span><br><span class="line">		c.ready.set(<span class="literal">true</span>)</span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> successfulList &#123;</span><br><span class="line">			c.ready.set(<span class="literal">false</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	c.terminateAllWatchers()</span><br><span class="line">	<span class="keyword">if</span> err := c.reflector.ListAndWatch(stopChannel); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Errorf(<span class="string">"unexpected listAndWatch error: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Cacher)</span> <span class="title">terminateAllWatchers</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.Unlock()</span><br><span class="line">	c.watchers.terminateAll(c.objectType)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">forgetWatcher</span><span class="params">(c *Cacher, index <span class="keyword">int</span>, triggerValue <span class="keyword">string</span>, triggerSupported <span class="keyword">bool</span>)</span> <span class="title">func</span><span class="params">(<span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="function"><span class="keyword">func</span><span class="params">(lock <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> lock &#123;</span><br><span class="line">			c.Lock()</span><br><span class="line">			<span class="keyword">defer</span> c.Unlock()</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			fmt.Errorf(<span class="string">"Forcing watcher close due to unresponsiveness: %v"</span>, c.objectType.String())</span><br><span class="line">		&#125;</span><br><span class="line">		c.watchers.deleteWatcher(index, triggerValue, triggerSupported)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="感悟"><a href="#感悟" class="headerlink" title="感悟"></a>感悟</h3><p>其实看了很多， 一层层， 但要完全说明每一层，每一个函数都是怎么转换的帧的太多了， 其实核心就两个Storage和Watcher, Storage的核心是数据变化通知的上层实现，Watcher用于关注数据变化传递响应， 接下来，可能会暂停看apiserver端，先看一下controller和client-go量部分，先这样吧，Good Night</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;">
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/k8s/" rel="tag">#k8s</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/k8s/admission_design.html" rel="next" title="Kubernetes 准入控制模块实现">
+                <i class="fa fa-chevron-left"></i> Kubernetes 准入控制模块实现
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/k8s/k8s_request_filters.html" rel="prev" title="K8s中的request与filters">
+                K8s中的request与filters <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg" alt="布衣">
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">分享后端go语言开发的各种架构设计源码分析与核心数据结构算法设计与云计算相关实践,涉及到kubernetes,云计算,微服务,系统设计,系统架构,设计模式,数据结构与算法,还有底层的操作系统实现,深度解读各种源码细节与精彩设计,加深对各种中间件系统的了解</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">48</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">45</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">49</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#主要功能"><span class="nav-number">1.1.</span> <span class="nav-text">主要功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#功能拆解"><span class="nav-number">1.2.</span> <span class="nav-text">功能拆解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#模式理解"><span class="nav-number">1.3.</span> <span class="nav-text">模式理解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#详细的调用图"><span class="nav-number">1.4.</span> <span class="nav-text">详细的调用图</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码实现"><span class="nav-number">2.</span> <span class="nav-text">代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#关键数据结构"><span class="nav-number">2.1.</span> <span class="nav-text">关键数据结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关键方法实现"><span class="nav-number">2.2.</span> <span class="nav-text">关键方法实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#完整代码"><span class="nav-number">3.</span> <span class="nav-text">完整代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#感悟"><span class="nav-number">4.</span> <span class="nav-text">感悟</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

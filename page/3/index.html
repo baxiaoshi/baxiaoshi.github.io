@@ -306,7 +306,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/cloudify_agent_host_00/" itemprop="url">
+                <a class="post-title-link" href="/cloudify_agent_host_00.html" itemprop="url">
                   cloudify agent执行日志
                 </a>
               
@@ -370,7 +370,7 @@
         
           <p>###　cloudify的执行日志</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/cloudify_agent_host_00/#more" rel="contents">
+            <a class="btn" href="/cloudify_agent_host_00.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -421,7 +421,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/cloudify_00/" itemprop="url">
+                <a class="post-title-link" href="/cloudify_00.html" itemprop="url">
                   cloudify基本了解
                 </a>
               
@@ -467,7 +467,7 @@
           <h2 id="cloudify基本介绍"><a href="#cloudify基本介绍" class="headerlink" title="cloudify基本介绍"></a>cloudify基本介绍</h2><p>cloudify是一款应用编排工具,支持多种平台包括: openstask、docker、aws等,并通过插件化的方式，方便实现其他平台的管理</p>
 <p>cloudify中使用bleprint(蓝图)来实现业务的编排, 相对于其他软件，强调了应用从创建主机、配置环境、启动服务、停止服务、删除服务等,因为如此所有cloudify的技术架构如下:</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/cloudify_00/#more" rel="contents">
+            <a class="btn" href="/cloudify_00.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -518,7 +518,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/1. cloudify_system_event_bus_01/" itemprop="url">
+                <a class="post-title-link" href="/1. cloudify_system_event_bus_01.html" itemprop="url">
                   cloudify的任务执行流程
                 </a>
               
@@ -582,7 +582,7 @@
         
           <h2 id="任务执行的流程"><a href="#任务执行的流程" class="headerlink" title="任务执行的流程"></a>任务执行的流程</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">前端web ui</span><br><span class="line">    通过前端或者命令行上传blueprint</span><br><span class="line">    通过上传的blueprint,并提供blueprint需要的参数，生成一个workflow(前端显示的是deployment)</span><br><span class="line">通过任务引擎 rest service</span><br><span class="line">    当前端提执行workflow后, rest service把任务下发到rabbitmq</span><br><span class="line">workflow excuter(deployment workflow agent)</span><br><span class="line">    将workflow解析成一个个task，然后提交到task队列</span><br><span class="line">Task broker(deployment agent)</span><br><span class="line">    读取任务并执行(如果是第一次执行，则会使到目标机器上安装对应的agent)</span><br><span class="line">Celery agent</span><br><span class="line">    读取对应的任务执行，并返回对应的metrics/event/logs</span><br><span class="line">logstash</span><br><span class="line">    将agent发送到rabbitmq里面的event/logs读取出来，发送到elasticsearch</span><br><span class="line">riemann</span><br><span class="line">    是一个分布式的监控系统，接收应用上报来的event,cloudify中将应用的数据收集到influxdb里</span><br></pre></td></tr></table></figure>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/1. cloudify_system_event_bus_01/#more" rel="contents">
+            <a class="btn" href="/1. cloudify_system_event_bus_01.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -633,7 +633,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/k8s/watch_cache/" itemprop="url">
+                <a class="post-title-link" href="/k8s/watch_cache.html" itemprop="url">
                   k8s watchCache 缓存滑动窗口
                 </a>
               
@@ -705,7 +705,7 @@
 <p> 主要作用是缓存固定大小的最新的数据, 因为有些情况下，我们并不一定需要一个全量的数据， 比如在k8s开始watch一个资源对象, 那其实只需要吧watch的对应的版本最新的数据，给你最近一批被修改的数据就可以了，并不需要全部的数据</p>
 </blockquote>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/k8s/watch_cache/#more" rel="contents">
+            <a class="btn" href="/k8s/watch_cache.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -756,7 +756,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/k8s/wait_poll/" itemprop="url">
+                <a class="post-title-link" href="/k8s/wait_poll.html" itemprop="url">
                   定时、周期调度、等待时间的工具函数实现
                 </a>
               
@@ -824,7 +824,7 @@
 <li>比如在CMDB删除了一个项目，CMDB需要一直等待其他系统资源回收完，才能在自身彻底释放对应的资源， 那就需要一直在哪里等待<br><em>今天主要是一个关于定时轮训、等待的工具方法实现</em></li>
 </ul>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/k8s/wait_poll/#more" rel="contents">
+            <a class="btn" href="/k8s/wait_poll.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -875,7 +875,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/k8s/lru_cache/" itemprop="url">
+                <a class="post-title-link" href="/k8s/lru_cache.html" itemprop="url">
                   LRU缓存
                 </a>
               
@@ -944,7 +944,7 @@
 <li>数据缓存当发现该对象呗删除的时候，直接穿透，不缓存每次都获取一下<br><em>今天说的主要是第二种, 每次都强制更新当前最新状态</em></li>
 </ul>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/k8s/lru_cache/#more" rel="contents">
+            <a class="btn" href="/k8s/lru_cache.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -995,7 +995,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/k8s/k8s_shared_informer/" itemprop="url">
+                <a class="post-title-link" href="/k8s/k8s_shared_informer.html" itemprop="url">
                   Kubernetes sharedInformer 图解
                 </a>
               
@@ -1072,7 +1072,7 @@
           <h3 id="概况"><a href="#概况" class="headerlink" title="概况"></a>概况</h3><p>informer负责对应单个资源的lw操作, 但是如果当前controller需要使用多种资源，那每个controller就得对关注的资源再来一个informer(比如jobcontroller, 它既需要负责job事件的处理，同时如果job的pod不满足又得创建对应的pod)</p>
 <p>shared informer 就是一堆informer的集合，每一类资源在一个客户端下只会有一个informer, 如果其他的controller关注对应的资源, 就只注册一个对应的处理函数, 当事件发生的时候, 由shared informer统一进行事件的分发处理(有点类似观察者模式, 但是里面的消息传递大量使用了go里面channel)</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/k8s/k8s_shared_informer/#more" rel="contents">
+            <a class="btn" href="/k8s/k8s_shared_informer.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1123,7 +1123,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/k8s/k8s_request_filters/" itemprop="url">
+                <a class="post-title-link" href="/k8s/k8s_request_filters.html" itemprop="url">
                   K8s中的request与filters
                 </a>
               
@@ -1199,7 +1199,7 @@
         
           <h3 id="Request与RequestInfoFactory"><a href="#Request与RequestInfoFactory" class="headerlink" title="Request与RequestInfoFactory"></a>Request与RequestInfoFactory</h3><p>k8s中由apiserver负责所有资源的增、删、改、查、Watch的操作，为了实现对所有资源上层的统一操作，包含：身份验证、权限检查、跨域、日志、超时等，为了实现对各种资源的统一操作，apiserver会将每一个http请求进行解析，放入到一个RequestInfo中</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/k8s/k8s_request_filters/#more" rel="contents">
+            <a class="btn" href="/k8s/k8s_request_filters.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1250,7 +1250,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/k8s/cahce_watch/" itemprop="url">
+                <a class="post-title-link" href="/k8s/cahce_watch.html" itemprop="url">
                   Cache Watcher ListWatch
                 </a>
               
@@ -1315,7 +1315,7 @@
           <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p><img src="http://baxiaoshi.cdn.bcebos.com/blog/2018-08-16-22-29-06.png" alt></p>
 <h4 id="主要功能"><a href="#主要功能" class="headerlink" title="主要功能"></a>主要功能</h4><p>K8s里面所有的数据增、删、改、查、WATCH都通过apiserver进行, 为了避免对Etcd的访问压力, k8s里面抽象了一个Cacher的struct，所有etcd事件的分发和访问, 都通过该对象进行, 该对象包装了etcd的client为一个storage在多层store里面共享</p>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/k8s/cahce_watch/#more" rel="contents">
+            <a class="btn" href="/k8s/cahce_watch.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1366,7 +1366,7 @@
             
               
                 
-                <a class="post-title-link" href="/2018/10/27/k8s/admission_design/" itemprop="url">
+                <a class="post-title-link" href="/k8s/admission_design.html" itemprop="url">
                   Kubernetes 准入控制模块实现
                 </a>
               
@@ -1459,7 +1459,7 @@
 <li><a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/" target="_blank" rel="noopener">https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/</a></li>
 </ul>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2018/10/27/k8s/admission_design/#more" rel="contents">
+            <a class="btn" href="/k8s/admission_design.html#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>

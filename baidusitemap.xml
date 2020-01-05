@@ -1,148 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://www.sreguide.com/2019/12/23/go/sync_mutex/</loc>
+    <loc>http://www.sreguide.com/go/sync_mutex.html</loc>
     <lastmod>2019-12-30</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/12/30/go/go_sync_map/</loc>
+    <loc>http://www.sreguide.com/go/go_sync_map.html</loc>
     <lastmod>2019-12-30</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/12/25/go/go_sync_waitgroup/</loc>
+    <loc>http://www.sreguide.com/go/go_sync_waitgroup.html</loc>
     <lastmod>2019-12-30</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/12/20/go/sync_reader_writer/</loc>
+    <loc>http://www.sreguide.com/go/sync_reader_writer.html</loc>
     <lastmod>2019-12-20</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/23/microservices/register_center_registery_hashcode/</loc>
+    <loc>http://www.sreguide.com/microservices/register_center_registery_hashcode.html</loc>
     <lastmod>2019-05-23</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/21/distributed/kafka_leader_follower_coordinator/</loc>
+    <loc>http://www.sreguide.com/distributed/kafka_leader_follower_coordinator.html</loc>
     <lastmod>2019-05-20</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/17/data_struct/2pc_msg_queue_conf/</loc>
+    <loc>http://www.sreguide.com/data_struct/2pc_msg_queue_conf.html</loc>
     <lastmod>2019-05-17</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/14/k8s/k8s_service_controller/</loc>
+    <loc>http://www.sreguide.com/k8s/k8s_service_controller.html</loc>
     <lastmod>2019-05-14</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/14/go/go_channel/</loc>
+    <loc>http://www.sreguide.com/go/go_channel.html</loc>
     <lastmod>2019-05-14</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/14/data_struct/circular_queue_rr/</loc>
+    <loc>http://www.sreguide.com/data_struct/circular_queue_rr.html</loc>
     <lastmod>2019-05-14</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/14/designpatter/circuit_breaker/</loc>
+    <loc>http://www.sreguide.com/designpatter/circuit_breaker.html</loc>
     <lastmod>2019-05-14</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2019/05/14/go/go_restful_01/</loc>
+    <loc>http://www.sreguide.com/go/go_restful_01.html</loc>
     <lastmod>2019-05-14</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/31/k8s/k8s_job_controller/</loc>
+    <loc>http://www.sreguide.com/k8s/k8s_job_controller.html</loc>
     <lastmod>2018-10-31</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/django_rest_auth_00/</loc>
+    <loc>http://www.sreguide.com/django_rest_auth_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_workflow_code_01/</loc>
+    <loc>http://www.sreguide.com/cloudify_workflow_code_01.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_workflow_agent_00/</loc>
+    <loc>http://www.sreguide.com/cloudify_workflow_agent_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_run_workflow_00/</loc>
+    <loc>http://www.sreguide.com/cloudify_run_workflow_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_run_flow_00/</loc>
+    <loc>http://www.sreguide.com/cloudify_run_flow_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_agent_run_steps_00/</loc>
+    <loc>http://www.sreguide.com/cloudify_agent_run_steps_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_agent_manager_00/</loc>
+    <loc>http://www.sreguide.com/cloudify_agent_manager_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_agent_host_00/</loc>
+    <loc>http://www.sreguide.com/cloudify_agent_host_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cloudify_00/</loc>
+    <loc>http://www.sreguide.com/cloudify_00.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/1.%20cloudify_system_event_bus_01/</loc>
+    <loc>http://www.sreguide.com/1.%20cloudify_system_event_bus_01.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/watch_cache/</loc>
+    <loc>http://www.sreguide.com/k8s/watch_cache.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/wait_poll/</loc>
+    <loc>http://www.sreguide.com/k8s/wait_poll.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/lru_cache/</loc>
+    <loc>http://www.sreguide.com/k8s/lru_cache.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_shared_informer/</loc>
+    <loc>http://www.sreguide.com/k8s/k8s_shared_informer.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_request_filters/</loc>
+    <loc>http://www.sreguide.com/k8s/k8s_request_filters.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/cahce_watch/</loc>
+    <loc>http://www.sreguide.com/k8s/cahce_watch.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/admission_design/</loc>
+    <loc>http://www.sreguide.com/k8s/admission_design.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/devops/devop_event_sourcing/</loc>
+    <loc>http://www.sreguide.com/devops/devop_event_sourcing.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/devops/devops_baidu_ark/</loc>
+    <loc>http://www.sreguide.com/devops/devops_baidu_ark.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/data_struct/ring_queue/</loc>
+    <loc>http://www.sreguide.com/data_struct/ring_queue.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cmdb/cmdb_design/</loc>
+    <loc>http://www.sreguide.com/cmdb/cmdb_design.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/cmdb/bk_cmdb_source_01/</loc>
+    <loc>http://www.sreguide.com/cmdb/bk_cmdb_source_01.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/ansible/ansible_api/</loc>
+    <loc>http://www.sreguide.com/ansible/ansible_api.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_endpoint_controller/</loc>
+    <loc>http://www.sreguide.com/k8s/k8s_endpoint_controller.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/k8s_basic_infomer/</loc>
+    <loc>http://www.sreguide.com/k8s/k8s_basic_infomer.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/event_broadcaster/</loc>
+    <loc>http://www.sreguide.com/k8s/event_broadcaster.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/27/k8s/cron_job_controller/</loc>
+    <loc>http://www.sreguide.com/k8s/cron_job_controller.html</loc>
     <lastmod>2018-10-27</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/django/user_permission_auth/</loc>
+    <loc>http://www.sreguide.com/django/user_permission_auth.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/django/class_view_source_code/</loc>
+    <loc>http://www.sreguide.com/django/class_view_source_code.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/go/go_array/</loc>
+    <loc>http://www.sreguide.com/go/go_array.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/go/go_closure/</loc>
+    <loc>http://www.sreguide.com/go/go_closure.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/go/go_string/</loc>
+    <loc>http://www.sreguide.com/go/go_string.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/go/go_slice/</loc>
+    <loc>http://www.sreguide.com/go/go_slice.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/go/go_func_scope/</loc>
+    <loc>http://www.sreguide.com/go/go_func_scope.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>  <url>
-    <loc>http://www.sreguide.com/2018/10/16/go/go_map_01/</loc>
+    <loc>http://www.sreguide.com/go/go_map_01.html</loc>
     <lastmod>2018-10-15</lastmod>
   </url>
 </urlset>
