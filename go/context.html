@@ -1,0 +1,910 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="go语言,golang,上下文,context,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2">
+
+
+
+
+
+
+<meta name="description" content="基础筑基基于线程的编程语言中的一些设计ThreadGroupThreadGroup是基于线程并发的编程语言中常用的一个概念，当一个线程派生出一个子线程后通常会加入父线程的线程组(未指定线程组的情况下)中， 最后可以通过ThreadGroup来控制一组线程的退出等操作, 然后在go语言中goroutine没有明确的这种parent/children的关系，如果想退出当前调用链上的所有goroutin">
+<meta name="keywords" content="go语言,golang,上下文,context">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图解Go语言的context了解编程语言核心实现源码">
+<meta property="og:url" content="http://www.sreguide.com/go/context.html">
+<meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析个人技术博客">
+<meta property="og:description" content="基础筑基基于线程的编程语言中的一些设计ThreadGroupThreadGroup是基于线程并发的编程语言中常用的一个概念，当一个线程派生出一个子线程后通常会加入父线程的线程组(未指定线程组的情况下)中， 最后可以通过ThreadGroup来控制一组线程的退出等操作, 然后在go语言中goroutine没有明确的这种parent/children的关系，如果想退出当前调用链上的所有goroutin">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577671651735-18757b0b-3a7a-4f33-9904-64d4e8872424.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577673431666-7d8cc356-028f-440d-9e39-db5ccb3f00b7.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577674429857-b80711da-052e-4d2f-a8b3-c9010f5fd89e.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577674872619-1ae59ec6-1de2-47c6-8cc4-ea0f7bf74045.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577675134087-bb4abe88-aa6f-4c41-909c-bb207097935c.png">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2020/png/97498/1578275132749-2e9850a9-3fc0-47b5-86a8-0d0a6564a9c7.png">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2020/png/97498/1578275225887-08179c1a-436f-4b3a-ba9c-a57cec7e2dd6.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg">
+<meta property="og:updated_time" content="2020-01-06T02:14:14.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="图解Go语言的context了解编程语言核心实现源码">
+<meta name="twitter:description" content="基础筑基基于线程的编程语言中的一些设计ThreadGroupThreadGroup是基于线程并发的编程语言中常用的一个概念，当一个线程派生出一个子线程后通常会加入父线程的线程组(未指定线程组的情况下)中， 最后可以通过ThreadGroup来控制一组线程的退出等操作, 然后在go语言中goroutine没有明确的这种parent/children的关系，如果想退出当前调用链上的所有goroutin">
+<meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577671651735-18757b0b-3a7a-4f33-9904-64d4e8872424.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://www.sreguide.com/go/context.html">
+
+
+  <title> 图解Go语言的context了解编程语言核心实现源码 | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析个人技术博客 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?2f321255b7093cd1f243e3a2c7adb665";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    (function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title"></span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                图解Go语言的context了解编程语言核心实现源码
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-01-06T10:11:04+08:00" content="2020-01-06 10:11">
+              2020-01-06 10:11
+            </time>
+          </span>
+
+          
+            <span class="post-category">
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/" itemprop="url" rel="index">
+                    <span itemprop="name">golang</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/上下文/" itemprop="url" rel="index">
+                    <span itemprop="name">上下文</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/go语言/golang/上下文/context/" itemprop="url" rel="index">
+                    <span itemprop="name">context</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="基础筑基"><a href="#基础筑基" class="headerlink" title="基础筑基"></a>基础筑基</h1><h2 id="基于线程的编程语言中的一些设计"><a href="#基于线程的编程语言中的一些设计" class="headerlink" title="基于线程的编程语言中的一些设计"></a>基于线程的编程语言中的一些设计</h2><h3 id="ThreadGroup"><a href="#ThreadGroup" class="headerlink" title="ThreadGroup"></a>ThreadGroup</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577671651735-18757b0b-3a7a-4f33-9904-64d4e8872424.png" alt="image.png"><br>ThreadGroup是基于线程并发的编程语言中常用的一个概念，当一个线程派生出一个子线程后通常会加入父线程的线程组(未指定线程组的情况下)中， 最后可以通过ThreadGroup来控制一组线程的退出等操作, 然后在go语言中goroutine没有明确的这种parent/children的关系，如果想退出当前调用链上的所有goroutine则需要用到context</p>
+<h3 id="ThreadLocal"><a href="#ThreadLocal" class="headerlink" title="ThreadLocal"></a>ThreadLocal</h3><p>在基于线程的编程语言语言中，通常可以基于ThreadLocal来进行一些线程本地的存储，本质上是通过一个Map来进行key/value的存储，而在go里面并没有ThreadLocal的设计，在key/value传递的时候，除了通过参数来进行传递，也可以通过context来进行上下文信息的传递</p>
+<h2 id="context典型应用场景"><a href="#context典型应用场景" class="headerlink" title="context典型应用场景"></a>context典型应用场景</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>实现</th>
+<th>原理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上下文信息传递</td>
+<td>WithValue</td>
+<td>通过一个内部的key/value属性来进行键值对的保存,不可修改，只能通过覆盖的方式来进行值得替换</td>
+</tr>
+<tr>
+<td>退出通知</td>
+<td>WithCancel</td>
+<td>通过监听通知的channel来进行共同退出的通知</td>
+</tr>
+</tbody>
+</table>
+<a id="more"></a>
+<h2 id="上下文数据的递归获取"><a href="#上下文数据的递归获取" class="headerlink" title="上下文数据的递归获取"></a>上下文数据的递归获取</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577673431666-7d8cc356-028f-440d-9e39-db5ccb3f00b7.png" alt="image.png"><br>因为在go的context里面并没有使用map进行数据保存，所以实际获取的时候，是从当前层开始逐层的进行向上递归，直至找到某个匹配的key</p>
+<p>其实我们类比ThreadGroup，因为goroutine本身并没有上下级的概念，但其实我们可以通过context来实现传递数据的父子关系，可以在一个goroutine中设定context数据，然后传递给派生出来的goroutine</p>
+<h2 id="取消的通知"><a href="#取消的通知" class="headerlink" title="取消的通知"></a>取消的通知</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577674429857-b80711da-052e-4d2f-a8b3-c9010f5fd89e.png" alt="image.png"><br>既然通过context来构建parent/child的父子关系，在实现的过程中context会向parent来注册自身，当我们取消某个parent的goroutine, 实际上上会递归层层cancel掉自己的child context的done chan从而让整个调用链中所有监听cancel的goroutine退出</p>
+<p>那如果一个child context的done chan为被初始化呢？那怎么通知关闭呢，那直接给你一个closedchan已经关闭的channel那是不是就可以了呢</p>
+<h2 id="带有超时context"><a href="#带有超时context" class="headerlink" title="带有超时context"></a>带有超时context</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577674872619-1ae59ec6-1de2-47c6-8cc4-ea0f7bf74045.png" alt="image.png"><br>如果要实现一个超时控制，通过上面的context的parent/child机制，其实我们只需要启动一个定时器，然后在超时的时候，直接将当前的context给cancel掉，就可以实现监听在当前和下层的额context.Done()的goroutine的退出</p>
+<h2 id="Background与TODO"><a href="#Background与TODO" class="headerlink" title="Background与TODO"></a>Background与TODO</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577675134087-bb4abe88-aa6f-4c41-909c-bb207097935c.png" alt="image.png"><br>Backgroud其实从字面意思就很容易理解，其实构建一个context对象作为root对象，其本质上是一个共享的全局变量，通常在一些系统处理中，我们都可以使用该对象作为root对象，并进行新context的构建来进行上下文数据的传递和统一的退出控制</p>
+<p>那TODO呢？通常我们会给自己立很多的todo list,其实这里也一样，我们虽然构建了很多的todo list, 但大多数人其实啥也不会做，在很多的函数调用的过程中都会传递但是通常又不会使用，比如你既不会监听退出，也不会从里面获取数据，TODO跟Background一样，其背后也是返回一个全局变量</p>
+<h2 id="不可变性"><a href="#不可变性" class="headerlink" title="不可变性"></a>不可变性</h2><p>通常我们使用context都是做位一个上下文的数据传递，比如一次http request请求的处理，但是如果当这次请求处理完成，其context就失去了意义，后续不应该继续重复使用一个context, 之前如果超时或者已经取消，则其状态不会发生改变</p>
+<h1 id="源码实现"><a href="#源码实现" class="headerlink" title="源码实现"></a>源码实现</h1><h2 id="context接口"><a href="#context接口" class="headerlink" title="context接口"></a>context接口</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Context <span class="keyword">interface</span> &#123;</span><br><span class="line">    <span class="comment">// Deadline返回一个到期的timer定时器,以及当前是否以及到期</span></span><br><span class="line">    Deadline() (deadline time.Time, ok <span class="keyword">bool</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Done在当前上下文完成后返回一个关闭的通道，代表当前context应该被取消，以便goroutine进行清理工作</span></span><br><span class="line">    <span class="comment">// WithCancel:负责在cancel被调用的时候关闭Done</span></span><br><span class="line">    <span class="comment">// WithDeadline: 负责在最后其期限过期时关闭Done</span></span><br><span class="line">    <span class="comment">// WithTimeout:负责超时后关闭done</span></span><br><span class="line">    Done() &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果Done通道没有被关闭则返回nil</span></span><br><span class="line">    <span class="comment">// 否则则会返回一个具体的错误</span></span><br><span class="line">    <span class="comment">// Canceled 被取消</span></span><br><span class="line">    <span class="comment">// DeadlineExceeded 过期</span></span><br><span class="line">    Err() error</span><br><span class="line">	<span class="comment">// 返回对应key的value</span></span><br><span class="line">    Value(key <span class="keyword">interface</span>&#123;&#125;) <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="emptyCtx"><a href="#emptyCtx" class="headerlink" title="emptyCtx"></a>emptyCtx</h2><p>emptyCtx是一个不会被取消、没有到期时间、没有值、不会返回错误的context实现，其主要作为context.Background()和context.TODO()返回这种root context或者不做任何操作的context<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> emptyCtx <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*emptyCtx)</span> <span class="title">Deadline</span><span class="params">()</span> <span class="params">(deadline time.Time, ok <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*emptyCtx)</span> <span class="title">Done</span><span class="params">()</span> &lt;-<span class="title">chan</span> <span class="title">struct</span></span>&#123;&#125; &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*emptyCtx)</span> <span class="title">Err</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*emptyCtx)</span> <span class="title">Value</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *emptyCtx)</span> <span class="title">String</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">    <span class="keyword">switch</span> e &#123;</span><br><span class="line">    <span class="keyword">case</span> background:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"context.Background"</span></span><br><span class="line">    <span class="keyword">case</span> todo:</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"context.TODO"</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"unknown empty Context"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>比较有意思的实现时emptyCtx的String方法，该方法可以返回当前context的具体类型，比如是Background还是TODO, 因为background和todo是两个全局变量，这里通过取其地址来进行对应类型的判断</p>
+<h2 id="cancelCtx"><a href="#cancelCtx" class="headerlink" title="cancelCtx"></a>cancelCtx</h2><p><img src="https://cdn.nlark.com/yuque/0/2020/png/97498/1578275132749-2e9850a9-3fc0-47b5-86a8-0d0a6564a9c7.png" alt="image.png"></p>
+<h3 id="结构体"><a href="#结构体" class="headerlink" title="结构体"></a>结构体</h3><p>cancelCtx结构体内嵌了一个Context对象，即其parent context，同时内部还通过children来保存所有可以被取消的context的接口，后续当当前context被取消的时候，只需要调用所有canceler接口的context就可以实现当前调用链的取消<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> cancelCtx <span class="keyword">struct</span> &#123;</span><br><span class="line">    Context</span><br><span class="line"></span><br><span class="line">    mu       sync.Mutex            <span class="comment">// protects following fields 保护属性</span></span><br><span class="line">    done     <span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;         <span class="comment">// created lazily, closed by first cancel call</span></span><br><span class="line">    children <span class="keyword">map</span>[canceler]<span class="keyword">struct</span>&#123;&#125; <span class="comment">// set to nil by the first cancel call</span></span><br><span class="line">    err      error                 <span class="comment">// set to non-nil by the first cancel call</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="Done"><a href="#Done" class="headerlink" title="Done"></a>Done</h3><p>Done操作返回当前的一个chan 用于通知goroutine退出<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *cancelCtx)</span> <span class="title">Done</span><span class="params">()</span> &lt;-<span class="title">chan</span> <span class="title">struct</span></span>&#123;&#125; &#123;</span><br><span class="line">    c.mu.Lock()</span><br><span class="line">    <span class="keyword">if</span> c.done == <span class="literal">nil</span> &#123;</span><br><span class="line">        c.done = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    d := c.done</span><br><span class="line">    c.mu.Unlock()</span><br><span class="line">    <span class="keyword">return</span> d</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="cancel"><a href="#cancel" class="headerlink" title="cancel"></a>cancel</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *cancelCtx)</span> <span class="title">cancel</span><span class="params">(removeFromParent <span class="keyword">bool</span>, err error)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="built_in">panic</span>(<span class="string">"context: internal error: missing cancel error"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// context一旦被某个操作操作触发取消后，就不会在进行任何状态的修改</span></span><br><span class="line">    c.mu.Lock()</span><br><span class="line">    <span class="keyword">if</span> c.err != <span class="literal">nil</span> &#123;</span><br><span class="line">        c.mu.Unlock()</span><br><span class="line">        <span class="keyword">return</span> <span class="comment">// already canceled</span></span><br><span class="line">    &#125;</span><br><span class="line">    c.err = err</span><br><span class="line">    <span class="keyword">if</span> c.done == <span class="literal">nil</span> &#123;</span><br><span class="line">        c.done = closedchan</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// close当前chan</span></span><br><span class="line">        <span class="built_in">close</span>(c.done)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 调用所有children取消</span></span><br><span class="line">    <span class="keyword">for</span> child := <span class="keyword">range</span> c.children &#123;</span><br><span class="line">        child.cancel(<span class="literal">false</span>, err)</span><br><span class="line">    &#125;</span><br><span class="line">    c.children = <span class="literal">nil</span></span><br><span class="line">    c.mu.Unlock()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 是否需要从parent context中移除,如果是当前context的取消操作，则需要进行该操作</span></span><br><span class="line">    <span class="comment">// 否则，则上层context会主动进行child的移除工作</span></span><br><span class="line">    <span class="keyword">if</span> removeFromParent &#123;</span><br><span class="line">        removeChild(c.Context, c)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="timerCtx"><a href="#timerCtx" class="headerlink" title="timerCtx"></a>timerCtx</h2><p><img src="https://cdn.nlark.com/yuque/0/2020/png/97498/1578275225887-08179c1a-436f-4b3a-ba9c-a57cec7e2dd6.png" alt="image.png"><br>timerCtx主要是用于实现WithDeadline和WithTimer两个context实现，其继承了cancelCtx接口，同时还包含一个timer.Timer定时器和一个deadline终止实现</p>
+<h3 id="2-4-1-结构体"><a href="#2-4-1-结构体" class="headerlink" title="2.4.1 结构体"></a>2.4.1 结构体</h3><p>timerCtx<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> timerCtx <span class="keyword">struct</span> &#123;</span><br><span class="line">    cancelCtx</span><br><span class="line">    timer *time.Timer <span class="comment">// timer定时器</span></span><br><span class="line"></span><br><span class="line">    deadline time.Time <span class="comment">//终止时间</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="取消方法"><a href="#取消方法" class="headerlink" title="取消方法"></a>取消方法</h3><p>取消方法就很简单了首先进行cancelCtx的取消流程，然后进行自身的定时器的Stop操作，这样就可以实现取消了<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *timerCtx)</span> <span class="title">cancel</span><span class="params">(removeFromParent <span class="keyword">bool</span>, err error)</span></span> &#123;</span><br><span class="line">    c.cancelCtx.cancel(<span class="literal">false</span>, err)</span><br><span class="line">    <span class="keyword">if</span> removeFromParent &#123;</span><br><span class="line">        <span class="comment">// Remove this timerCtx from its parent cancelCtx's children.</span></span><br><span class="line">        removeChild(c.cancelCtx.Context, c)</span><br><span class="line">    &#125;</span><br><span class="line">    c.mu.Lock()</span><br><span class="line">    <span class="keyword">if</span> c.timer != <span class="literal">nil</span> &#123;</span><br><span class="line">        c.timer.Stop() <span class="comment">// 停止定时器</span></span><br><span class="line">        c.timer = <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br><span class="line">    c.mu.Unlock()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="valueCtx"><a href="#valueCtx" class="headerlink" title="valueCtx"></a>valueCtx</h2><p>其内部通过一个key/value进行值得保存，如果当前context不包含着值就会层层向上递归<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> valueCtx <span class="keyword">struct</span> &#123;</span><br><span class="line">    Context</span><br><span class="line">    key, val <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *valueCtx)</span> <span class="title">String</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> fmt.Sprintf(<span class="string">"%v.WithValue(%#v, %#v)"</span>, c.Context, c.key, c.val)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *valueCtx)</span> <span class="title">Value</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">    <span class="keyword">if</span> c.key == key &#123;</span><br><span class="line">        <span class="keyword">return</span> c.val</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> c.Context.Value(key)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="propagateCancel"><a href="#propagateCancel" class="headerlink" title="propagateCancel"></a>propagateCancel</h2><h3 id="设计目标"><a href="#设计目标" class="headerlink" title="设计目标"></a>设计目标</h3><p>propagateCancel主要设计目标就是当parent context取消的时候，进行child context的取消， 这就会有两种模式：<br>1.parent取消的时候通知child进行cancel取消<br>2.parent取消的时候调用child的层层递归取消</p>
+<h3 id="parentCancelCtx"><a href="#parentCancelCtx" class="headerlink" title="parentCancelCtx"></a>parentCancelCtx</h3><p>context可以任意嵌套组成一个N层树形结构的context, 结合上面的两种模式，当能找到parent为cancelCtx、timerCtx任意一种的时候，就采用第二种模式，由parent来调用child的cancel完成整个调用链的退出，反之则采用第一种模式监听Done</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">parentCancelCtx</span><span class="params">(parent Context)</span> <span class="params">(*cancelCtx, <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">switch</span> c := parent.(<span class="keyword">type</span>) &#123;</span><br><span class="line">		<span class="keyword">case</span> *cancelCtx:</span><br><span class="line">			<span class="keyword">return</span> c, <span class="literal">true</span>	<span class="comment">// 找到最近支持cancel的parent，由parent进行取消操作的调用</span></span><br><span class="line">		<span class="keyword">case</span> *timerCtx:</span><br><span class="line">			<span class="keyword">return</span> &amp;c.cancelCtx, <span class="literal">true</span> <span class="comment">// 找到最近支持cancel的parent，由parent进行取消操作的调用</span></span><br><span class="line">		<span class="keyword">case</span> *valueCtx:</span><br><span class="line">			parent = c.Context <span class="comment">// 递归</span></span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="核心实现"><a href="#核心实现" class="headerlink" title="核心实现"></a>核心实现</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">propagateCancel</span><span class="params">(parent Context, child canceler)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> parent.Done() == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="comment">// parent is never canceled</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> p, ok := parentCancelCtx(parent); ok &#123;</span><br><span class="line">		p.mu.Lock()</span><br><span class="line">		<span class="keyword">if</span> p.err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// parent has already been canceled</span></span><br><span class="line">            <span class="comment">// 如果发现parent已经取消就直接进行取消</span></span><br><span class="line">			child.cancel(<span class="literal">false</span>, p.err)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> p.children == <span class="literal">nil</span> &#123;</span><br><span class="line">				p.children = <span class="built_in">make</span>(<span class="keyword">map</span>[canceler]<span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line">			&#125;</span><br><span class="line">            <span class="comment">// 否则加入parent的children map中</span></span><br><span class="line">			p.children[child] = <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		p.mu.Unlock()</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			<span class="keyword">select</span> &#123;</span><br><span class="line">			<span class="keyword">case</span> &lt;-parent.Done():</span><br><span class="line">                <span class="comment">// 监听parent DOne完成, 此处也不会向parent进行注册</span></span><br><span class="line">				child.cancel(<span class="literal">false</span>, parent.Err())</span><br><span class="line">			<span class="keyword">case</span> &lt;-child.Done():</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="WithDeadline"><a href="#WithDeadline" class="headerlink" title="WithDeadline"></a>WithDeadline</h2><p>有了上面的基础学习WithDeadline，就简单了许多,  WithDeadline会给定一个截止时间， 可以通过当前时间计算需要等待多长时间取消即可<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithDeadline</span><span class="params">(parent Context, d time.Time)</span> <span class="params">(Context, CancelFunc)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> cur, ok := parent.Deadline(); ok &amp;&amp; cur.Before(d) &#123;</span><br><span class="line">		<span class="comment">// The current deadline is already sooner than the new one.</span></span><br><span class="line">		<span class="keyword">return</span> WithCancel(parent)</span><br><span class="line">	&#125;</span><br><span class="line">	c := &amp;timerCtx&#123;</span><br><span class="line">		cancelCtx: newCancelCtx(parent),</span><br><span class="line">		deadline:  d,</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// 监听parent的取消，或者向parent注册自身</span></span><br><span class="line">	propagateCancel(parent, c)</span><br><span class="line">	dur := time.Until(d)</span><br><span class="line">	<span class="keyword">if</span> dur &lt;= <span class="number">0</span> &#123;</span><br><span class="line">        <span class="comment">// 已经过期</span></span><br><span class="line">		c.cancel(<span class="literal">true</span>, DeadlineExceeded) <span class="comment">// deadline has already passed</span></span><br><span class="line">		<span class="keyword">return</span> c, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; c.cancel(<span class="literal">false</span>, Canceled) &#125;</span><br><span class="line">	&#125;</span><br><span class="line">	c.mu.Lock()</span><br><span class="line">	<span class="keyword">defer</span> c.mu.Unlock()</span><br><span class="line">	<span class="keyword">if</span> c.err == <span class="literal">nil</span> &#123;</span><br><span class="line">		c.timer = time.AfterFunc(dur, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">            <span class="comment">// 构建一个timer定时器，到期后自动调用cancel取消</span></span><br><span class="line">			c.cancel(<span class="literal">true</span>, DeadlineExceeded)</span><br><span class="line">		&#125;)</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// 返回取消函数</span></span><br><span class="line">	<span class="keyword">return</span> c, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; c.cancel(<span class="literal">true</span>, Canceled) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>微信号：baxiaoshi2020<br><img src="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png" alt><br>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"><br>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/qrcode_for_gh_258.jpg" alt="布衣 wechat" style="width: 200px; max-width: 100%;">
+    <div>欢迎您扫一扫上面的微信公众号，订阅我的博客！</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/go语言/" rel="tag">#go语言</a>
+          
+            <a href="/tags/golang/" rel="tag">#golang</a>
+          
+            <a href="/tags/上下文/" rel="tag">#上下文</a>
+          
+            <a href="/tags/context/" rel="tag">#context</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/go/go_sync_map.html" rel="next" title="图解Go里面的sync.map了解编程语言核心实现源码">
+                <i class="fa fa-chevron-left"></i> 图解Go里面的sync.map了解编程语言核心实现源码
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="https://baxiaoshi.cdn.bcebos.com/blog%2Fqrcode_for_gh_258.jpg" alt="布衣">
+          <p class="site-author-name" itemprop="name">布衣</p>
+          <p class="site-description motion-element" itemprop="description">分享后端go语言开发的各种架构设计源码分析与核心数据结构算法设计与云计算相关实践,涉及到kubernetes,云计算,微服务,系统设计,系统架构,设计模式,数据结构与算法,还有底层的操作系统实现,深度解读各种源码细节与精彩设计,加深对各种中间件系统的了解的个人技术博客</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">47</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">51</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#基础筑基"><span class="nav-number">1.</span> <span class="nav-text">基础筑基</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基于线程的编程语言中的一些设计"><span class="nav-number">1.1.</span> <span class="nav-text">基于线程的编程语言中的一些设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ThreadGroup"><span class="nav-number">1.1.1.</span> <span class="nav-text">ThreadGroup</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ThreadLocal"><span class="nav-number">1.1.2.</span> <span class="nav-text">ThreadLocal</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#context典型应用场景"><span class="nav-number">1.2.</span> <span class="nav-text">context典型应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#上下文数据的递归获取"><span class="nav-number">1.3.</span> <span class="nav-text">上下文数据的递归获取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#取消的通知"><span class="nav-number">1.4.</span> <span class="nav-text">取消的通知</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#带有超时context"><span class="nav-number">1.5.</span> <span class="nav-text">带有超时context</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Background与TODO"><span class="nav-number">1.6.</span> <span class="nav-text">Background与TODO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#不可变性"><span class="nav-number">1.7.</span> <span class="nav-text">不可变性</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#源码实现"><span class="nav-number">2.</span> <span class="nav-text">源码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#context接口"><span class="nav-number">2.1.</span> <span class="nav-text">context接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#emptyCtx"><span class="nav-number">2.2.</span> <span class="nav-text">emptyCtx</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cancelCtx"><span class="nav-number">2.3.</span> <span class="nav-text">cancelCtx</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#结构体"><span class="nav-number">2.3.1.</span> <span class="nav-text">结构体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Done"><span class="nav-number">2.3.2.</span> <span class="nav-text">Done</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cancel"><span class="nav-number">2.3.3.</span> <span class="nav-text">cancel</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#timerCtx"><span class="nav-number">2.4.</span> <span class="nav-text">timerCtx</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-1-结构体"><span class="nav-number">2.4.1.</span> <span class="nav-text">2.4.1 结构体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#取消方法"><span class="nav-number">2.4.2.</span> <span class="nav-text">取消方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#valueCtx"><span class="nav-number">2.5.</span> <span class="nav-text">valueCtx</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#propagateCancel"><span class="nav-number">2.6.</span> <span class="nav-text">propagateCancel</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#设计目标"><span class="nav-number">2.6.1.</span> <span class="nav-text">设计目标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#parentCancelCtx"><span class="nav-number">2.6.2.</span> <span class="nav-text">parentCancelCtx</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#核心实现"><span class="nav-number">2.6.3.</span> <span class="nav-text">核心实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#WithDeadline"><span class="nav-number">2.7.</span> <span class="nav-text">WithDeadline</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">布衣</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
