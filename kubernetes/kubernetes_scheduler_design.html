@@ -87,7 +87,7 @@
 <meta name="description" content="资源调度基础scheudler是kubernetes中的核心组件，负责为用户声明的pod资源选择合适的node,同时保证集群资源的最大化利用，这里先介绍下资源调度系统设计里面的一些基础概念 基础任务资源调度基础的任务资源调度通常包括三部分：    角色类型 功能     node node负责具体任务的执行,同时对包汇报自己拥有的资源   resource manager 汇总当前集群中所有nod">
 <meta name="keywords" content="kubernetes,scheduler,design,架构设计,源码">
 <meta property="og:type" content="article">
-<meta property="og:title" content="图解 kubernetes scheduler 架构设计">
+<meta property="og:title" content="图解 kubernetes scheduler 架构设计系列-初步了解">
 <meta property="og:url" content="http://www.sreguide.com/kubernetes/kubernetes_scheduler_design.html">
 <meta property="og:site_name" content="专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析个人技术博客">
 <meta property="og:description" content="资源调度基础scheudler是kubernetes中的核心组件，负责为用户声明的pod资源选择合适的node,同时保证集群资源的最大化利用，这里先介绍下资源调度系统设计里面的一些基础概念 基础任务资源调度基础的任务资源调度通常包括三部分：    角色类型 功能     node node负责具体任务的执行,同时对包汇报自己拥有的资源   resource manager 汇总当前集群中所有nod">
@@ -107,9 +107,9 @@
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578559951157-3950a00d-028c-48ce-aa95-fa5be7c69091.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg">
-<meta property="og:updated_time" content="2020-01-09T09:11:03.725Z">
+<meta property="og:updated_time" content="2020-01-09T09:12:50.474Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="图解 kubernetes scheduler 架构设计">
+<meta name="twitter:title" content="图解 kubernetes scheduler 架构设计系列-初步了解">
 <meta name="twitter:description" content="资源调度基础scheudler是kubernetes中的核心组件，负责为用户声明的pod资源选择合适的node,同时保证集群资源的最大化利用，这里先介绍下资源调度系统设计里面的一些基础概念 基础任务资源调度基础的任务资源调度通常包括三部分：    角色类型 功能     node node负责具体任务的执行,同时对包汇报自己拥有的资源   resource manager 汇总当前集群中所有nod">
 <meta name="twitter:image" content="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578474232951-89fe8f0f-350a-40bd-b3ab-2cd9e725232b.png">
 
@@ -135,7 +135,7 @@
   <link rel="canonical" href="http://www.sreguide.com/kubernetes/kubernetes_scheduler_design.html">
 
 
-  <title> 图解 kubernetes scheduler 架构设计 | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析个人技术博客 </title>
+  <title> 图解 kubernetes scheduler 架构设计系列-初步了解 | 专注go语言后端程序源码分析与云计算kubernetes领域源码分析与最佳实践分析个人技术博客 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -320,7 +320,7 @@
             
             
               
-                图解 kubernetes scheduler 架构设计
+                图解 kubernetes scheduler 架构设计系列-初步了解
               
             
           </h1>

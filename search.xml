@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>图解 kubernetes scheduler 架构设计</title>
+    <title>图解 kubernetes scheduler 架构设计系列-初步了解</title>
     <url>/kubernetes/kubernetes_scheduler_design.html</url>
     <content><![CDATA[<h1 id="资源调度基础"><a href="#资源调度基础" class="headerlink" title="资源调度基础"></a>资源调度基础</h1><p>scheudler是kubernetes中的核心组件，负责为用户声明的pod资源选择合适的node,同时保证集群资源的最大化利用，这里先介绍下资源调度系统设计里面的一些基础概念</p>
 <h2 id="基础任务资源调度"><a href="#基础任务资源调度" class="headerlink" title="基础任务资源调度"></a>基础任务资源调度</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578474232951-89fe8f0f-350a-40bd-b3ab-2cd9e725232b.png" alt="image.png"><br>基础的任务资源调度通常包括三部分：</p>
