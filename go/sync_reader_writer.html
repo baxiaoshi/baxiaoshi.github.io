@@ -98,7 +98,9 @@
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/read_release.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/writer_lock.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/writer_release.png">
-<meta property="og:updated_time" content="2019-12-20T02:45:31.782Z">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png">
+<meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg">
+<meta property="og:updated_time" content="2020-01-09T09:09:36.052Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go里面的读写锁与源码实现">
 <meta name="twitter:description" content="基础筑基读写锁的特点读写锁区别与互斥锁的主要区别就是读锁之间是共享的，多个goroutine可以同时加读锁，但是写锁与写锁、写锁与读锁之间则是互斥的 写锁饥饿问题因为读锁是共享的，所以如果当前已经有读锁，那后续goroutine继续加读锁正常情况下是可以加锁成功，但是如果一直有读锁进行加锁，那尝试加写锁的goroutine则可能会长期获取不到锁，这就是因为读锁而导致的写锁饥饿问题 基于高低位与等待">
@@ -439,6 +441,15 @@
 <h3 id="写锁与读锁的公平性"><a href="#写锁与读锁的公平性" class="headerlink" title="写锁与读锁的公平性"></a>写锁与读锁的公平性</h3><p>在加读锁和写锁的工程中都使用atomic.AddInt32来进行递增，而该指令在底层是会通过LOCK来进行CPU总线加锁的，因此多个CPU同时执行readerCount其实只会有一个成功，从这上面看其实是写锁与读锁之间是相对公平的，谁先达到谁先被CPU调度执行，进行LOCK锁cache line成功，谁就加成功锁</p>
 <h3 id="可见性与原子性问题"><a href="#可见性与原子性问题" class="headerlink" title="可见性与原子性问题"></a>可见性与原子性问题</h3><p>在并发场景中特别是JAVA中通常会提到并发里面的两个问题：可见性与内存屏障、原子性， 其中可见性通常是指在cpu多级缓存下如何保证缓存的一致性，即在一个CPU上修改了了某个数据在其他的CPU上不会继续读取旧的数据，内存屏障通常是为了CPU为了提高流水线性能，而对指令进行重排序而来，而原子性则是指的执行某个操作的过程的不可分割</p>
 <p>go里面并没有volatile这种关键字，那如何能保证上面的AddInt32这个操作可以满足上面的两个问题呢， 其实关键就在于底层的2条指令，通过LOCK指令配合CPU的MESI协议，实现可见性和内存屏障，同时通过XADDL则用来保证原子性，从而解决上面提到的可见性与原子性问题<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// atomic/asm_amd64.s TEXT runtime∕internal∕atomic·Xadd(SB)</span></span><br><span class="line">LOCK</span><br><span class="line">XADDL	AX, <span class="number">0</span>(BX)</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>微信号：baxiaoshi2020<br><img src="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png" alt></p>
+</blockquote>
+<blockquote>
+<p>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"></p>
+</blockquote>
+<blockquote>
+<p>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
 
       
     </div>
@@ -582,7 +593,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-count">50</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -590,7 +601,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">47</span>
+                <span class="site-state-item-count">52</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -599,7 +610,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">51</span>
+                <span class="site-state-item-count">56</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

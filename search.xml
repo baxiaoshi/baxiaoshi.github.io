@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>图解 kubernetes scheduler 架构设计</title>
+    <url>/kubernetes/kubernetes_scheduler_design.html</url>
+    <content><![CDATA[<h1 id="资源调度基础"><a href="#资源调度基础" class="headerlink" title="资源调度基础"></a>资源调度基础</h1><p>scheudler是kubernetes中的核心组件，负责为用户声明的pod资源选择合适的node,同时保证集群资源的最大化利用，这里先介绍下资源调度系统设计里面的一些基础概念</p>
+<h2 id="基础任务资源调度"><a href="#基础任务资源调度" class="headerlink" title="基础任务资源调度"></a>基础任务资源调度</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578474232951-89fe8f0f-350a-40bd-b3ab-2cd9e725232b.png" alt="image.png"><br>基础的任务资源调度通常包括三部分：</p>
+<table>
+<thead>
+<tr>
+<th>角色类型</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>node</td>
+<td>node负责具体任务的执行,同时对包汇报自己拥有的资源</td>
+</tr>
+<tr>
+<td>resource manager</td>
+<td>汇总当前集群中所有node提供的资源,供上层的scheduler的调用获取,同时根据node汇报的任务信息来进行当前集群资源的更新</td>
+</tr>
+<tr>
+<td>scheduler</td>
+<td>结合当前集群的资源和用户提交的任务信息,选择合适的node节点当前的资源，分配节点任务，尽可能保证任务的运行</td>
+</tr>
+</tbody>
+</table>
+<p>通用的调度框架往往还会包含一个上层的集群管理器，负责针对集群中scheduler的管理和资源分配工作，同时负责scheduler集群状态甚至resource manager的保存</p>
+<h2 id="资源调度设计的挑战"><a href="#资源调度设计的挑战" class="headerlink" title="资源调度设计的挑战"></a>资源调度设计的挑战</h2><h3 id="资源：集群资源利用的最大化与平均"><a href="#资源：集群资源利用的最大化与平均" class="headerlink" title="资源：集群资源利用的最大化与平均"></a>资源：集群资源利用的最大化与平均</h3><p>传统的IDC集群资源利用：<br>在IDC环境中我们通常希望机器利用率能够平均,让机器保持在某个平均利用率，然后根据资源的需要预留足够的buffer, 来应对集群的资源利用高峰，毕竟采购通常都有周期，我们既不能让机器空着，也不能让他跑满(业务无法弹性)<br><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578476614096-330fd19e-1ff7-4068-8999-bd48751bfcae.png" alt="image.png"><br>云环境下的资源利用：<br>而云环境下我们可以按需分配，而且云厂商通常都支持秒级交付，那其实下面的这种资源利用率其实也可以<br><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578476742837-4fb88f31-3e93-44e8-8959-e2a411cff3cf.png" alt="image.png"><br>可以看到仅仅是环境的不一致，就可能会导致不同的调度结果，所有针对集群资源利用最大化这个目标，其实会有很多的不同</p>
+<h3 id="调度-任务最少等待时间与优先级"><a href="#调度-任务最少等待时间与优先级" class="headerlink" title="调度: 任务最少等待时间与优先级"></a>调度: 任务最少等待时间与优先级</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578477131618-96b8fead-04d4-4ef1-b351-901a046963ac.png" alt="image.png"><br>在集群任务繁忙的时候，可能会导致集群资源部足以分配给当前集群中的所有任务，在让所有任务都能够尽快完成的同时，我们还要保证高优先级的任务优先被完成</p>
+<h3 id="调度-任务本地性"><a href="#调度-任务本地性" class="headerlink" title="调度: 任务本地性"></a>调度: 任务本地性</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578478349785-f5f4cfb9-61ff-469d-ac15-ad70b75c8687.png" alt="image.png"><br>本地性是指在大数据处理中常用的一种机制，其核心是尽可能将任务分配到包含其任务执行资源的节点上，避免数据的复制</p>
+<h3 id="集群-高可用性"><a href="#集群-高可用性" class="headerlink" title="集群: 高可用性"></a>集群: 高可用性</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578477622551-b0bc9981-4dcc-4605-aeda-150c4a73a426.png" alt="image.png"><br>在调度过程中可能由于硬件、系统或者软件导致任务的不可用，通常会由需要一些高可用机制，来保证当前集群不会因为部分节点宕机而导致整个系统不可用</p>
+<h3 id="系统-可扩展性"><a href="#系统-可扩展性" class="headerlink" title="系统: 可扩展性"></a>系统: 可扩展性</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578477890421-50d0b4b9-334f-4df9-94d3-6ed406d09e97.png" alt="image.png"><br>扩展机制主要是指的，系统如何如何应对业务需求的变化，提供的一种可扩展机制，在集群默认调度策略不满足业务需求时，通过扩展接口，来进行系统的扩展满足业务需求</p>
+<h2 id="Pod调度场景的挑战"><a href="#Pod调度场景的挑战" class="headerlink" title="Pod调度场景的挑战"></a>Pod调度场景的挑战</h2><p>Pod调度场景其实可以看做一类特殊的任务，除了上面资源调度的挑战，还有一些针对pod调度这个具体的场景(有些是共同的,这里通过pod来描述会比较清晰)</p>
+<h3 id="亲和与反亲和"><a href="#亲和与反亲和" class="headerlink" title="亲和与反亲和"></a>亲和与反亲和</h3><p>在kubernetes中的亲和性主要体现pod和node两种资源，主要体现在两个方面:<br>1.亲和性: 1)pod之间的亲和性 2)pod与node之间的亲和性<br>2.反亲和: 1)pod之间的反亲和性  2)pod与node之间的反亲和<br>简单举例：<br>1.pod之间的反亲和: 为了保证高可用我们通常会将同一业务的多个节点分散在不通的数据中心和机架<br>2.pod与node亲和性: 比如某些需要磁盘io操作的pod，我们可以调度到具有ssd的机器上，提高IO性能</p>
+<h3 id="多租户与容量规划"><a href="#多租户与容量规划" class="headerlink" title="多租户与容量规划"></a>多租户与容量规划</h3><p>多租户通常是为了进行集群资源的隔离，在业务系统中，通常会按照业务线来进行资源的隔离，同时会给业务设定对应的容量，从而避免单个业务线资源的过度使用影响整个公司的所有业务</p>
+<h3 id="Zone与node选择"><a href="#Zone与node选择" class="headerlink" title="Zone与node选择"></a>Zone与node选择</h3><p>zone通常是在业务容灾中常见的概念，通过将服务分散在多个数据中心，避免因为单个数据中心故障导致业务完全不可用</p>
+<p>因为之前亲和性的问题，如何在多个zone中的所有node中选择出一个合适的节点，则是一个比较大的挑战</p>
+<h3 id="多样化资源的扩展"><a href="#多样化资源的扩展" class="headerlink" title="多样化资源的扩展"></a>多样化资源的扩展</h3><p>系统资源除了cpu、内存还包括网络、磁盘io、gpu等等，针对其余资源的分配调度，kubernetes还需要提供额外的扩展机制来进行调度扩展的支持</p>
+<h3 id="资源混部"><a href="#资源混部" class="headerlink" title="资源混部"></a>资源混部</h3><p>kubernetes初期是针对pod调度场景而生，主要其实是在线web业务，这类任务的特点大部分都是无状态的，那如何针对离线场景的去支持离线的批处理计算等任务</p>
+<h1 id="kubernetes中的调度初识"><a href="#kubernetes中的调度初识" class="headerlink" title="kubernetes中的调度初识"></a>kubernetes中的调度初识</h1><h2 id="中心化数据集中存储"><a href="#中心化数据集中存储" class="headerlink" title="中心化数据集中存储"></a>中心化数据集中存储</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578556897111-6556c220-75db-4b54-804b-90e6f45f6d5c.png" alt="image.png"></p>
+<h3 id="中心化的数据存储"><a href="#中心化的数据存储" class="headerlink" title="中心化的数据存储"></a>中心化的数据存储</h3><p>kubernetes是一个数据中心化存储的系统，集群中的所有数据都通过apiserver存储到etcd中，包括node节点的资源信息、节点上面的pod信息、当前集群的所有pod信息，在这里其实apiserver也充当了resource manager的角色，存储所有的集群资源和已经分配的资源</p>
+<h3 id="调度数据的存储与获取"><a href="#调度数据的存储与获取" class="headerlink" title="调度数据的存储与获取"></a>调度数据的存储与获取</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578557144870-ed127b9c-a5ef-41c6-9658-67f49b0ea470.png" alt="image.png"><br>kubernetes中采用了一种list watch的机制，用于集群中其他节点从apiserver感知数据，scheduler也采用该机制，通过在感知apiserver的数据变化，同时在本地memory中构建一份cache数据(资源数据)，来提供调度使用，即SchedulerCache</p>
+<h3 id="scheduler的高可用"><a href="#scheduler的高可用" class="headerlink" title="scheduler的高可用"></a>scheduler的高可用</h3><p>大多数系统的高可用机制都是通过类似zookeeper、etcd等AP系统实现，通过临时节点或者锁机制机制来实现多个节点的竞争，从而在主节点宕机时，能够快速接管， scheduler自然也是这种机制，通过apiserver底层的etcd来实现锁的竞争，然后通过apiserver的数据，就可以保证调度器的高可用</p>
+<h2 id="调度器内部组成"><a href="#调度器内部组成" class="headerlink" title="调度器内部组成"></a>调度器内部组成</h2><h3 id="调度队列"><a href="#调度队列" class="headerlink" title="调度队列"></a>调度队列</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578558102514-7be7dec2-923d-4823-a910-18e5e1772605.png" alt="image.png"><br>当从apiserver感知到要调度的pod的时候,scheduler会根据pod的优先级，来讲其加入到内部的一个优先级队列中，后续调度的时候，会先获取优先级比较高的pod来进行优先满足调度</p>
+<p>这里还有一个点就是如果优先调度了优先级比较低的pod，其实在后续的抢占过程中，也会被驱逐出去</p>
+<h3 id="调度与抢占调度"><a href="#调度与抢占调度" class="headerlink" title="调度与抢占调度"></a>调度与抢占调度</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578558736579-5ccecb0b-bbdf-49b6-852c-57ab4e115538.png" alt="image.png"><br>前面提到过抢占,kubernetes默认会对所有的pod来尝试进行调度，当集群资源部满足的时候，则会尝试抢占调度，通过抢占调度，为高优先级的pod来进行优先调度 其核心都是通过调度算法实现即ScheduleAlgorithm</p>
+<p>这里的调度算法实际上是一堆调度算法和调度配置的集合</p>
+<h3 id="外部扩展机制"><a href="#外部扩展机制" class="headerlink" title="外部扩展机制"></a>外部扩展机制</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578558976602-38e238fb-d2f7-40cb-a8f8-6d4ce4abc440.png" alt="image.png"><br>scheduler extender是k8s对调度器的一种扩展机制，我们可以定义对应的extender,在对应资源的调度的时候，k8s会检查对应的资源，如果发现需要调用外部的extender,则将当前的调度数据发送给extender,然后汇总调度数据，决定最终的调度结果</p>
+<h3 id="内部扩展机制"><a href="#内部扩展机制" class="headerlink" title="内部扩展机制"></a>内部扩展机制</h3><p>上面提到调度算法是一组调度算法和调度配置的集合，kubernetes scheduler framework是则是一个框架声明对应插件的接口，从而支持用户编写自己的plugin,来影响调度决策，个人感觉这并不是一种好的机制，因为要修改代码，或者通过修改kubernetes scheduler启动来进行自定义插件的加载</p>
+<h2 id="调度基础架构"><a href="#调度基础架构" class="headerlink" title="调度基础架构"></a>调度基础架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578559951157-3950a00d-028c-48ce-aa95-fa5be7c69091.png" alt="image.png"><br>结合上面所说的就得到了一个最简单的架构，主要调度流程分为如下几部分：<br>0.通过apiserver来进行主节点选举，成功者进行调度业务流程处理<br>1.通过apiserver感知集群的资源数据和pod数据，更新本地schedulerCache<br>2.通过apiserver感知用户或者controller的pod调度请求，加入本地调度队列<br>3.通过调度算法来进行pod请求的调度，分配合适的node节点，此过程可能会发生抢占调度<br>4.将调度结果返回给apiserver,然后由kubelet组件进行后续pod的请求处理</p>
+<p>这是一个最简单的调度流程和基础的组件模块，所以没有源码,后续这个系列会详细分析每个关键的调度数据结构和一些有趣的调度算法的具体实现，祝我好运，good luck</p>
+<blockquote>
+<p>微信号：baxiaoshi2020<br><img src="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png" alt></p>
+</blockquote>
+<blockquote>
+<p>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"></p>
+</blockquote>
+<blockquote>
+<p>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>kubernetes</category>
+        <category>scheduler</category>
+        <category>design</category>
+        <category>架构设计</category>
+        <category>源码</category>
+      </categories>
+      <tags>
+        <tag>kubernetes</tag>
+        <tag>scheduler</tag>
+        <tag>design</tag>
+        <tag>架构设计</tag>
+        <tag>源码</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>图解Go语言的context了解编程语言核心实现源码</title>
     <url>/go/context.html</url>
     <content><![CDATA[<h1 id="基础筑基"><a href="#基础筑基" class="headerlink" title="基础筑基"></a>基础筑基</h1><h2 id="基于线程的编程语言中的一些设计"><a href="#基于线程的编程语言中的一些设计" class="headerlink" title="基于线程的编程语言中的一些设计"></a>基于线程的编程语言中的一些设计</h2><h3 id="ThreadGroup"><a href="#ThreadGroup" class="headerlink" title="ThreadGroup"></a>ThreadGroup</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/context/1577671651735-18757b0b-3a7a-4f33-9904-64d4e8872424.png" alt="image.png"><br>ThreadGroup是基于线程并发的编程语言中常用的一个概念，当一个线程派生出一个子线程后通常会加入父线程的线程组(未指定线程组的情况下)中， 最后可以通过ThreadGroup来控制一组线程的退出等操作, 然后在go语言中goroutine没有明确的这种parent/children的关系，如果想退出当前调用链上的所有goroutine则需要用到context</p>
@@ -232,6 +309,15 @@
 <h3 id="加锁排队与状态转换"><a href="#加锁排队与状态转换" class="headerlink" title="加锁排队与状态转换"></a>加锁排队与状态转换</h3><p>再加锁的时候实际上只会有一个goroutine加锁CAS成功，而其他线程则需要重新获取状态，进行上面的自旋与唤醒状态的重新计算，从而再次CAS<br><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> atomic.CompareAndSwapInt32(&amp;m.state, old, <span class="built_in">new</span>) &#123;</span><br><span class="line">	<span class="keyword">if</span> old&amp;(mutexLocked|mutexStarving) == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="comment">// 如果原来的状态等于0则表明当前已经释放了锁并且也不处于饥饿模式下</span></span><br><span class="line">              <span class="comment">// 实际的二进制位可能是这样的 1111000, 后面三位全是0，只有记录等待goroutine的计数器可能会不为0</span></span><br><span class="line">              <span class="comment">// 那就表明其实</span></span><br><span class="line">		<span class="keyword">break</span> <span class="comment">// locked the mutex with CAS</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 排队逻辑，如果发现waitStatrTime不为0，则表明当前线程之前已经再排队来，后面可能因为</span></span><br><span class="line">          <span class="comment">// unlock被唤醒，但是本次依旧没获取到锁，所以就将它移动到等待队列的头部</span></span><br><span class="line">	queueLifo := waitStartTime != <span class="number">0</span></span><br><span class="line">	<span class="keyword">if</span> waitStartTime == <span class="number">0</span> &#123;</span><br><span class="line">		waitStartTime = runtime_nanotime()</span><br><span class="line">	&#125;</span><br><span class="line">          <span class="comment">// 这里就会进行排队等待其他节点进行唤醒</span></span><br><span class="line">	runtime_SemacquireMutex(&amp;m.sema, queueLifo)</span><br><span class="line">	<span class="comment">// 如果等待超过指定时间，则切换为饥饿模式 starving=true</span></span><br><span class="line">          <span class="comment">// 如果一个线程之前不是饥饿状态，并且也没超过starvationThresholdNs，则starving为false</span></span><br><span class="line">          <span class="comment">// 就会触发下面的状态切换</span></span><br><span class="line">	starving = starving || runtime_nanotime()-waitStartTime &gt; starvationThresholdNs</span><br><span class="line">	<span class="comment">// 重新获取状态</span></span><br><span class="line">          old = m.state</span><br><span class="line">	<span class="keyword">if</span> old&amp;mutexStarving != <span class="number">0</span> &#123; </span><br><span class="line">              <span class="comment">// 如果发现当前已经是饥饿模式，注意饥饿模式唤醒的是第一个goroutine</span></span><br><span class="line">              <span class="comment">// 当前所有的goroutine都在排队等待</span></span><br><span class="line">	<span class="comment">// 一致性检查，</span></span><br><span class="line">		<span class="keyword">if</span> old&amp;(mutexLocked|mutexWoken) != <span class="number">0</span> || old&gt;&gt;mutexWaiterShift == <span class="number">0</span> &#123;</span><br><span class="line">			throw(<span class="string">"sync: inconsistent mutex state"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 获取当前的模式</span></span><br><span class="line">		delta := <span class="keyword">int32</span>(mutexLocked - <span class="number">1</span>&lt;&lt;mutexWaiterShift)</span><br><span class="line">		<span class="keyword">if</span> !starving || old&gt;&gt;mutexWaiterShift == <span class="number">1</span> &#123;</span><br><span class="line">			<span class="comment">// 如果当前goroutine不是饥饿状态，就从饥饿模式切换会正常模式</span></span><br><span class="line">                  <span class="comment">// 就从mutexStarving状态切换出去</span></span><br><span class="line">			delta -= mutexStarving</span><br><span class="line">		&#125;</span><br><span class="line">              <span class="comment">// 最后进行cas操作</span></span><br><span class="line">		atomic.AddInt32(&amp;m.state, delta)</span><br><span class="line">		<span class="keyword">break</span></span><br><span class="line">	&#125;</span><br><span class="line">          <span class="comment">// 重置计数</span></span><br><span class="line">	awoke = <span class="literal">true</span></span><br><span class="line">	iter = <span class="number">0</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">	old = m.state</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="释放锁逻辑"><a href="#释放锁逻辑" class="headerlink" title="释放锁逻辑"></a>释放锁逻辑</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/golang/sync/1576057552076-e45a9a4c-bf46-487a-a780-95dd90f931d2.png" alt="image.png"></p>
 <h3 id="释放锁代码"><a href="#释放锁代码" class="headerlink" title="释放锁代码"></a>释放锁代码</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Mutex)</span> <span class="title">Unlock</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">		_ = m.state</span><br><span class="line">		race.Release(unsafe.Pointer(m))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 直接进行cas操作</span></span><br><span class="line">	<span class="built_in">new</span> := atomic.AddInt32(&amp;m.state, -mutexLocked)</span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">new</span>+mutexLocked)&amp;mutexLocked == <span class="number">0</span> &#123;</span><br><span class="line">		throw(<span class="string">"sync: unlock of unlocked mutex"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">new</span>&amp;mutexStarving == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="comment">// 如果释放锁并且不是饥饿模式</span></span><br><span class="line">		old := <span class="built_in">new</span></span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line"></span><br><span class="line">			<span class="keyword">if</span> old&gt;&gt;mutexWaiterShift == <span class="number">0</span> || old&amp;(mutexLocked|mutexWoken|mutexStarving) != <span class="number">0</span> &#123;</span><br><span class="line">				<span class="comment">// 如果已经有等待者并且已经被唤醒，就直接返回</span></span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// 减去一个等待计数，然后将当前模式切换成mutexWoken</span></span><br><span class="line">			<span class="built_in">new</span> = (old - <span class="number">1</span>&lt;&lt;mutexWaiterShift) | mutexWoken</span><br><span class="line">			<span class="keyword">if</span> atomic.CompareAndSwapInt32(&amp;m.state, old, <span class="built_in">new</span>) &#123;</span><br><span class="line">				<span class="comment">// 唤醒一个goroutine</span></span><br><span class="line">				runtime_Semrelease(&amp;m.sema, <span class="literal">false</span>)</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			old = m.state</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">// 唤醒等待的线程</span></span><br><span class="line">		runtime_Semrelease(&amp;m.sema, <span class="literal">true</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>微信号：baxiaoshi2020<br><img src="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png" alt></p>
+</blockquote>
+<blockquote>
+<p>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"></p>
+</blockquote>
+<blockquote>
+<p>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
 ]]></content>
       <categories>
         <category>go语言</category>
@@ -272,6 +358,15 @@
 <h3 id="写锁与读锁的公平性"><a href="#写锁与读锁的公平性" class="headerlink" title="写锁与读锁的公平性"></a>写锁与读锁的公平性</h3><p>在加读锁和写锁的工程中都使用atomic.AddInt32来进行递增，而该指令在底层是会通过LOCK来进行CPU总线加锁的，因此多个CPU同时执行readerCount其实只会有一个成功，从这上面看其实是写锁与读锁之间是相对公平的，谁先达到谁先被CPU调度执行，进行LOCK锁cache line成功，谁就加成功锁</p>
 <h3 id="可见性与原子性问题"><a href="#可见性与原子性问题" class="headerlink" title="可见性与原子性问题"></a>可见性与原子性问题</h3><p>在并发场景中特别是JAVA中通常会提到并发里面的两个问题：可见性与内存屏障、原子性， 其中可见性通常是指在cpu多级缓存下如何保证缓存的一致性，即在一个CPU上修改了了某个数据在其他的CPU上不会继续读取旧的数据，内存屏障通常是为了CPU为了提高流水线性能，而对指令进行重排序而来，而原子性则是指的执行某个操作的过程的不可分割</p>
 <p>go里面并没有volatile这种关键字，那如何能保证上面的AddInt32这个操作可以满足上面的两个问题呢， 其实关键就在于底层的2条指令，通过LOCK指令配合CPU的MESI协议，实现可见性和内存屏障，同时通过XADDL则用来保证原子性，从而解决上面提到的可见性与原子性问题<br><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// atomic/asm_amd64.s TEXT runtime∕internal∕atomic·Xadd(SB)</span></span><br><span class="line">LOCK</span><br><span class="line">XADDL	AX, <span class="number">0</span>(BX)</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>微信号：baxiaoshi2020<br><img src="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png" alt></p>
+</blockquote>
+<blockquote>
+<p>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"></p>
+</blockquote>
+<blockquote>
+<p>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
 ]]></content>
       <categories>
         <category>go语言</category>
@@ -577,9 +672,9 @@
       </categories>
       <tags>
         <tag>go语言</tag>
+        <tag>golang</tag>
         <tag>图解</tag>
         <tag>channel</tag>
-        <tag>golang</tag>
       </tags>
   </entry>
   <entry>

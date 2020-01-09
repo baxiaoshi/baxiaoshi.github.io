@@ -306,6 +306,224 @@
             
               
                 
+                <a class="post-title-link" href="/kubernetes/kubernetes_scheduler_design.html" itemprop="url">
+                  图解 kubernetes scheduler 架构设计
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-01-09T17:08:32+08:00" content="2020-01-09 17:08">
+              2020-01-09 17:08
+            </time>
+          </span>
+
+          
+            <span class="post-category">
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/kubernetes/" itemprop="url" rel="index">
+                    <span itemprop="name">kubernetes</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/kubernetes/scheduler/" itemprop="url" rel="index">
+                    <span itemprop="name">scheduler</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/kubernetes/scheduler/design/" itemprop="url" rel="index">
+                    <span itemprop="name">design</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/kubernetes/scheduler/design/架构设计/" itemprop="url" rel="index">
+                    <span itemprop="name">架构设计</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/kubernetes/scheduler/design/架构设计/源码/" itemprop="url" rel="index">
+                    <span itemprop="name">源码</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="资源调度基础"><a href="#资源调度基础" class="headerlink" title="资源调度基础"></a>资源调度基础</h1><p>scheudler是kubernetes中的核心组件，负责为用户声明的pod资源选择合适的node,同时保证集群资源的最大化利用，这里先介绍下资源调度系统设计里面的一些基础概念</p>
+<h2 id="基础任务资源调度"><a href="#基础任务资源调度" class="headerlink" title="基础任务资源调度"></a>基础任务资源调度</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578474232951-89fe8f0f-350a-40bd-b3ab-2cd9e725232b.png" alt="image.png"><br>基础的任务资源调度通常包括三部分：</p>
+<table>
+<thead>
+<tr>
+<th>角色类型</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>node</td>
+<td>node负责具体任务的执行,同时对包汇报自己拥有的资源</td>
+</tr>
+<tr>
+<td>resource manager</td>
+<td>汇总当前集群中所有node提供的资源,供上层的scheduler的调用获取,同时根据node汇报的任务信息来进行当前集群资源的更新</td>
+</tr>
+<tr>
+<td>scheduler</td>
+<td>结合当前集群的资源和用户提交的任务信息,选择合适的node节点当前的资源，分配节点任务，尽可能保证任务的运行</td>
+</tr>
+</tbody>
+</table>
+<p>通用的调度框架往往还会包含一个上层的集群管理器，负责针对集群中scheduler的管理和资源分配工作，同时负责scheduler集群状态甚至resource manager的保存</p>
+<h2 id="资源调度设计的挑战"><a href="#资源调度设计的挑战" class="headerlink" title="资源调度设计的挑战"></a>资源调度设计的挑战</h2><h3 id="资源：集群资源利用的最大化与平均"><a href="#资源：集群资源利用的最大化与平均" class="headerlink" title="资源：集群资源利用的最大化与平均"></a>资源：集群资源利用的最大化与平均</h3><p>传统的IDC集群资源利用：<br>在IDC环境中我们通常希望机器利用率能够平均,让机器保持在某个平均利用率，然后根据资源的需要预留足够的buffer, 来应对集群的资源利用高峰，毕竟采购通常都有周期，我们既不能让机器空着，也不能让他跑满(业务无法弹性)<br><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578476614096-330fd19e-1ff7-4068-8999-bd48751bfcae.png" alt="image.png"><br>云环境下的资源利用：<br>而云环境下我们可以按需分配，而且云厂商通常都支持秒级交付，那其实下面的这种资源利用率其实也可以<br><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578476742837-4fb88f31-3e93-44e8-8959-e2a411cff3cf.png" alt="image.png"><br>可以看到仅仅是环境的不一致，就可能会导致不同的调度结果，所有针对集群资源利用最大化这个目标，其实会有很多的不同</p>
+<h3 id="调度-任务最少等待时间与优先级"><a href="#调度-任务最少等待时间与优先级" class="headerlink" title="调度: 任务最少等待时间与优先级"></a>调度: 任务最少等待时间与优先级</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578477131618-96b8fead-04d4-4ef1-b351-901a046963ac.png" alt="image.png"><br>在集群任务繁忙的时候，可能会导致集群资源部足以分配给当前集群中的所有任务，在让所有任务都能够尽快完成的同时，我们还要保证高优先级的任务优先被完成</p>
+<h3 id="调度-任务本地性"><a href="#调度-任务本地性" class="headerlink" title="调度: 任务本地性"></a>调度: 任务本地性</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578478349785-f5f4cfb9-61ff-469d-ac15-ad70b75c8687.png" alt="image.png"><br>本地性是指在大数据处理中常用的一种机制，其核心是尽可能将任务分配到包含其任务执行资源的节点上，避免数据的复制</p>
+<h3 id="集群-高可用性"><a href="#集群-高可用性" class="headerlink" title="集群: 高可用性"></a>集群: 高可用性</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578477622551-b0bc9981-4dcc-4605-aeda-150c4a73a426.png" alt="image.png"><br>在调度过程中可能由于硬件、系统或者软件导致任务的不可用，通常会由需要一些高可用机制，来保证当前集群不会因为部分节点宕机而导致整个系统不可用</p>
+<h3 id="系统-可扩展性"><a href="#系统-可扩展性" class="headerlink" title="系统: 可扩展性"></a>系统: 可扩展性</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578477890421-50d0b4b9-334f-4df9-94d3-6ed406d09e97.png" alt="image.png"><br>扩展机制主要是指的，系统如何如何应对业务需求的变化，提供的一种可扩展机制，在集群默认调度策略不满足业务需求时，通过扩展接口，来进行系统的扩展满足业务需求</p>
+<h2 id="Pod调度场景的挑战"><a href="#Pod调度场景的挑战" class="headerlink" title="Pod调度场景的挑战"></a>Pod调度场景的挑战</h2><p>Pod调度场景其实可以看做一类特殊的任务，除了上面资源调度的挑战，还有一些针对pod调度这个具体的场景(有些是共同的,这里通过pod来描述会比较清晰)</p>
+<h3 id="亲和与反亲和"><a href="#亲和与反亲和" class="headerlink" title="亲和与反亲和"></a>亲和与反亲和</h3><p>在kubernetes中的亲和性主要体现pod和node两种资源，主要体现在两个方面:<br>1.亲和性: 1)pod之间的亲和性 2)pod与node之间的亲和性<br>2.反亲和: 1)pod之间的反亲和性  2)pod与node之间的反亲和<br>简单举例：<br>1.pod之间的反亲和: 为了保证高可用我们通常会将同一业务的多个节点分散在不通的数据中心和机架<br>2.pod与node亲和性: 比如某些需要磁盘io操作的pod，我们可以调度到具有ssd的机器上，提高IO性能</p>
+<h3 id="多租户与容量规划"><a href="#多租户与容量规划" class="headerlink" title="多租户与容量规划"></a>多租户与容量规划</h3><p>多租户通常是为了进行集群资源的隔离，在业务系统中，通常会按照业务线来进行资源的隔离，同时会给业务设定对应的容量，从而避免单个业务线资源的过度使用影响整个公司的所有业务</p>
+<h3 id="Zone与node选择"><a href="#Zone与node选择" class="headerlink" title="Zone与node选择"></a>Zone与node选择</h3><p>zone通常是在业务容灾中常见的概念，通过将服务分散在多个数据中心，避免因为单个数据中心故障导致业务完全不可用</p>
+<p>因为之前亲和性的问题，如何在多个zone中的所有node中选择出一个合适的节点，则是一个比较大的挑战</p>
+<h3 id="多样化资源的扩展"><a href="#多样化资源的扩展" class="headerlink" title="多样化资源的扩展"></a>多样化资源的扩展</h3><p>系统资源除了cpu、内存还包括网络、磁盘io、gpu等等，针对其余资源的分配调度，kubernetes还需要提供额外的扩展机制来进行调度扩展的支持</p>
+<h3 id="资源混部"><a href="#资源混部" class="headerlink" title="资源混部"></a>资源混部</h3><p>kubernetes初期是针对pod调度场景而生，主要其实是在线web业务，这类任务的特点大部分都是无状态的，那如何针对离线场景的去支持离线的批处理计算等任务</p>
+<h1 id="kubernetes中的调度初识"><a href="#kubernetes中的调度初识" class="headerlink" title="kubernetes中的调度初识"></a>kubernetes中的调度初识</h1><h2 id="中心化数据集中存储"><a href="#中心化数据集中存储" class="headerlink" title="中心化数据集中存储"></a>中心化数据集中存储</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578556897111-6556c220-75db-4b54-804b-90e6f45f6d5c.png" alt="image.png"></p>
+<h3 id="中心化的数据存储"><a href="#中心化的数据存储" class="headerlink" title="中心化的数据存储"></a>中心化的数据存储</h3><p>kubernetes是一个数据中心化存储的系统，集群中的所有数据都通过apiserver存储到etcd中，包括node节点的资源信息、节点上面的pod信息、当前集群的所有pod信息，在这里其实apiserver也充当了resource manager的角色，存储所有的集群资源和已经分配的资源</p>
+<h3 id="调度数据的存储与获取"><a href="#调度数据的存储与获取" class="headerlink" title="调度数据的存储与获取"></a>调度数据的存储与获取</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578557144870-ed127b9c-a5ef-41c6-9658-67f49b0ea470.png" alt="image.png"><br>kubernetes中采用了一种list watch的机制，用于集群中其他节点从apiserver感知数据，scheduler也采用该机制，通过在感知apiserver的数据变化，同时在本地memory中构建一份cache数据(资源数据)，来提供调度使用，即SchedulerCache</p>
+<h3 id="scheduler的高可用"><a href="#scheduler的高可用" class="headerlink" title="scheduler的高可用"></a>scheduler的高可用</h3><p>大多数系统的高可用机制都是通过类似zookeeper、etcd等AP系统实现，通过临时节点或者锁机制机制来实现多个节点的竞争，从而在主节点宕机时，能够快速接管， scheduler自然也是这种机制，通过apiserver底层的etcd来实现锁的竞争，然后通过apiserver的数据，就可以保证调度器的高可用</p>
+<h2 id="调度器内部组成"><a href="#调度器内部组成" class="headerlink" title="调度器内部组成"></a>调度器内部组成</h2><h3 id="调度队列"><a href="#调度队列" class="headerlink" title="调度队列"></a>调度队列</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578558102514-7be7dec2-923d-4823-a910-18e5e1772605.png" alt="image.png"><br>当从apiserver感知到要调度的pod的时候,scheduler会根据pod的优先级，来讲其加入到内部的一个优先级队列中，后续调度的时候，会先获取优先级比较高的pod来进行优先满足调度</p>
+<p>这里还有一个点就是如果优先调度了优先级比较低的pod，其实在后续的抢占过程中，也会被驱逐出去</p>
+<h3 id="调度与抢占调度"><a href="#调度与抢占调度" class="headerlink" title="调度与抢占调度"></a>调度与抢占调度</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578558736579-5ccecb0b-bbdf-49b6-852c-57ab4e115538.png" alt="image.png"><br>前面提到过抢占,kubernetes默认会对所有的pod来尝试进行调度，当集群资源部满足的时候，则会尝试抢占调度，通过抢占调度，为高优先级的pod来进行优先调度 其核心都是通过调度算法实现即ScheduleAlgorithm</p>
+<p>这里的调度算法实际上是一堆调度算法和调度配置的集合</p>
+<h3 id="外部扩展机制"><a href="#外部扩展机制" class="headerlink" title="外部扩展机制"></a>外部扩展机制</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578558976602-38e238fb-d2f7-40cb-a8f8-6d4ce4abc440.png" alt="image.png"><br>scheduler extender是k8s对调度器的一种扩展机制，我们可以定义对应的extender,在对应资源的调度的时候，k8s会检查对应的资源，如果发现需要调用外部的extender,则将当前的调度数据发送给extender,然后汇总调度数据，决定最终的调度结果</p>
+<h3 id="内部扩展机制"><a href="#内部扩展机制" class="headerlink" title="内部扩展机制"></a>内部扩展机制</h3><p>上面提到调度算法是一组调度算法和调度配置的集合，kubernetes scheduler framework是则是一个框架声明对应插件的接口，从而支持用户编写自己的plugin,来影响调度决策，个人感觉这并不是一种好的机制，因为要修改代码，或者通过修改kubernetes scheduler启动来进行自定义插件的加载</p>
+<h2 id="调度基础架构"><a href="#调度基础架构" class="headerlink" title="调度基础架构"></a>调度基础架构</h2><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/97498/1578559951157-3950a00d-028c-48ce-aa95-fa5be7c69091.png" alt="image.png"><br>结合上面所说的就得到了一个最简单的架构，主要调度流程分为如下几部分：<br>0.通过apiserver来进行主节点选举，成功者进行调度业务流程处理<br>1.通过apiserver感知集群的资源数据和pod数据，更新本地schedulerCache<br>2.通过apiserver感知用户或者controller的pod调度请求，加入本地调度队列<br>3.通过调度算法来进行pod请求的调度，分配合适的node节点，此过程可能会发生抢占调度<br>4.将调度结果返回给apiserver,然后由kubelet组件进行后续pod的请求处理</p>
+<p>这是一个最简单的调度流程和基础的组件模块，所以没有源码,后续这个系列会详细分析每个关键的调度数据结构和一些有趣的调度算法的具体实现，祝我好运，good luck</p>
+<blockquote>
+<p>微信号：baxiaoshi2020<br><img src="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png" alt></p>
+</blockquote>
+<blockquote>
+<p>关注公告号阅读更多源码分析文章<img src="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg" alt="21天大棚"></p>
+</blockquote>
+<blockquote>
+<p>更多文章关注 <a href="http://www.sreguide.com">www.sreguide.com</a></p>
+</blockquote>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/go/context.html" itemprop="url">
                   图解Go语言的context了解编程语言核心实现源码
                 </a>
@@ -1778,158 +1996,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/go/go_channel.html" itemprop="url">
-                  Go里面Channel的实现
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2019-05-14T21:55:56+08:00" content="2019-05-14 21:55">
-              2019-05-14 21:55
-            </time>
-          </span>
-
-          
-            <span class="post-category">
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/" itemprop="url" rel="index">
-                    <span itemprop="name">go语言</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/图解/" itemprop="url" rel="index">
-                    <span itemprop="name">图解</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/图解/channel/" itemprop="url" rel="index">
-                    <span itemprop="name">channel</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/go语言/图解/channel/golang/" itemprop="url" rel="index">
-                    <span itemprop="name">golang</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <h1 id="管道介绍"><a href="#管道介绍" class="headerlink" title="管道介绍"></a>管道介绍</h1><p><img src="https://baxiaoshi.cdn.bcebos.com/blog%2F2019-04-29-10-58-20.png" alt><br>Go并发模式使用的是CSP，在并发上提倡通过消息的传递而不是共享内存的方式来进行数据的传递和同步</p>
-<p>channel就是消息的管道,  码仔可以声明不同类型的管道，然后使用任意数量的生产者和消费者，去消费管道里面的数据进行业务处理</p>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/go/go_channel.html#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1973,7 +2039,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-count">50</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1981,7 +2047,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">47</span>
+                <span class="site-state-item-count">52</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1990,7 +2056,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">51</span>
+                <span class="site-state-item-count">56</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

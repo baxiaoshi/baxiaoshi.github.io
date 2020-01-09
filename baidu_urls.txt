@@ -1,3 +1,4 @@
+http://www.sreguide.com/kubernetes/kubernetes_scheduler_design.html
 http://www.sreguide.com/go/context.html
 http://www.sreguide.com/go/go_sync_map.html
 http://www.sreguide.com/go/go_sync_waitgroup.html

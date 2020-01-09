@@ -2,16 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://www.sreguide.com/go/context.html</loc>
+    <loc>http://www.sreguide.com/kubernetes/kubernetes_scheduler_design.html</loc>
     
-    <lastmod>2020-01-06T02:14:14.259Z</lastmod>
+    <lastmod>2020-01-09T09:11:03.725Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/go/sync_reader_writer.html</loc>
+    
+    <lastmod>2020-01-09T09:09:36.052Z</lastmod>
     
   </url>
   
   <url>
     <loc>http://www.sreguide.com/go/sync_mutex.html</loc>
     
-    <lastmod>2019-12-30T13:59:45.883Z</lastmod>
+    <lastmod>2020-01-09T09:09:32.890Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.sreguide.com/go/context.html</loc>
+    
+    <lastmod>2020-01-06T02:14:14.259Z</lastmod>
     
   </url>
   
@@ -33,13 +47,6 @@
     <loc>http://www.sreguide.com/404/index.html</loc>
     
     <lastmod>2019-12-23T04:03:45.221Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.sreguide.com/go/sync_reader_writer.html</loc>
-    
-    <lastmod>2019-12-20T02:45:31.782Z</lastmod>
     
   </url>
   
