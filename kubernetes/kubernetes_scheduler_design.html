@@ -107,7 +107,7 @@
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/1578559951157-3950a00d-028c-48ce-aa95-fa5be7c69091.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/weixin_baxiaoshi.png">
 <meta property="og:image" content="https://baxiaoshi.cdn.bcebos.com/blog/qrcode_for_gh_258.jpg">
-<meta property="og:updated_time" content="2020-01-09T09:21:49.240Z">
+<meta property="og:updated_time" content="2020-01-09T09:24:14.697Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="图解 kubernetes scheduler 架构设计系列-初步了解">
 <meta name="twitter:description" content="资源调度基础scheudler是kubernetes中的核心组件，负责为用户声明的pod资源选择合适的node,同时保证集群资源的最大化利用，这里先介绍下资源调度系统设计里面的一些基础概念 基础任务资源调度基础的任务资源调度通常包括三部分：    角色类型 功能     node node负责具体任务的执行,同时对包汇报自己拥有的资源   resource manager 汇总当前集群中所有nod">
@@ -451,7 +451,7 @@
 </tr>
 </tbody>
 </table>
-<p>通用的调度框架往往还会包含一个上层的集群管理器，负责针对集群中scheduler的管理和资源分配工作，同时负责scheduler集群状态甚至resource manager的保存</p>
+<p>通用的调度框架往往还会包含一个上层的集群管理器，负责针对集群中scheduler的管理和资源分配工作，同时负责scheduler集群状态甚至resource manager的保存<br><a id="more"></a></p>
 <h2 id="资源调度设计的挑战"><a href="#资源调度设计的挑战" class="headerlink" title="资源调度设计的挑战"></a>资源调度设计的挑战</h2><h3 id="资源：集群资源利用的最大化与平均"><a href="#资源：集群资源利用的最大化与平均" class="headerlink" title="资源：集群资源利用的最大化与平均"></a>资源：集群资源利用的最大化与平均</h3><p>传统的IDC集群资源利用：<br>在IDC环境中我们通常希望机器利用率能够平均,让机器保持在某个平均利用率，然后根据资源的需要预留足够的buffer, 来应对集群的资源利用高峰，毕竟采购通常都有周期，我们既不能让机器空着，也不能让他跑满(业务无法弹性)<br><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/1578476614096-330fd19e-1ff7-4068-8999-bd48751bfcae.png" alt="image.png"><br>云环境下的资源利用：<br>而云环境下我们可以按需分配，而且云厂商通常都支持秒级交付，那其实下面的这种资源利用率其实也可以<br><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/1578476742837-4fb88f31-3e93-44e8-8959-e2a411cff3cf.png" alt="image.png"><br>可以看到仅仅是环境的不一致，就可能会导致不同的调度结果，所有针对集群资源利用最大化这个目标，其实会有很多的不同</p>
 <h3 id="调度-任务最少等待时间与优先级"><a href="#调度-任务最少等待时间与优先级" class="headerlink" title="调度: 任务最少等待时间与优先级"></a>调度: 任务最少等待时间与优先级</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/1578477131618-96b8fead-04d4-4ef1-b351-901a046963ac.png" alt="image.png"><br>在集群任务繁忙的时候，可能会导致集群资源部足以分配给当前集群中的所有任务，在让所有任务都能够尽快完成的同时，我们还要保证高优先级的任务优先被完成</p>
 <h3 id="调度-任务本地性"><a href="#调度-任务本地性" class="headerlink" title="调度: 任务本地性"></a>调度: 任务本地性</h3><p><img src="https://baxiaoshi.cdn.bcebos.com/blog/kubernetes/scheduler/1578478349785-f5f4cfb9-61ff-469d-ac15-ad70b75c8687.png" alt="image.png"><br>本地性是指在大数据处理中常用的一种机制，其核心是尽可能将任务分配到包含其任务执行资源的节点上，避免数据的复制</p>
